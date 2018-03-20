@@ -5,7 +5,7 @@
  * Plugin URI: http://toiee.jp
  * Description: WooCommerceの商品と連動して、コンテンツの閲覧制限を設定できます
  * Author: toiee Lab
- * Version: 0.1
+ * Version: 0.2
  * Author URI: http://toiee.jp
  */
  
@@ -22,6 +22,14 @@
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
+
+//Use version 2.0 of the update checker.
+require 'plugin-update-checker/plugin-update-checker.php';
+$MyUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
+	'https://github.com/toiee-lab/wc-restrict/raw/master/update-metadata.json',
+	__FILE__,
+	'wc-restrict'
+);
 
 $wc_sr = new Woocommerce_SimpleRestrictContent();
 
