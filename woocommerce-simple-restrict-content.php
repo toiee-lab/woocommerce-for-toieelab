@@ -89,20 +89,28 @@ class Woocommerce_SimpleRestrictContent
 		$login_form = ob_get_contents();
 		ob_end_clean();
 		
+		// ログイン・ログアウトをチェック
+		$current_user = wp_get_current_user();
+		$display_none = ( $current_user->ID != 0) ? 'style="display:none;"' : '';
+		
 		// 表示の作成
 		$not_access_message = str_replace(
-			array('{{product_url}}', '{{product_name}}', '{{message}}', '{{login_url}}', '{{modal_id}}', '{{login_form}}'),
-			array($product_url, $prodcut_name, $message, $login_url, $modal_id, $login_form),
+			array('{{product_url}}', '{{product_name}}', '{{message}}', '{{login_url}}', '{{modal_id}}', '{{login_form}}', '{{display_none}}'),
+			array($product_url, $prodcut_name, $message, $login_url, $modal_id, $login_form, $display_none),
 			$not_access_message
 		);
-				
 		$not_access_message = do_shortcode($not_access_message);
 		
 		
 		// login していなければ、error
-		$current_user = wp_get_current_user();
 		if( $current_user->ID == 0){
 			return $not_access_message;
+		}
+		
+		// admin なら
+		if( is_super_admin() )
+		{
+			return '<div style="border:#f99 dashed 1px"><p style="background-color:#fcc;">このコンテンツは制限付きです</p>'.do_shortcode($content).'</div>';
 		}
 		
 		// 購入しているかチェック
@@ -452,6 +460,7 @@ here is contents
 	<li>{{product_name}} は、商品の名前に置き換わります(idで先頭に指定されている商品の名前)</li>
 	<li>{{login_url}} は、アカウントページへのリンクを表示します</li>
 	<li>{{modal_id}} は、 modal-(product.ID) に置き換わります</li>
+	<li>{{display_none}} は、ログイン済みなら style="display:none;" が挿入されます</li>
 	<li>{{login_form}} は、このページにリダイレクトされるログインフォームを表示します( woocommerce_login_form() を利用 )</li>
 	<li>{{message}} は、ショートコードで指定したメッセージに置き換えます</li>
 </ul>
