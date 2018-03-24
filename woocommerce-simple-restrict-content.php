@@ -83,9 +83,30 @@ class Woocommerce_SimpleRestrictContent
 		$prodcut_name = get_the_title( $ids[0] );
 		$login_url = get_permalink( get_option('woocommerce_myaccount_page_id') );
 		$modal_id = 'modal-'.$ids[0];
+
+		// error message などを取得
+		ob_start();
+		wc_print_notices();
+		$wc_notices = ob_get_contents();
+		ob_end_clean();
+		
+		if( $wc_notices != ''){
+			$js = <<<EOD
+<script>			
+el = document.getElementById('{$modal_id}');
+UIkit.modal(el).show();
+</script>
+EOD;
+		}
+		else{
+			$js = '';
+		}
+		
 		
 		ob_start();
+		echo $wc_notices;
 		woocommerce_login_form( array('redirect'=> get_permalink()) );
+		echo $js;
 		$login_form = ob_get_contents();
 		ob_end_clean();
 		
