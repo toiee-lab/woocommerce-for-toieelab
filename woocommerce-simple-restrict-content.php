@@ -67,15 +67,17 @@ class Woocommerce_SimpleRestrictContent
 	{
 		$atts = shortcode_atts( array(
 			'id' => '',
+			'sub_id' => '',
 			'message' => '',
 		), $atts );
 		extract( $atts );
 		
 		// 複数のidが指定されていることを想定
 		$ids = explode(',', $id);
+		$sub_ids = explode(',', $sub_id);
 
 		
-		//! [todo] message の取得と調整
+		// message の取得と調整
 		$not_access_message = $this->options['message'];
 
 		// データの作成
@@ -134,19 +136,27 @@ EOD;
 			return '<div style="border:#f99 dashed 1px"><p style="background-color:#fcc;">このコンテンツは制限付きです</p>'.do_shortcode($content).'</div>';
 		}
 		
-		// 購入しているかチェック
+		// プロダクトを購入しているかチェック
 		$access = false;
 		foreach($ids as $i)
 		{
 			$access = wc_customer_bought_product( $current_user->user_email, $current_user->ID, $i );
-			if($access) break;
+			if($access){
+				return do_shortcode($content);
+			}
 		}
 
-		if( $access != true ){
-			return $not_access_message;
+		//! todo Subscription でチェックをする 
+		$access = false;
+		foreach( $sub_ids as $i )
+		{
+			$access = wcs_user_has_subscription( $current_user->ID, $i, 'active');
+			if( $access ){
+				return do_shortcode($content);
+			}
 		}
 		
-		return do_shortcode($content);	
+		return $not_access_message;
 	}
 	
 	
