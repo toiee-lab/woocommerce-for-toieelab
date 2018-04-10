@@ -68,6 +68,7 @@ class Woocommerce_SimpleRestrictContent
 		$atts = shortcode_atts( array(
 			'id' => '',
 			'sub_id' => '',
+			'mem_id' => '',
 			'message' => '',
 		), $atts );
 		extract( $atts );
@@ -75,6 +76,7 @@ class Woocommerce_SimpleRestrictContent
 		// 複数のidが指定されていることを想定
 		$ids = explode(',', $id);
 		$sub_ids = explode(',', $sub_id);
+		$mem_ids = explode(',', $mem_id);
 
 		
 		// message の取得と調整
@@ -146,14 +148,31 @@ EOD;
 			}
 		}
 
-		//! todo Subscription でチェックをする 
-		$access = false;
-		foreach( $sub_ids as $i )
+		// Subscription でチェックをする 
+		if ( function_exists('wcs_user_has_subscription') )
 		{
-			$access = wcs_user_has_subscription( $current_user->ID, $i, 'active');
-			if( $access ){
-				return do_shortcode($content);
+			$access = false;
+			foreach( $sub_ids as $i )
+			{
+				$access = wcs_user_has_subscription( $current_user->ID, $i, 'active');
+				if( $access ){
+					return do_shortcode($content);
+				}
 			}
+		}
+		
+		// Membership でチェックする
+		if ( function_exists( 'wc_memberships' ) ) {
+
+			$access = false;
+			foreach( $mem_ids as $i )
+			{
+				$access = wc_memberships_is_user_active_member(  $current_user->ID, $i );
+				if( $access ){
+					return do_shortcode($content);
+				}
+			}
+			
 		}
 		
 		return $not_access_message;
