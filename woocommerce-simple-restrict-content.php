@@ -5,7 +5,7 @@
  * Plugin URI: http://toiee.jp
  * Description: WooCommerceの商品と連動して、コンテンツの閲覧制限を設定できます
  * Author: toiee Lab
- * Version: 0.2
+ * Version: 0.2.1
  * Author URI: http://toiee.jp
  */
  
@@ -151,10 +151,9 @@ EOD;
 		// Subscription でチェックをする 
 		if ( function_exists('wcs_user_has_subscription') )
 		{
-			$access = false;
 			foreach( $sub_ids as $i )
 			{
-				$access = wcs_user_has_subscription( $current_user->ID, $i, 'active');
+				$access = ($i != '') ? wcs_user_has_subscription( $current_user->ID, $i, 'active') : false;
 				if( $access ){
 					return do_shortcode($content);
 				}
@@ -167,7 +166,7 @@ EOD;
 			$access = false;
 			foreach( $mem_ids as $i )
 			{
-				$access = wc_memberships_is_user_active_member(  $current_user->ID, $i );
+				$access = ($i != '') ? wc_memberships_is_user_active_member(  $current_user->ID, $i ) : false;
 				if( $access ){
 					return do_shortcode($content);
 				}
