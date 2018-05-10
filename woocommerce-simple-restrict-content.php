@@ -192,6 +192,10 @@ EOD;
 		), $atts );
 		extract( $atts );
 		
+		// ----------------------------------------
+		// アクセス制限パラメータの取得 
+		// ----------------------------------------
+		
 		// 複数のidが指定されていることを想定
 		$ids = explode(',', $id);
 		$sub_ids = explode(',', $sub_id);
@@ -210,6 +214,11 @@ EOD;
 			}
 		}
 		
+		
+		// ----------------------------------------
+		// アクセス制限時のメッセージボックスの作成
+		// ----------------------------------------		
+		
 		// message の取得と調整
 		$not_access_message = $this->options['message'];
 
@@ -219,7 +228,7 @@ EOD;
 		$login_url = get_permalink( get_option('woocommerce_myaccount_page_id') );
 		$modal_id = 'modal-'.$ids[0];
 
-		// error message などを取得
+		// error message がある場合、モーダルウィンドウを表示する（ための準備）
 		ob_start();
 		wc_print_notices();
 		$wc_notices = ob_get_contents();
@@ -237,25 +246,30 @@ EOD;
 			$js = '';
 		}
 		
-		
+		// ログインフォームの取得
 		ob_start();
 		echo $wc_notices;
 		woocommerce_login_form( array('redirect'=> get_permalink()) );
 		echo $js;
 		$login_form = ob_get_contents();
+		
 		ob_end_clean();
 		
-		// ログイン・ログアウトをチェック
-		$current_user = wp_get_current_user();
-		$display_none = ( $current_user->ID != 0) ? 'style="display:none;"' : '';
 		
-		// 表示の作成
+		// --------------------------------------------------------
+		// Start Restrict Check
+		// --------------------------------------------------------
+		
+		// アクセス制限時のメッセージを作成
+		$current_user = wp_get_current_user();
+		$display_none = ( $current_user->ID != 0 ) ? 'style="display:none;"' : '';
+		
 		$not_access_message = str_replace(
 			array('{{product_url}}', '{{product_name}}', '{{message}}', '{{login_url}}', '{{modal_id}}', '{{login_form}}', '{{display_none}}'),
 			array($product_url, $prodcut_name, $message, $login_url, $modal_id, $login_form, $display_none),
 			$not_access_message
 		);
-		$not_access_message = do_shortcode($not_access_message);
+		$not_access_message = do_shortcode($not_access_message);  //ショートコードを適用する
 		
 		
 		// login していなければ、error
