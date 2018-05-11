@@ -5,7 +5,7 @@
  * Plugin URI: http://toiee.jp
  * Description: WooCommerceの商品と連動して、コンテンツの閲覧制限を設定できます
  * Author: toiee Lab
- * Version: 0.2
+ * Version: 0.2.2
  * Author URI: http://toiee.jp
  */
  
@@ -40,6 +40,12 @@ class Woocommerce_SimpleRestrictContent
 
 	function __construct()
 	{
+		//カスタム投稿タイプの設定
+		add_action('init',  array( $this, 'create_post_type') );
+		add_action( 'add_meta_boxes', array($this, 'add_meta_boxes_wcr') );
+		add_action( 'save_post', array($this, 'save_post_wcr') );
+
+		
 		// 投稿にカスタムメタボックスを設置
 		add_action( 'add_meta_boxes', array($this, 'register_meta_boxes') );
 		add_action( 'save_post', array($this, 'save_meta_boxes') );
@@ -57,6 +63,118 @@ class Woocommerce_SimpleRestrictContent
 		$this->options = get_option( 'wc_src_options' );
 	}
 	
+	// -----------------------------------------------------------------------------
+	//
+	// ! Create post type for WC Restriction
+	//
+	// -----------------------------------------------------------------------------
+	function create_post_type()
+	{
+		register_post_type(
+			'wcrestrict',
+			array(
+				'label' 				=> 'WC Restrict',
+				'public'				=> false,
+				'exclude_from_search'	=> false,
+				'show_ui'				=> true,
+				'show_in_menu'			=> true,
+				'menu_position'			=> 5,
+				'hierarchical'			=> false,
+				'has_archive'			=> false,
+				'supports'				=> array(
+					'title',
+					'editor',
+				)
+			)
+		);
+	}
+	
+	// 登録情報を表示するための meta box の表示
+	function add_meta_boxes_wcr(){
+		add_meta_box(
+			'wc_restrict',
+			'WC Restriction Setting', 
+			array($this, 'display_wcr_meta_box'),
+			'wcrestrict',
+			'advanced' 
+		);
+	}
+	function display_wcr_meta_box( $post ){
+		$id = get_the_ID();
+		
+		$wc_param = array('wcr_product_ids'=>'', 'wcr_sub_ids'=>'', 'wcr_mem_ids'=>'');
+
+		$wc_param_data = get_post_meta($id, 'wcr_param', true);
+		
+		if( $wc_param_data != '' )
+		{
+			$wc_param_arr = unserialize( $wc_param_data );
+			
+			foreach($wc_param_arr as $key => $v)
+			{
+				$wc_param[$key] = implode(',', $v);
+			}
+		}
+		
+		wp_nonce_field( 'wcr_meta_box', 'wcr_meta_box_nonce' );
+		
+		echo <<<EOD
+<p><b>閲覧制限</b></p>
+<p>許可するWooCommercプロダクト、メンバーシップ、サブスクリプションIDを設定を、コンマ区切りで複数記入できます。</p>
+<table>
+	<tr>
+		<th><label>Product IDs</label></th>
+		<td><input type="text" name="wcr_product_ids" value="{$wc_param['wcr_product_ids']}" /></td>
+	</tr>
+	<tr>
+		<th><label>Subscription IDs</label></th>
+		<td><input type="text" name="wcr_sub_ids" value="{$wc_param['wcr_sub_ids']}" /></td>
+	</tr>
+	<tr>
+		<th><label>Membership IDs</label></th>
+		<td><input type="text" name="wcr_mem_ids" value="{$wc_param['wcr_mem_ids']}" /></td>
+	</tr>
+</table>
+
+<p>閲覧制限のためのショートコード</p>
+
+<pre id="s_code" style="height:6em;overflow:scroll;background-color:#eee;border:1px solid #999;padding:1em;">
+[wc-restrict id="" wcr_id="{$id}"]
+
+here is contents
+
+[/wc-restrict]
+</pre>
+
+EOD;
+	}
+	
+	
+	function save_post_wcr( $post_id ){
+		
+    	// Check if our nonce is set.
+        if ( ! isset( $_POST['wcr_meta_box_nonce'] ) ) {
+            return $post_id;
+        }
+        $nonce = $_POST['wcr_meta_box_nonce'];
+        // Verify that the nonce is valid.
+        if ( ! wp_verify_nonce( $nonce, 'wcr_meta_box' ) ) {
+            return $post_id;
+        }
+        
+        		$wc_param = array();
+		foreach( array('product', 'sub', 'mem') as $name )
+		{
+			$vname = 'wcr_'.$name.'_ids';
+			if( isset( $_POST[$vname]) )
+			{
+				$wc_param[$vname] = explode(',', $_POST[$vname]);
+			}
+		}
+		update_post_meta( $post_id, 'wcr_param', serialize($wc_param) );
+	}
+	
+	
 	
 	// -----------------------------------------------------------------------------
 	//
@@ -69,15 +187,39 @@ class Woocommerce_SimpleRestrictContent
 			'id' => '',
 			'sub_id' => '',
 			'mem_id' => '',
+			'wcr_id' => '',
 			'message' => '',
+			'show_to_not_grantee_mode' => false,
+			'show_to_grantee_mode' => false,
 		), $atts );
 		extract( $atts );
+		
+		// ----------------------------------------
+		// アクセス制限パラメータの取得 
+		// ----------------------------------------
 		
 		// 複数のidが指定されていることを想定
 		$ids = explode(',', $id);
 		$sub_ids = explode(',', $sub_id);
 		$mem_ids = explode(',', $mem_id);
 
+		// WC Restrict Post type からデータを取り出して、$ids, $sub_ids, $mem_ids に加える
+		if( $wcr_id != '' && is_numeric($wcr_id) ){
+			$wcr_dat  = get_post_meta($wcr_id, 'wcr_param', true);
+			$wcr_arr = unserialize( $wcr_dat );
+			
+			$tmp_arr = array( 'product'=>'ids', 'sub'=>'sub_ids', 'mem'=>'mem_ids' );
+			foreach($tmp_arr as $k => $v){
+				foreach( $wcr_arr['wcr_'.$k.'_ids'] as $i ){
+					$$v[] = $i;
+				}
+			}
+		}
+		
+		
+		// ----------------------------------------
+		// アクセス制限時のメッセージボックスの作成
+		// ----------------------------------------		
 		
 		// message の取得と調整
 		$not_access_message = $this->options['message'];
@@ -88,7 +230,7 @@ class Woocommerce_SimpleRestrictContent
 		$login_url = get_permalink( get_option('woocommerce_myaccount_page_id') );
 		$modal_id = 'modal-'.$ids[0];
 
-		// error message などを取得
+		// error message がある場合、モーダルウィンドウを表示する（ための準備）
 		ob_start();
 		wc_print_notices();
 		$wc_notices = ob_get_contents();
@@ -106,39 +248,54 @@ EOD;
 			$js = '';
 		}
 		
-		
+		// ログインフォームの取得
 		ob_start();
 		echo $wc_notices;
 		woocommerce_login_form( array('redirect'=> get_permalink()) );
 		echo $js;
 		$login_form = ob_get_contents();
-		ob_end_clean();
+		ob_end_clean();		
 		
-		// ログイン・ログアウトをチェック
+		// アクセス制限時のメッセージを作成
 		$current_user = wp_get_current_user();
-		$display_none = ( $current_user->ID != 0) ? 'style="display:none;"' : '';
+		$display_none = ( $current_user->ID != 0 ) ? 'style="display:none;"' : '';
 		
-		// 表示の作成
 		$not_access_message = str_replace(
 			array('{{product_url}}', '{{product_name}}', '{{message}}', '{{login_url}}', '{{modal_id}}', '{{login_form}}', '{{display_none}}'),
 			array($product_url, $prodcut_name, $message, $login_url, $modal_id, $login_form, $display_none),
 			$not_access_message
 		);
-		$not_access_message = do_shortcode($not_access_message);
+		$not_access_message = do_shortcode($not_access_message);  //ショートコードを適用する
 		
+		// show_to_not_grantee_mode = true の場合、not_access_message は、コンテンツ部分を使い、$content は null とする
+		if( $show_to_not_grantee_mode )
+		{
+			$not_access_message = do_shortcode($content);
+			$content = '';
+		}
 		
-		// login していなければ、error
+		// show_to_grantee_mode = true の場合、not_access_message は null、$content を表示する
+		if( $show_to_grantee_mode )
+		{
+			$not_access_message = '';
+		}
+		
+		// --------------------------------------------------------
+		// Start Restrict Check
+		// --------------------------------------------------------
+		
+		// ユーザーとして、ログインしているかチェック（ログインしていなければ、$not_access_message を表示）
 		if( $current_user->ID == 0){
 			return $not_access_message;
 		}
 		
-		// admin なら
+		// admin の場合は制限せず、表示する。ただし、制限コンテンツの範囲を示す
 		if( is_super_admin() )
 		{
 			return '<div style="border:#f99 dashed 1px"><p style="background-color:#fcc;">このコンテンツは制限付きです</p>'.do_shortcode($content).'</div>';
 		}
 		
-		// プロダクトを購入しているかチェック
+		// 通常のプロダクトを購入しているかチェック
 		$access = false;
 		foreach($ids as $i)
 		{
@@ -151,10 +308,9 @@ EOD;
 		// Subscription でチェックをする 
 		if ( function_exists('wcs_user_has_subscription') )
 		{
-			$access = false;
 			foreach( $sub_ids as $i )
 			{
-				$access = wcs_user_has_subscription( $current_user->ID, $i, 'active');
+				$access = ($i != '') ? wcs_user_has_subscription( $current_user->ID, $i, 'active') : false;
 				if( $access ){
 					return do_shortcode($content);
 				}
@@ -167,12 +323,11 @@ EOD;
 			$access = false;
 			foreach( $mem_ids as $i )
 			{
-				$access = wc_memberships_is_user_active_member(  $current_user->ID, $i );
+				$access = ($i != '') ? wc_memberships_is_user_active_member(  $current_user->ID, $i ) : false;
 				if( $access ){
 					return do_shortcode($content);
 				}
 			}
-			
 		}
 		
 		return $not_access_message;
@@ -318,6 +473,24 @@ function change_code(){
 
 }
 </script>
+EOD;
+		$wcr_posts = get_posts( array('post_type'=>'wcrestrict') );
+		$code = '';
+		foreach( $wcr_posts as $p ){
+			$code .= <<<EOD
+
+[wc-restrict wcr_id="{$p->ID}" ]
+{$p->post_title}
+[/wc-restrict]
+EOD;
+			$code .= "\n";
+		}
+		
+		echo <<<EOD
+<p>WC Restrict で設定したデータに基づいて制限をかける場合は、以下を使ってください。</p>		
+<pre style="height:10em;overflow:scroll;background-color:#eee;border:1px solid #999;padding:1em;">
+{$code}
+</pre>		
 EOD;
 
 	}
