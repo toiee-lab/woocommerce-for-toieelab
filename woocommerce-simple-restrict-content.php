@@ -189,6 +189,8 @@ EOD;
 			'mem_id' => '',
 			'wcr_id' => '',
 			'message' => '',
+			'show_to_not_grantee_mode' => false,
+			'show_to_grantee_mode' => false,
 		), $atts );
 		extract( $atts );
 		
@@ -252,13 +254,7 @@ EOD;
 		woocommerce_login_form( array('redirect'=> get_permalink()) );
 		echo $js;
 		$login_form = ob_get_contents();
-		
-		ob_end_clean();
-		
-		
-		// --------------------------------------------------------
-		// Start Restrict Check
-		// --------------------------------------------------------
+		ob_end_clean();		
 		
 		// アクセス制限時のメッセージを作成
 		$current_user = wp_get_current_user();
@@ -271,19 +267,35 @@ EOD;
 		);
 		$not_access_message = do_shortcode($not_access_message);  //ショートコードを適用する
 		
+		// show_to_not_grantee_mode = true の場合、not_access_message は、コンテンツ部分を使い、$content は null とする
+		if( $show_to_not_grantee_mode )
+		{
+			$not_access_message = do_shortcode($content);
+			$content = '';
+		}
 		
-		// login していなければ、error
+		// show_to_grantee_mode = true の場合、not_access_message は null、$content を表示する
+		if( $show_to_grantee_mode )
+		{
+			$not_access_message = '';
+		}
+		
+		// --------------------------------------------------------
+		// Start Restrict Check
+		// --------------------------------------------------------
+		
+		// ユーザーとして、ログインしているかチェック（ログインしていなければ、$not_access_message を表示）
 		if( $current_user->ID == 0){
 			return $not_access_message;
 		}
 		
-		// admin なら
+		// admin の場合は制限せず、表示する。ただし、制限コンテンツの範囲を示す
 		if( is_super_admin() )
 		{
 			return '<div style="border:#f99 dashed 1px"><p style="background-color:#fcc;">このコンテンツは制限付きです</p>'.do_shortcode($content).'</div>';
 		}
 		
-		// プロダクトを購入しているかチェック
+		// 通常のプロダクトを購入しているかチェック
 		$access = false;
 		foreach($ids as $i)
 		{
@@ -317,8 +329,6 @@ EOD;
 				}
 			}
 		}
-		
-
 		
 		return $not_access_message;
 	}
