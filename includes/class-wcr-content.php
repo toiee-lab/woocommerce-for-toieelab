@@ -168,23 +168,24 @@ EOD;
 		// ----------------------------------------
 		
 		// 複数のidが指定されていることを想定
-		$ids = explode(',', $id);
+		$product_ids = explode(',', $id);
 		$sub_ids = explode(',', $sub_id);
 		$mem_ids = explode(',', $mem_id);
 
-		// WC Restrict Post type からデータを取り出して、$ids, $sub_ids, $mem_ids に加える
+		// WC Restrict Post type からデータを取り出して、$product_ids, $sub_ids, $mem_ids に加える
 		if( $wcr_id != '' && is_numeric($wcr_id) ){
 			$wcr_dat  = get_post_meta($wcr_id, 'wcr_param', true);
 			$wcr_arr = unserialize( $wcr_dat );
 			
-			$tmp_arr = array( 'product'=>'ids', 'sub'=>'sub_ids', 'mem'=>'mem_ids' );
-			foreach($tmp_arr as $k => $v){
-				foreach( $wcr_arr['wcr_'.$k.'_ids'] as $i ){
-					$$v[] = $i;
-				}
+			$tmp_arr = array( 'product_ids', 'sub_ids', 'mem_ids' );
+			foreach($tmp_arr as $v){
+				$$v = array_merge($$v, $wcr_arr['wcr_'.$v] );
 			}
 		}
 		
+		echo "<br><pre>";
+		var_dump($product_ids, $sub_ids, $mem_id);
+		echo "</pre><br>";
 		
 		// ----------------------------------------
 		// アクセス制限時のメッセージボックスの作成
@@ -194,10 +195,10 @@ EOD;
 		$not_access_message = $this->options['message'];
 
 		// データの作成
-		$product_url = get_permalink( $ids[0] );
-		$prodcut_name = get_the_title( $ids[0] );
+		$product_url = get_permalink( $product_ids[0] );
+		$prodcut_name = get_the_title( $product_ids[0] );
 		$login_url = get_permalink( get_option('woocommerce_myaccount_page_id') );
-		$modal_id = 'modal-'.$ids[0];
+		$modal_id = 'modal-'.$product_ids[0];
 
 		// error message がある場合、モーダルウィンドウを表示する（ための準備）
 		ob_start();
@@ -266,7 +267,7 @@ EOD;
 		
 		// 通常のプロダクトを購入しているかチェック
 		$access = false;
-		foreach($ids as $i)
+		foreach($product_ids as $i)
 		{
 			$access = wc_customer_bought_product( $current_user->user_email, $current_user->ID, $i );
 			if($access){
@@ -300,6 +301,10 @@ EOD;
 		}
 		
 		return $not_access_message;
+	}
+	
+	function has_access(){
+		
 	}
 	
 	
