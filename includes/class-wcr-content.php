@@ -261,6 +261,11 @@ EOD;
 			return '<div style="border:#f99 dashed 1px"><p style="background-color:#fcc;">このコンテンツは制限付きです</p>'.do_shortcode($content).'</div>';
 		}
 		
+		if( $this->has_access( $product_ids, $sub_ids, $mem_ids ) ){
+			return do_shortcode( $content );
+		}
+		
+/*
 		// 通常のプロダクトを購入しているかチェック
 		$access = false;
 		foreach($product_ids as $i)
@@ -295,12 +300,71 @@ EOD;
 				}
 			}
 		}
+*/
 		
 		return $not_access_message;
 	}
 	
-	function has_access(){
+	/**
+	* 現在のユーザーで、アクセス権チェック
+	*/
+	function has_access($product_ids, $sub_ids, $mem_ids, $user_id='' ){
 		
+			
+		if($user_id == '') {
+			if( is_user_logged_in() ){
+				$user = wp_get_current_user();
+			}
+			else{
+				return false;
+			}
+		}
+		else{
+			$user = get_userdata( $user_id );
+			if( $user == FALSE ) {
+				return false;
+			}
+		}		
+	
+		$user_id    = $user->ID;
+		$user_email = $user->user_email; 
+		
+		$access = false;
+		foreach($product_ids as $i)
+		{
+			$access = wc_customer_bought_product( $user_id, $user_email, $i );
+			if($access){
+				return true;
+			}
+		}
+
+		// Subscription でチェックをする 
+		if ( function_exists('wcs_user_has_subscription') )
+		{
+			foreach( $sub_ids as $i )
+			{
+				$access = ($i != '') ? wcs_user_has_subscription( $user_email, $i, 'active') : false;
+				if( $access ){
+					return true;
+				}
+			}
+		}
+		
+		// Membership でチェックする
+		if ( function_exists( 'wc_memberships' ) ) {
+
+			$access = false;
+			foreach( $mem_ids as $i )
+			{
+				$access = ($i != '') ? wc_memberships_is_user_active_member(  $user_email, $i ) : false;
+				if( $access ){
+					return true;
+				}
+			}
+		}
+		
+		return false;
+
 	}
 	
 	

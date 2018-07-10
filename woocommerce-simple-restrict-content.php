@@ -5,7 +5,7 @@
  * Plugin URI: http://toiee.jp
  * Description: WooCommerceの商品と連動して、コンテンツの閲覧制限を設定できます。また Seriously Simple Podcastの閲覧制限も可能でdす。
  * Author: toiee Lab
- * Version: 0.3.1
+ * Version: 0.3.2
  * Author URI: http://toiee.jp
  */
  
