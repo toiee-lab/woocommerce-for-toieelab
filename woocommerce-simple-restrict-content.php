@@ -5,7 +5,7 @@
  * Plugin URI: http://toiee.jp
  * Description: WooCommerceの商品と連動して、コンテンツの閲覧制限を設定できます
  * Author: toiee Lab
- * Version: 0.2.2
+ * Version: 0.3
  * Author URI: http://toiee.jp
  */
  
