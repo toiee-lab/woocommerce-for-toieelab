@@ -332,7 +332,7 @@ EOD;
 		$access = false;
 		foreach($product_ids as $i)
 		{
-			$access = wc_customer_bought_product( $user_id, $user_email, $i );
+			$access = wc_customer_bought_product( $user_email, $user_id, $i );
 			if($access){
 				return true;
 			}
@@ -343,7 +343,7 @@ EOD;
 		{
 			foreach( $sub_ids as $i )
 			{
-				$access = ($i != '') ? wcs_user_has_subscription( $user_email, $i, 'active') : false;
+				$access = ($i != '') ? wcs_user_has_subscription( $user_id, $i, 'active') : false;
 				if( $access ){
 					return true;
 				}
@@ -356,7 +356,7 @@ EOD;
 			$access = false;
 			foreach( $mem_ids as $i )
 			{
-				$access = ($i != '') ? wc_memberships_is_user_active_member(  $user_email, $i ) : false;
+				$access = ($i != '') ? wc_memberships_is_user_active_member(  $user_id, $i ) : false;
 				if( $access ){
 					return true;
 				}
