@@ -360,7 +360,7 @@ EOD;
 	
 	public function get_access_and_product_url( $user_email, $user_id, $series_id ) {
 		
-		$url = '';
+		$product_url = '';
 		
 		// 関連商品IDs の取得
 		$wc_prods = array();
@@ -388,53 +388,53 @@ EOD;
 		{
 			$access = wc_customer_bought_product( $user_email, $user_id, $i );
 			if( $product_url == '') {  // 商品ページを探す
-				$url = get_post_permalink($i);
-				$url = is_wp_error( $url ) ? '' : $url;	//エラーならセットしない		
-			}			
+				$product = wc_get_product( $i );
+				$product_url = is_object( $product ) ? get_permalink( $product->get_id() ) : '';
+			}
 			
 			if($access){
 				return array(
 					'access' => true,
-					'url'    => $url
+					'url'    => $product_url
 				);
 			}
 		}
 		
 		// subscription のチェック
-		if ( function_exists('wcs_user_has_subscription') &&  $restrict_pass != true )
+		if ( function_exists('wcs_user_has_subscription') )
 		{
 			foreach( $wc_prods['sub_ids'] as $i )
 			{
 				if( $product_url == '') {  // 商品ページを探す
-					$url = get_post_permalink($i);
-					$url = is_wp_error( $url ) ? '' : $url;	//エラーならセットしない		
+					$product = wc_get_product( $i );
+					$product_url = is_object( $product ) ? get_permalink( $product->get_id() ) : '';
 				}
 				
 				$access = ($i != '') ? wcs_user_has_subscription( $user_id, $i, 'active') : false;
 				if( $access ){
 					return array(
 						'access' => true,
-						'url'    => $url
+						'url'    => $product_url
 					);
 				}
 			}
 		}
 		
 		// Membership でチェックする
-		if ( function_exists( 'wc_memberships' ) &&  $restrict_pass != true  ) {
+		if ( function_exists( 'wc_memberships' )  ) {
 			foreach( $wc_prods['mem_ids'] as $i )
 			{
 				$access = ($i != '') ? wc_memberships_is_user_active_member(  $user_id, $i ) : false;
 				if( $access ){
 					return array(
 						'access' => true,
-						'url'    => $url
+						'url'    => $product_url
 					);
 				}
 			}
 		}
 		
-		return array( 'access' => false, 'url' => $url );
+		return array( 'access' => false, 'url' => $product_url );
 	}
 	
 	
