@@ -20,7 +20,7 @@ class WCR_SSP
 		add_filter( 'ssp_episode_fields' , array($this, 'ssp_episode_fields'), 10, 1);
 		
 		// テンプレートの差し替え
-		add_filter( 'ssp_feed_template_file' , array($this, 'ssp_feed_template_file'), 10, 1);
+		add_filter( 'ssp_feed_template_file' , array($this, 'ssp_feed_template_file'), 1, 1);
 		
 		// ショートコード
 		add_shortcode('wcr_ssp', array($this, 'add_wcr_ssp_shortcode'));
@@ -144,7 +144,7 @@ class WCR_SSP
 	
 	function ssp_feed_template_file( $template_file )
 	{
-		$template_file = plugin_dir_path(__FILE__) . 'templates/feed-podcast.php';
+		$template_file = dirname( dirname( __FILE__ ) ). '/templates/feed-podcast.php';
 		return $template_file;
 	}
 	
@@ -231,68 +231,17 @@ class WCR_SSP
 				$product_url = '';
 				$modal_html = '';
 				
-				// 関連商品IDs の取得
-				$wc_prods = array();
-				foreach( array('product_ids', 'sub_ids', 'mem_ids') as $tmp_field ) {
-					$dat = get_option( 'ss_podcasting_' . $tmp_field . '_' . $series_id, false );
-					$ids = explode(',' , $dat);
-					
-					$wc_prods[ $tmp_field ] = $ids;
-				}
-											
-				// 通常商品のチェック
-				foreach($wc_prods['product_ids'] as $i)
-				{
-					$access = wc_customer_bought_product( $user_email, $user_id, $i );
-					if( $product_url == '') {  // 商品ページを探す
-						$url = get_post_permalink($i);
-						$url = is_wp_error( $url ) ? '' : $url;	//エラーならセットしない		
-					}
-					
-					if($access){
-						$restrict_pass = true;
-						break;
-					}
-				}
-				
-				// subscription のチェック
-				if ( function_exists('wcs_user_has_subscription') &&  $restrict_pass != true )
-				{
-					foreach( $wc_prods['sub_ids'] as $i )
-					{
-						if( $product_url == '') {  // 商品ページを探す
-							$url = get_post_permalink($i);
-							$url = is_wp_error( $url ) ? '' : $url;	//エラーならセットしない		
-						}
-						
-						$access = ($i != '') ? wcs_user_has_subscription( $user_id, $i, 'active') : false;
-						if( $access ){
-							$restrict_pass = true;
-							break;
-						}
-					}
-				}
-				
-				// Membership でチェックする
-				if ( function_exists( 'wc_memberships' ) &&  $restrict_pass != true  ) {
-					foreach( $wc_prods['mem_ids'] as $i )
-					{
-						$access = ($i != '') ? wc_memberships_is_user_active_member(  $user_id, $i ) : false;
-						if( $access ){
-							$restrict_pass = true;							
-							break;
-						}
-					}
-				}
+				$ret = $this->get_access_and_product_url( $user_email, $user_id, $series_id );
+
 				
 				// メッセージの生成
-				if( $restrict_pass ) {
+				if( $ret['access'] ) {
 					$message = $label_ok;
 				}
 				else {
 					$message = $label_trial;
-					if( $url != '' ){
-						$message .= ' <a href="'.$url.'" class="uk-button uk-button-text">('.$label_ok_offer.')</a>';
+					if( $ret['url'] != '' ){
+						$message .= ' <a href="'.$ret['url'].'" class="uk-button uk-button-text">('.$label_ok_offer.')</a>';
 					}
 				}
 								
@@ -406,6 +355,86 @@ EOD;
 					array($url_scheme_feed, $url_scheme_pcast, $wcr_feed_url, $target_toggle,    $message), 
 					$template
 				) . $modal_html;	
+	}
+	
+	
+	public function get_access_and_product_url( $user_email, $user_id, $series_id ) {
+		
+		$url = '';
+		
+		// 関連商品IDs の取得
+		$wc_prods = array();
+		foreach( array('product_ids', 'sub_ids', 'mem_ids') as $tmp_field ) {
+			$dat = get_option( 'ss_podcasting_' . $tmp_field . '_' . $series_id, false );
+			$ids = explode(',' , $dat);
+			
+			$wc_prods[ $tmp_field ] = $ids;
+		}
+				
+		// WC Restrict の情報を取得し設定
+		$wcr_id = get_option( 'ss_podcasting_wcr_ids_' . $series_id );
+		if( $wcr_id != '' && is_numeric($wcr_id) ){
+			$wcr_dat  = get_post_meta($wcr_id, 'wcr_param', true);
+			$wcr_arr = unserialize( $wcr_dat );
+			
+			$tmp_arr = array( 'product', 'sub','mem' );
+			foreach($tmp_arr as $name) {				
+				$wc_prods[ $name.'_ids' ] = array_merge( $wc_prods[ $name.'_ids' ], $wcr_arr['wcr_'.$name.'_ids'] );
+			}
+		}
+									
+		// 通常商品のチェック
+		foreach($wc_prods['product_ids'] as $i)
+		{
+			$access = wc_customer_bought_product( $user_email, $user_id, $i );
+			if( $product_url == '') {  // 商品ページを探す
+				$url = get_post_permalink($i);
+				$url = is_wp_error( $url ) ? '' : $url;	//エラーならセットしない		
+			}			
+			
+			if($access){
+				return array(
+					'access' => true,
+					'url'    => $url
+				);
+			}
+		}
+		
+		// subscription のチェック
+		if ( function_exists('wcs_user_has_subscription') &&  $restrict_pass != true )
+		{
+			foreach( $wc_prods['sub_ids'] as $i )
+			{
+				if( $product_url == '') {  // 商品ページを探す
+					$url = get_post_permalink($i);
+					$url = is_wp_error( $url ) ? '' : $url;	//エラーならセットしない		
+				}
+				
+				$access = ($i != '') ? wcs_user_has_subscription( $user_id, $i, 'active') : false;
+				if( $access ){
+					return array(
+						'access' => true,
+						'url'    => $url
+					);
+				}
+			}
+		}
+		
+		// Membership でチェックする
+		if ( function_exists( 'wc_memberships' ) &&  $restrict_pass != true  ) {
+			foreach( $wc_prods['mem_ids'] as $i )
+			{
+				$access = ($i != '') ? wc_memberships_is_user_active_member(  $user_id, $i ) : false;
+				if( $access ){
+					return array(
+						'access' => true,
+						'url'    => $url
+					);
+				}
+			}
+		}
+		
+		return array( 'access' => false, 'url' => $url );
 	}
 	
 	
