@@ -6,8 +6,9 @@
 
 class WCR_SSP
 {
-	private $options;
+	private   $options;
 	protected $plugin_slug;
+	public    $plugin_url;
 	
 	function __construct()
 	{
@@ -45,6 +46,7 @@ class WCR_SSP
 		
 		//表示数を変更
 		add_action( 'pre_get_posts', array( $this, 'change_episode_per_page' ) );
+		add_filter( 'get_the_archive_title', array( $this, 'remove_tax_name' ) );
 		
 		//RSS の表示数を増やす
 		add_filter('ssp_feed_number_of_posts', function($num){ return 300; } );
@@ -168,9 +170,65 @@ class WCR_SSP
 			'label_trial'       => '一部コンテンツをご覧いただけます',
 			'label_ok_offer'    => '全編のお申し込みはこちら',
 			'label_offer_trial' => '無料登録で、一部コンテンツをご覧いただけます',
+			'label_web'         => 'Web視聴',
+			'label_toc'         => '(目次一覧)',
 			'template'          => '',
+			'template_name'     => 'default',
+			'redirect_url'      => '',
 		), $atts );
 		extract( $atts );
+				
+		$na_audio_img = $this->plugin_url. '/images/na-audio.png';
+		$na_video_img = $this->plugin_url. '/images/na-video.png';
+		
+		// template の決定
+		if( $template == '' ) {
+			switch( $template_name ) {
+				case 'on_episode_audio':
+					$template = '
+<div class="uk-margin-medium-top uk-margin-small-bottom">
+<img src="'.$na_audio_img.'" /><br>
+<span class="uk-text-meta uk-text-small">%MESSAGE%</span>&nbsp;
+</div>					
+';
+					break;
+
+				case 'on_episode_video':
+					$template = '
+<div class="uk-margin-medium-top uk-margin-small-bottom">
+<img src="'.$na_video_img.'" /><br>
+<span class="uk-text-meta uk-text-small">%MESSAGE%</span>&nbsp;
+</div>					
+';
+					break;
+								
+				case 'on_archive':
+					$template = '
+<p><a href="%FEED%" class="uk-button uk-button-secondary" %TARGET_TOGLE%>' .$label_podcast. '</a>
+<a href="%PCAST%" class="uk-button uk-button-secondary" %TARGET_TOGLE%>'  .$label_pcast.   '</a>
+<a href="%URL%" %TARGET_TOGLE% class="uk-button uk-button-text">'         .$label_url.     '</a>
+<br>
+<span class="uk-text-meta uk-text-small">%MESSAGE%</span>&nbsp;
+</p>';
+					break;
+					
+				default:
+					$template = '
+<p><a href="%FEED%" class="uk-button uk-button-secondary" %TARGET_TOGLE%>' .$label_podcast. '</a>
+<a href="%PCAST%" class="uk-button uk-button-secondary" %TARGET_TOGLE%>'  .$label_pcast.   '</a>
+<a href="%URL%" %TARGET_TOGLE% class="uk-button uk-button-text">'         .$label_url.     '</a>
+<a href="%TERM_LINK%" target="_blank" class="uk-button uk-button-text">'         .$label_web.     '</a>
+<br>
+<span class="uk-text-meta uk-text-small">%MESSAGE%</span>&nbsp;
+<a href="%TERM_LINK%" target="_blank"><span class="uk-text-small">%ARCHIVE%</span></a>
+</p>';
+			}
+		}
+		
+		
+		
+		
+		// check
 		
 		if($id == ''){
 			return '<p>invalid series id</p>';
@@ -180,8 +238,13 @@ class WCR_SSP
 		global $ss_podcasting;
 
 		$series_id     = $id;				
-		$series      = get_term( $series_id, 'series' );
-		$series_slug = $series->slug;
+		$series        = get_term( $series_id, 'series' );
+		$series_url    = get_term_link( $series );
+		$series_slug   = $series->slug;
+		
+		if( is_wp_error( $series ) ){
+			return '<p>invalid series id</p>';
+		}
 				
 		if ( get_option( 'permalink_structure' ) ) {
 			$feed_slug = apply_filters( 'ssp_feed_slug', $ss_podcasting->token );
@@ -259,9 +322,12 @@ class WCR_SSP
 					: '';
 
 				// ログインフォームの取得
+				if( $redirect_url == '' ){
+					$redirect_url = get_permalink();
+				}
 				ob_start();
 				echo $wc_notices;
-				woocommerce_login_form( array('redirect'=> get_permalink()) );
+				woocommerce_login_form( array('redirect'=> $redirect_url) );
 				echo $js;
 				$login_form = ob_get_contents();
 				ob_end_clean();
@@ -342,23 +408,17 @@ EOD;
 
 		$url_scheme_feed  = str_replace('https://', 'podcast://', $wcr_feed_url);
 		$url_scheme_pcast = str_replace('https://', 'pcast://', $wcr_feed_url);
-		
-		$template = '
-<p><a href="%FEED%" class="uk-button uk-button-secondary" %TARGET_TOGLE%>' .$label_podcast. '</a>
- <a href="%PCAST%" class="uk-button uk-button-secondary" %TARGET_TOGLE%>'  .$label_pcast.   '</a>
- <a href="%URL%" %TARGET_TOGLE% class="uk-button uk-button-text">'         .$label_url.     '</a><br>
- <span class="uk-text-meta uk-text-small">%MESSAGE%</span>
- </p>';
  
-		return str_replace(
-					array('%FEED%',         '%PCAST%',         '%URL%',       '%TARGET_TOGLE%' , '%MESSAGE%'),
-					array($url_scheme_feed, $url_scheme_pcast, $wcr_feed_url, $target_toggle,    $message), 
-					$template
-				) . $modal_html;	
+		return 
+			str_replace(
+				array('%FEED%',         '%PCAST%',         '%URL%',       '%TARGET_TOGLE%' , '%MESSAGE%', '%ARCHIVE%', '%TERM_LINK%'),
+				array($url_scheme_feed, $url_scheme_pcast, $wcr_feed_url, $target_toggle,    $message   , $label_toc , $series_url), 
+				$template
+			) . $modal_html;	
 	}
 	
 	
-	public function get_access_and_product_url( $user_email, $user_id, $series_id ) {
+	public function get_access_and_product_url( $user_email='', $user_id='', $series_id ) {
 		
 		$product_url = '';
 		
@@ -382,11 +442,23 @@ EOD;
 				$wc_prods[ $name.'_ids' ] = array_merge( $wc_prods[ $name.'_ids' ], $wcr_arr['wcr_'.$name.'_ids'] );
 			}
 		}
+
+		if( $user_email == '' ) { // ユーザーが指定されていない場合
+			if( is_user_logged_in() ) {
+				$user       = wp_get_current_user();					
+				$user_id    = $user->ID;
+				$user_email = $user->user_email;
+			}
+		}
 									
 		// 通常商品のチェック
+		$access = false;
 		foreach($wc_prods['product_ids'] as $i)
 		{
-			$access = wc_customer_bought_product( $user_email, $user_id, $i );
+			if( $user_email != '' ) {
+				$access = wc_customer_bought_product( $user_email, $user_id, $i );
+			}
+			
 			if( $product_url == '') {  // 商品ページを探す
 				$product = wc_get_product( $i );
 				$product_url = is_object( $product ) ? get_permalink( $product->get_id() ) : '';
@@ -398,6 +470,11 @@ EOD;
 					'url'    => $product_url
 				);
 			}
+		}
+		
+		// user が指定されていない場合
+		if( $user_email == '' || $user_id == '' ){
+			return array( 'access' => false, 'url' => $product_url );
 		}
 		
 		// subscription のチェック
@@ -594,13 +671,13 @@ EOD;
 	    }
 	    
 	    if ( $query->is_tax( 'series' ) ) {
-	        $query->set( 'posts_per_page', '300' ); //表示件数を指定
+	        $query->set( 'posts_per_page', '5' ); //表示件数を指定
 	        
 	        $term       = get_term_by( 'slug', $query->get('series'), 'series');
 	        $series_id  = $term->term_id;
-	        $pcast_type = get_option( 'ss_podcasting_podcast_type_'.$series_id, 'ptype_default' ); 
+	        $consume_order = get_option( 'ss_podcasting_consume_order_'.$series_id, 'episodic' ); 
 	        
-	        if( $pcast_type == 'ptype_seminar' ){ // 順序の変更
+	        if( $consume_order == 'serial' ){ // 順序の変更
 		        $query->set( 'orderby', 'post_date' );
 		        $query->set( 'order', 'ASC' );
 	        }
@@ -609,6 +686,17 @@ EOD;
 		        $query->set( 'order', 'DESC' );
 	        }
 	    }
+	}
+	
+	function remove_tax_name( $title ) {
+	
+	    if ( is_tax() ) {
+            $title = single_cat_title( '', false );
+
+        }
+	
+	    return $title;
+	
 	}
 	
 	

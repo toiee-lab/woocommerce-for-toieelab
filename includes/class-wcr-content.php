@@ -6,6 +6,7 @@
 class Woocommerce_SimpleRestrictContent
 {
 	private $options;
+	public $plugin_url;
 
 	function __construct()
 	{

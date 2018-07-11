@@ -44,11 +44,13 @@ require_once( 'includes/wcr-functions.php' );
 
 global $wcr_content;
 $wcr_content = new Woocommerce_SimpleRestrictContent();
+$wcr_content->plugin_url = plugins_url( '', __FILE__ );
 
 // Seriously Simple Podcast がインストールされていれば、有効にする
 include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
 if(is_plugin_active( 'seriously-simple-podcasting/seriously-simple-podcasting.php' )){
 	global $wcr_ssp;
 	$wcr_ssp = new WCR_SSP();
+	$wcr_ssp->plugin_url = plugins_url( '', __FILE__ );
 }
 
