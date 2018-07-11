@@ -671,7 +671,7 @@ EOD;
 	    }
 	    
 	    if ( $query->is_tax( 'series' ) ) {
-	        $query->set( 'posts_per_page', '5' ); //表示件数を指定
+	        $query->set( 'posts_per_page', '20' ); //表示件数を指定
 	        
 	        $term       = get_term_by( 'slug', $query->get('series'), 'series');
 	        $series_id  = $term->term_id;
