@@ -280,10 +280,11 @@ $wc_restrict_ssp = false;   // デフォルトチャネルの場合は、false
 $podcast_type = 'ptype_default';
 if ( $podcast_series ) {
 	$wc_restrict_ssp  = get_option( 'ss_podcasting_wc_restrict_ssp_' . $series_id, false );  // デフォルトは false
-	$podcast_type = get_option( 'ss_podcasting_podcast_type_' . $series_id, 'ptype_default' );  // デフォルトは false
 	if( $wc_restrict_ssp == 'restrict_enable' ) {
 		$wc_restrict_ssp = true;
 	}
+
+	$podcast_type = get_option( 'ss_podcasting_podcast_type_' . $series_id, 'ptype_default' );  // デフォルトは false
 }
 
 // 閲覧制限なら、アクセス権を調べる
