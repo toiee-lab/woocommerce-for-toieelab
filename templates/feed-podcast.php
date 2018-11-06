@@ -675,7 +675,7 @@ if ( $wc_restrict_ssp ) {
 					// 非表示にする
 					$enclosure = 'https://d.toiee.org/not-available.m4a';
 					$prefix_episode = '【会員のみ】 ';
-					$prefix_episode_description = '【会員以外の方は、ご利用いただけません（<a href="'.$product_url.'">お申し込みはこちら</a> ）】<br>';	
+					$prefix_episode_description = '【会員以外の方は、ご利用いただけません（<a href="'.$product_url.'">お申し込みはこちら</a> ）】<br>';					$mime_type = 'audio/mpeg';
 				}
 				
 				?>
