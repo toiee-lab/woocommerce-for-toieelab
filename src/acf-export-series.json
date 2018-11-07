@@ -1,0 +1,89 @@
+[
+    {
+        "key": "group_5be205bca4c98",
+        "title": "シリーズ詳細設定",
+        "fields": [
+            {
+                "key": "field_5be2400e03764",
+                "label": "共通テキスト",
+                "name": "series_material",
+                "type": "wysiwyg",
+                "instructions": "全てのエピソードの末尾に追加される共通パーツです。ここに講座資料などを貼り付けておくと便利です",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "tabs": "all",
+                "toolbar": "full",
+                "media_upload": 1,
+                "delay": 0
+            },
+            {
+                "key": "field_5be206fffdd89",
+                "label": "閲覧制限",
+                "name": "series_limit",
+                "type": "true_false",
+                "instructions": "閲覧制限をする、しない",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "message": "",
+                "default_value": 0,
+                "ui": 0,
+                "ui_on_text": "",
+                "ui_off_text": ""
+            },
+            {
+                "key": "field_5be206053a550",
+                "label": "アクセス許可商品",
+                "name": "series_products",
+                "type": "post_object",
+                "instructions": "ここで指定した商品(購読、会員)や、商品まとめ(WC Restrict)を購入しているユーザーに閲覧許可します",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "post_type": [
+                    "wcrestrict",
+                    "product",
+                    "product_variation",
+                    "shop_subscription",
+                    "wc_membership_plan"
+                ],
+                "taxonomy": "",
+                "allow_null": 1,
+                "multiple": 1,
+                "return_format": "id",
+                "ui": 1
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "taxonomy",
+                    "operator": "==",
+                    "value": "series"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "normal",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": 1,
+        "description": "Seriously Simple Podcast のシリーズの閲覧許可設定、資料集設定"
+    }
+]

@@ -1,0 +1,50 @@
+[
+    {
+        "key": "group_5be17d7a9a9d7",
+        "title": "商品登録",
+        "fields": [
+            {
+                "key": "field_5be17da0c750c",
+                "label": "商品、購読、会員",
+                "name": "wcr_product_ids",
+                "type": "post_object",
+                "instructions": "ここで登録した商品、購読、会員をまとめて「閲覧許可」を与えることができます",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "post_type": [
+                    "product",
+                    "product_variation",
+                    "wc_membership_plan",
+                    "shop_subscription"
+                ],
+                "taxonomy": "",
+                "allow_null": 1,
+                "multiple": 1,
+                "return_format": "id",
+                "ui": 1
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "wcrestrict"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "acf_after_title",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": 1,
+        "description": "WC Restrict に商品登録するためのもの"
+    }
+]

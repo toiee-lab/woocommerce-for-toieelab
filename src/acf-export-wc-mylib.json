@@ -1,0 +1,67 @@
+[
+    {
+        "key": "group_5be20140832f0",
+        "title": "マイライブラリ設定",
+        "fields": [
+            {
+                "key": "field_5be201568379a",
+                "label": "コンテンツURL",
+                "name": "wcmylib_url",
+                "type": "url",
+                "instructions": "マイライブラリに表示する場合は、指定してください。商品ページにも表示（購入している場合）します。",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "placeholder": "https:\/\/"
+            },
+            {
+                "key": "field_5be202018379b",
+                "label": "アクセス可能商品",
+                "name": "wcmylib_products",
+                "type": "post_object",
+                "instructions": "以下の商品を持つユーザーを購入済みとして扱い、ライブラリURLを表示します。",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "post_type": [
+                    "product",
+                    "product_variation",
+                    "shop_subscription",
+                    "wc_membership_plan",
+                    "wcrestrict"
+                ],
+                "taxonomy": "",
+                "allow_null": 1,
+                "multiple": 1,
+                "return_format": "id",
+                "ui": 1
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "post_type",
+                    "operator": "==",
+                    "value": "product"
+                }
+            ]
+        ],
+        "menu_order": 10,
+        "position": "normal",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": 1,
+        "description": "マイライブラリ設定を行います"
+    }
+]
