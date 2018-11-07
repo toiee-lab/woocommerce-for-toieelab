@@ -1,6 +1,6 @@
-# WooCommerce Simple Restrict Content Plugin
+# WooCommerce Extension for toiee Lab
 
-WordPress の No.1 ショッピングカート WooCommerce の購入情報を参照して「コンテンツの表示、非表示」を制御するプラグインです。
+WordPress の No.1 ショッピングカート WooCommerce の購入情報を参照して「コンテンツの表示、非表示」を制御するプラグインです。 
 
 以下のプロダクトタイプを識別することができます。
 
@@ -12,6 +12,14 @@ WordPress の No.1 ショッピングカート WooCommerce の購入情報を参
 また、複数の商品をまとめて「許可」する仕組みも用意しています。複数ページに渡って許可を与えたり、様々なグレードやプランが関連する場合に、便利に使えます。
 
 ver0.3 からは、Seriously Simple Podcast の閲覧制限機能も統合しました。
+ver0.4 からは、マイライブラリ機能や、Advanced Custom Fieldsを統合して、使いやすくしました。
+
+## 下位互換について
+
+- Seriously Simple Podcast の Feed Detail の設定を優先します
+- なるべく、新しい設定にしてください
+- その際、Feed Detail の設定を削除（制限しないをチェックも）してください
+- その上で、新しい方を使ってください
 
 
 ## 必要なもの
@@ -87,23 +95,25 @@ KANSOテーマは、uikit を利用しているため、以下のようなソー
 ## 使い方
 
 閲覧制限を行うには、以下のショートコードを行います。
+offer で、商品IDを指定すると、その商品へのボタンを表示します。デフォルトでは、idsの中からはじめに見つかった商品へのリンクを出します。
+XXX,YYY は、商品のIDと商品まとめ投稿タイプのIDを混ぜて使えます。
 
 ```
-[wc-restrict id="XXX,YYY" wcr_id="ZZZ" message="資料をご覧になるには、お申し込みが必要です"]
+[wcr-content ids="XXX,YYY" offer="ZZZ" message="資料をご覧になるには、お申し込みが必要です"]
 
 ここに閲覧制限コンテンツ
 
-[/wc-restrict]
+[/wcr-content]
 ```
 
 
 
 ### 2つの方法
 
-- 複数の条件をまとめて「WC-Restrict 投稿タイプ」で設定する
+- 複数の条件をまとめて「商品まとめ 投稿タイプ」で設定する
 - 個々のページで、商品を指定する
 
-オススメは、 **複数の条件をまとめる、WC-Restrict** を使うことです。後から、商品を追加したりすることが可能で、変更しやすくなります。
+オススメは、 **複数の条件をまとめる、商品まとめ** を使うことです。後から、商品を追加したりすることが可能で、変更しやすくなります。
 
 
 ### 基本的な使い方
@@ -112,25 +122,17 @@ KANSOテーマは、uikit を利用しているため、以下のようなソー
 p1, p2, p3 のように、コンマ区切りで商品IDを指定することで、**いずれかの商品を購入して入れば、アクセス可能** とすることができます。
 
 ```
-[wc-restrict id="p1,p2,p3"]
+[wcr-content ids="p1,p2,p3"]
 ここにコンテンツ
-[/wc-restrict]
+[/wcr-content]
 ```
-
-
-利用できるパラメータは、
-
-- `wcr_id` : WC-Restrict投稿タイプで設定した条件を指定できます
-- `id` : プロダクト、プロダクト・バリエーションを指定できます
-- `mem_id` : メンバーシップを指定できます
-- `sub_id` : サブスクリプションを指定できます
 
 また、「ログインフォームを表示しない」形で、コンテンツを表示、非表示することができます。例えば、以下のように記述することができます。
 
 ```
-[wc-restrict wcr_id="..." show_to_not_grantee_mode="true"]
+[wcr-content ids="..." show_to_not_grantee_mode="true"]
 このコンテンツは、アクセスできない人にだけ表示されます。アクセスできる人には、何も表示されません。
-[/wc-restrict]
+[/wcr-content]
 ```
 
 利用できるパラメータは、以下の通りです。
@@ -139,9 +141,9 @@ p1, p2, p3 のように、コンマ区切りで商品IDを指定することで�
 - `show_to_grantee_mode` : アクセスできる人にだけコンテンツを表示します。アクセスできない人には、何も表示しません。
 
 
-### WC-Restrict について
+### 商品まとめ投稿タイプ について
 
-![WC-Restrict設定](https://user-images.githubusercontent.com/7563975/39902882-4ab30b52-550b-11e8-85c6-d9b8eb728ffc.png)
+![商品まとめ設定](https://user-images.githubusercontent.com/7563975/39902882-4ab30b52-550b-11e8-85c6-d9b8eb728ffc.png)
 
 プロダクトID、subscription、Membership を設定できます。設定したものの **いずれか** がマッチすれば、許可をします。
 
@@ -162,53 +164,25 @@ p1, p2, p3 のように、コンマ区切りで商品IDを指定することで�
 ```
 // Standard Plan id: 123, Gold Plan id: 243, Premium Plan id: 321 とした場合
 
-[wc-restrict id="123,243,321"]
+[wcr-content ids="123,243,321"]
 ここはスタンダードプラン以上が閲覧できます。
-[/wc-restrict]
+[/wcr-content]
 
-[wc-restrict id="243,321"]
+[wcr-content ids="243,321"]
 ここはゴールドプラン以上が閲覧できます。
-[/wc-restrict]
+[/wcr-content]
 
-[wc-restrict id="321"]
+[wcr-content ids="321"]
 ここはプレミアムプラン以上が閲覧できます。
-[/wc-restrict]
+[/wcr-content]
 ```
 
-### Membership について
-
-メンバーシップについても同様にアクセス制限が行えます。xxx はプロダクト IDです。
-
-```
-[wc-restrict mem_id="xxx"]
-ここにコンテンツ
-[/wc-restrict]
-```
+## メンバーシップについて
 
 
-メンバーシップと、商品を同時に指定することも可能です。
-
-```
-[wc-restrict id="p1" mem_id="m2"]
-ここにコンテンツ。
-商品ID:p1を持つ人と、メンバーシップID:m2を持つ人が閲覧できます。
-[/wc-restrict]
-```
-
-> なお、WooCommerce Membership は、[Membership専用のショートコード](https://docs.woocommerce.com/document/woocommerce-memberships-restrict-content/#section-6)を持っています。シンプルに「メンバーに対してだけ見せたい」場合は、こちらのショートコードを使えば良いでしょう。
+なお、WooCommerce Membership は、[Membership専用のショートコード](https://docs.woocommerce.com/document/woocommerce-memberships-restrict-content/#section-6)を持っています。シンプルに「メンバーに対してだけ見せたい」場合は、こちらのショートコードを使えば良いでしょう。
 
 
-### Subsrciption で制限する
-
-WooCommerce Subscription 商品を使って「閲覧制限」を行うことができます。
-
-```
-[wc-restrict sub_id="xxx"]
-ここは xxx IDのサブスクリプション商品の人だけが閲覧できるコンテンツ
-[/wc-restrict]
-```
-
-なお、 id, mem_id オプションを同時に指定することができます。
 
 
 

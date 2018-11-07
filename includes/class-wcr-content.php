@@ -14,15 +14,17 @@ class Woocommerce_SimpleRestrictContent
 		add_action('init',  array( $this, 'create_post_type') );
 		add_action( 'add_meta_boxes', array($this, 'add_meta_boxes_wcr') );
 		add_action( 'save_post', array($this, 'save_post_wcr') );
-
 		
 		// 投稿にカスタムメタボックスを設置
-		add_action( 'add_meta_boxes', array($this, 'register_meta_boxes') );
-		add_action( 'save_post', array($this, 'save_meta_boxes') );
+//		add_action( 'add_meta_boxes', array($this, 'register_meta_boxes') );
+//		add_action( 'save_post', array($this, 'save_meta_boxes') );
 		
-		//shortcode の追加
+		//shortcode の追加（以下は非推奨）
 		add_shortcode('wc-restrict', array($this, 'wc_restrict_shortcode'));
 		add_shortcode('wc-restrict-list', array($this, 'wc_restrict_list_shortcode'));
+		
+		//shortcode の追加
+		add_shortcode( 'wcr-content' , array( $this, 'wcr_content_shortdode') );
 		
 		//管理画面設定
 		if( is_admin() ){
@@ -43,7 +45,7 @@ class Woocommerce_SimpleRestrictContent
 		register_post_type(
 			'wcrestrict',
 			array(
-				'label' 				=> 'WC Restrict',
+				'label' 				=> '商品まとめ',
 				'public'				=> false,
 				'exclude_from_search'	=> false,
 				'show_ui'				=> true,
@@ -63,7 +65,7 @@ class Woocommerce_SimpleRestrictContent
 	function add_meta_boxes_wcr(){
 		add_meta_box(
 			'wc_restrict',
-			'WC Restriction Setting', 
+			'ショートコード例', 
 			array($this, 'display_wcr_meta_box'),
 			'wcrestrict',
 			'advanced' 
@@ -89,6 +91,22 @@ class Woocommerce_SimpleRestrictContent
 		wp_nonce_field( 'wcr_meta_box', 'wcr_meta_box_nonce' );
 		
 		echo <<<EOD
+<p>閲覧制限のためのショートコード</p>
+
+<pre id="s_code" style="height:6em;overflow:scroll;background-color:#eee;border:1px solid #999;padding:1em;">
+[wcr-content ids="{$id}"]
+
+here is contents
+
+[/wcr-content]
+</pre>
+
+<br>
+<br>
+
+<hr>
+
+<p><b>※ 以下の設定は、下位互換のためのものです。今後は、利用しないようにお願いします</b></p>		
 <p><b>閲覧制限</b></p>
 <p>許可するWooCommercプロダクト、メンバーシップ、サブスクリプションIDを設定を、コンマ区切りで複数記入できます。</p>
 <table>
@@ -106,17 +124,9 @@ class Woocommerce_SimpleRestrictContent
 	</tr>
 </table>
 
-<p>閲覧制限のためのショートコード</p>
-
-<pre id="s_code" style="height:6em;overflow:scroll;background-color:#eee;border:1px solid #999;padding:1em;">
-[wc-restrict id="" wcr_id="{$id}"]
-
-here is contents
-
-[/wc-restrict]
-</pre>
-
 EOD;
+
+
 	}
 	
 	
@@ -144,6 +154,8 @@ EOD;
 		update_post_meta( $post_id, 'wcr_param', serialize($wc_param) );
 	}
 	
+
+
 	
 	
 	// -----------------------------------------------------------------------------
@@ -151,6 +163,117 @@ EOD;
 	// ! Shortcode
 	//
 	// -----------------------------------------------------------------------------
+	
+	
+	function wcr_content_shortdode( $atts, $content ) {
+		$atts = shortcode_atts( array(
+			'ids' => '',
+			'offer' => '',
+			'message' => '',
+			'show_to_not_grantee_mode' => false,
+			'show_to_grantee_mode' => false,
+		), $atts );
+		extract( $atts );
+		
+		
+		$ids = explode(',', $ids);
+		if( $offer == '' ) {
+			$offer = $this->get_offer_product_id( $ids );
+		}
+				
+		
+		// ----------------------------------------
+		// アクセス制限時のメッセージボックスの作成
+		// ----------------------------------------		
+		
+		// message の取得と調整
+		$not_access_message = $this->options['message'];
+
+		// message の取得と調整
+		$not_access_message = $this->options['message'];
+
+		// データの作成
+		$product_url = get_permalink( $offer );
+		$prodcut_name = get_the_title( $offer );
+		$login_url = get_permalink( get_option('woocommerce_myaccount_page_id') );
+		$modal_id = 'modal-'.$offer;
+
+		// error message がある場合、モーダルウィンドウを表示する（ための準備）
+		ob_start();
+		if( function_exists( 'wc_print_notices' ) ) {  // Gutenbergとの兼ね合いで、不意に呼び出される
+			wc_print_notices();
+		}
+		$wc_notices = ob_get_contents();
+		ob_end_clean();
+		
+		if( $wc_notices != ''){
+			$js = <<<EOD
+<script>			
+el = document.getElementById('{$modal_id}');
+UIkit.modal(el).show();
+</script>
+EOD;
+		}
+		else{
+			$js = '';
+		}
+		
+		// ログインフォームの取得
+		ob_start();
+		echo $wc_notices;
+		woocommerce_login_form( array('redirect'=> get_permalink()) );
+		echo $js;
+		$login_form = ob_get_contents();
+		ob_end_clean();		
+		
+		// アクセス制限時のメッセージを作成
+		$current_user = wp_get_current_user();
+		$display_none = ( $current_user->ID != 0 ) ? 'style="display:none;"' : '';
+		
+		$not_access_message = str_replace(
+			array('{{product_url}}', '{{product_name}}', '{{message}}', '{{login_url}}', '{{modal_id}}', '{{login_form}}', '{{display_none}}'),
+			array($product_url, $prodcut_name, $message, $login_url, $modal_id, $login_form, $display_none),
+			$not_access_message
+		);
+		$not_access_message = do_shortcode($not_access_message);  //ショートコードを適用する
+		
+		// show_to_not_grantee_mode = true の場合、not_access_message は、コンテンツ部分を使い、$content は null とする
+		if( $show_to_not_grantee_mode )
+		{
+			$not_access_message = do_shortcode($content);
+			$content = '';
+		}
+		
+		// show_to_grantee_mode = true の場合、not_access_message は null、$content を表示する
+		if( $show_to_grantee_mode )
+		{
+			$not_access_message = '';
+		}
+
+		// --------------------------------------------------------
+		// Start Restrict Check
+		// --------------------------------------------------------
+		
+		// ユーザーとして、ログインしているかチェック（ログインしていなければ、$not_access_message を表示）
+		if( $current_user->ID == 0){
+			return $not_access_message;
+		}
+		
+		// admin の場合は制限せず、表示する。ただし、制限コンテンツの範囲を示す
+		if( is_super_admin() )
+		{
+			return '<div style="border:#f99 dashed 1px"><p style="background-color:#fcc;">このコンテンツは制限付きです</p>'.do_shortcode($content).'</div>';
+		}
+		
+		if( $this->check_access( $ids ) ) {
+			return do_shortcode( $content );
+		}
+		
+		return $not_access_message;
+	}
+	
+	
+	// 非推奨
 	function wc_restrict_shortcode( $atts, $content )
 	{
 		$atts = shortcode_atts( array(
@@ -266,48 +389,100 @@ EOD;
 			return do_shortcode( $content );
 		}
 		
-/*
-		// 通常のプロダクトを購入しているかチェック
-		$access = false;
-		foreach($product_ids as $i)
-		{
-			$access = wc_customer_bought_product( $current_user->user_email, $current_user->ID, $i );
-			if($access){
-				return do_shortcode($content);
-			}
-		}
-
-		// Subscription でチェックをする 
-		if ( function_exists('wcs_user_has_subscription') )
-		{
-			foreach( $sub_ids as $i )
-			{
-				$access = ($i != '') ? wcs_user_has_subscription( $current_user->ID, $i, 'active') : false;
-				if( $access ){
-					return do_shortcode($content);
-				}
-			}
-		}
-		
-		// Membership でチェックする
-		if ( function_exists( 'wc_memberships' ) ) {
-
-			$access = false;
-			foreach( $mem_ids as $i )
-			{
-				$access = ($i != '') ? wc_memberships_is_user_active_member(  $current_user->ID, $i ) : false;
-				if( $access ){
-					return do_shortcode($content);
-				}
-			}
-		}
-*/
 		
 		return $not_access_message;
 	}
+
+	/**
+	* 現在のユーザーで、アクセスをチェックします。様々なプロダクトが混ざった状態で動作する設計です
+	* wcrestrict、product、
+	*/
+	function check_access( $ids , $user_id = '') {
+
+		// user check
+		if($user_id == '') {
+			if( is_user_logged_in() ){
+				$user = wp_get_current_user();
+			}
+			else{
+				return false;
+			}
+		}
+		else{
+			$user = get_userdata( $user_id );
+			if( $user == FALSE ) {
+				return false;
+			}
+		}
+		
+		$user_id    = $user->ID;
+		$user_email = $user->user_email;
+		
+		$ret = false;
+		
+		foreach( $ids as $i ) {
+			$post_type =  get_post_type( $i );
+			
+			switch( $post_type ) {
+				
+				case 'wcrestrict' :    //商品まとめなので、再帰的な呼び出し
+					$wcr_ids = get_field( 'wcr_product_ids', $i);
+					$ret = $this->check_access( $wcr_ids );
+
+					break;
+														
+				case 'wc_membership_plan': //WooCommerce メンバーシップ
+					if ( function_exists( 'wc_memberships' ) ) {
+						$ret = ($i != '') ? wc_memberships_is_user_active_member(  $user_id, $i ) : false;
+					}
+					
+					break;
+					
+				case 'product':  //その他は商品としてチェックする
+				default:
+					$product = wc_get_product( $i );
+					$product_type = $product->get_type();
+					
+					// subscription
+					if( $product_type == 'subscription' && function_exists('wcs_user_has_subscription') ) {
+						$ret = ($i != '') ? wcs_user_has_subscription( $user_id, $i, 'active') : false;
+					}
+					else {  // 今の所、 product_varidation ぐらいか？						
+						$ret = wc_customer_bought_product( $user_email, $user_id, $i );
+					}
+			}
+			
+			if( $ret ) return true;
+		}
+		
+		return $ret;
+	}
+	
+	// ごちゃ混ぜのID(wc restrict 含む）から、最初のプロダクトを提供する
+	function get_offer_product_id( $ids ) {
+		
+		foreach( $ids as $i ) {
+			$post_type = get_post_type( $i );
+			
+			if( $post_type == 'product' ) {
+				return $i;
+			}
+			else if( $post_type == 'wcrestrict' ) {
+				$wcr_ids = get_field( 'wcr_product_ids', $i);
+				$ret = $this->get_offer_product_id( $wcr_ids );
+				
+				if( $ret != false ) {
+					return $ret;
+				}
+			}
+		}
+		
+		return false;
+	}
+
 	
 	/**
-	* 現在のユーザーで、アクセス権チェック
+	* 現在のユーザーで、アクセス権チェック（このメソッドは非推奨です。古いモデルに基づきます）
 	*/
 	function has_access($product_ids, $sub_ids, $mem_ids, $user_id='' ){
 		
@@ -368,7 +543,9 @@ EOD;
 
 	}
 	
-	
+	/*
+		このメソッドは使わない、廃止予定
+	*/
 	function wc_restrict_list_shortcode( $atts, $content ){
 		$atts = shortcode_atts( array(
 			'cat' => '',
@@ -438,7 +615,7 @@ EOD;
 		$screens = array('post', 'page', 'podcast');
 		foreach ($screens as $screen)
 		{
-			add_meta_box('wc_src_product_id', 'WooCommerce Simple Restrict Content', array($this, 'display_meta_box'), $screen, 'normal' );
+			add_meta_box('wc_src_product_id', 'WooCommerce Simple Restrict Content', array($this, 'display_meta_box'), $screen, 'side' );
 		}
 
 	}

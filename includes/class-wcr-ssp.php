@@ -16,6 +16,8 @@ class WCR_SSP
 				
 		// Series の拡張
 		add_filter( 'ssp_settings_fields' , array($this, 'ssp_setting_fields'), 10, 1);
+		add_action( 'series_edit_form_fields', array($this, 'add_detail_url') );
+		
 		
 		// Episode の拡張
 		add_filter( 'ssp_episode_fields' , array($this, 'ssp_episode_fields'), 10, 1);
@@ -57,11 +59,38 @@ class WCR_SSP
 	
 	// Series に、アクセス制限のための項目と、Podcastの形式（オーディオ、デフォルト）を追加する
 	function ssp_setting_fields( $settings ){
+
+		$series_slug = $_GET['feed-series'];
+		$term = get_term_by('slug', $series_slug, 'series');
+		
+		if( $term == false ) {
+			$series_url = '#';
+			$series_edit_url = '#';			
+		}
+		else {
+			$series_url  = get_term_link( $term , 'series' );
+			$series_edit_url = get_edit_term_link( $term , 'series' );
+		}
+
+		
+		
+		array_unshift($settings['feed-details']['fields'], array(
+					'id'          => 'podcast_info',
+					'label'       => __( 'リンク集', 'seriously-simple-podcasting' ),
+					'description' => '<a href="'.$series_url.'">視聴ページ</a> : <a href="'.$series_edit_url.'">編集ページ</a>',
+					'type'        => 'none',
+					'default'     => '',
+					'placeholder' => __( '100,200,...', 'seriously-simple-podcasting' ),
+					'callback'    => '',
+					'class'       => 'regular-text',
+				));
+
+
 		
 		$settings['feed-details']['fields'][] = array(
 					'id'          => 'wc_restrict_ssp',
-					'label'       => __( '購入者制限をする', 'seriously-simple-podcasting' ),
-					'description' => __( '購入者制限を行う場合は、ハイを選んでください', 'seriously-simple-podcasting' ),
+					'label'       => __( '【非推奨】 購入者制限をする<br><a href="'.$series_edit_url.'">こちらを使ってください</a>', 'seriously-simple-podcasting' ),
+					'description' => __( '', 'seriously-simple-podcasting' ),
 					'type'        => 'radio',
 					'options'     => array( 'restrict_enable' => __( 'Yes, Restrict', 'seriously-simple-podcasting' ), 'restrict_disable' => __( 'No, Restrict', 'seriously-simple-podcasting' ) ),
 					'default'     => 'restrict_disable',
@@ -69,8 +98,8 @@ class WCR_SSP
 		
 		$settings['feed-details']['fields'][] = array(
 					'id'          => 'wcr_ids',
-					'label'       => __( 'WC Restrict IDs', 'seriously-simple-podcasting' ),
-					'description' => __( 'Relative WC Restrict IDs (, is separation)', 'seriously-simple-podcasting' ),
+					'label'       => __( '【非推奨】WC Restrict IDs<br><a href="'.$series_edit_url.'">こちらを使ってください</a>', 'seriously-simple-podcasting' ),
+					'description' => __( '', 'seriously-simple-podcasting' ),
 					'type'        => 'text',
 					'default'     => '',
 					'placeholder' => __( '1,2,3...', 'seriously-simple-podcasting' ),
@@ -80,8 +109,8 @@ class WCR_SSP
 		
 		$settings['feed-details']['fields'][] = array(
 					'id'          => 'product_ids',
-					'label'       => __( 'WC Product IDs', 'seriously-simple-podcasting' ),
-					'description' => __( 'Relative WC Product IDs (, is separation)', 'seriously-simple-podcasting' ),
+					'label'       => __( '【非推奨】WC Product IDs<br><a href="'.$series_edit_url.'">こちらを使ってください</a>', 'seriously-simple-podcasting' ),
+					'description' => __( '', 'seriously-simple-podcasting' ),
 					'type'        => 'text',
 					'default'     => '',
 					'placeholder' => __( '1,2,3...', 'seriously-simple-podcasting' ),
@@ -91,8 +120,8 @@ class WCR_SSP
 				
 		$settings['feed-details']['fields'][] = array(
 					'id'          => 'sub_ids',
-					'label'       => __( 'WC Subscription IDs', 'seriously-simple-podcasting' ),
-					'description' => __( 'Relative WC Suscription IDs (, is separation)', 'seriously-simple-podcasting' ),
+					'label'       => __( '【非推奨】WC Subscription IDs<br><a href="'.$series_edit_url.'">こちらを使ってください</a>', 'seriously-simple-podcasting' ),
+					'description' => __( '', 'seriously-simple-podcasting' ),
 					'type'        => 'text',
 					'default'     => '',
 					'placeholder' => __( '10,20,...', 'seriously-simple-podcasting' ),
@@ -102,8 +131,8 @@ class WCR_SSP
 				
 		$settings['feed-details']['fields'][] = array(
 					'id'          => 'mem_ids',
-					'label'       => __( 'WC Membership IDs', 'seriously-simple-podcasting' ),
-					'description' => __( 'Relative WC Membership IDs (, is separation)', 'seriously-simple-podcasting' ),
+					'label'       => __( '【非推奨】WC Membership IDs<br><a href="'.$series_edit_url.'">こちらを使ってください</a>', 'seriously-simple-podcasting' ),
+					'description' => __( '', 'seriously-simple-podcasting' ),
 					'type'        => 'text',
 					'default'     => '',
 					'placeholder' => __( '100,200,...', 'seriously-simple-podcasting' ),
@@ -143,6 +172,26 @@ class WCR_SSP
 		
 		return $fields;
 	}
+	
+	// Series に便利なリンクを用意する
+	function add_detail_url( $term ) {
+		$url = get_admin_url().'edit.php?post_type=podcast&page=podcast_settings&tab=feed-details&feed-series='.$term->slug;
+		$enc_url = htmlentities( $url );
+		$series_url  = get_term_link( $term , 'series' );
+	?>
+	
+	    <tr class="form-field term-meta-text-wrap">
+	        <th scope="row"><label for="term-meta-text"><?php _e( '便利なリンク集', 'text_domain' ); ?></label></th>
+	        <td>
+		        <a href="<?php echo $enc_url; ?>">フィード設定</a> : <a href="<?php echo $series_url; ?>">視聴ページ</a> :
+		         <input type="text" readonly="readonly" value='[wcr_ssp id="<?php echo $term->term_id; ?>" /]'  >
+	        </td>
+	    </tr>
+	    <tr class="form-field term-meta-text-wrap">
+	        <th scope="row"><hr></th>
+	        <td><hr></td>
+	    </tr>
+<?php }
 	
 	function ssp_feed_template_file( $template_file )
 	{
@@ -287,14 +336,24 @@ class WCR_SSP
 		$target_toggle = 'target="_blank"';
 		$message = '';
 		
+		//! いずれ、このソースコードは修正だ（データを入れ替えられたら消す）
 		$wc_restrict_ssp  = get_option( 'ss_podcasting_wc_restrict_ssp_' . $series_id, false );  // デフォルトは false
-		if( $wc_restrict_ssp == 'restrict_enable' ) {  // もし、制限ありなら
+		
+		//新しい方の設定（ term の場合は、term object を渡す必要がある）
+		$wcr_content_ssp  = get_field( 'series_limit',  $series );
+		
+		if( $wc_restrict_ssp == 'restrict_enable' || $wcr_content_ssp ) {  // もし、制限ありなら
 			if( $user_logined ){  // ユーザーの制限をチェックして、メッセージを切り替える
 				
 				$product_url = '';
 				$modal_html = '';
 				
-				$ret = $this->get_access_and_product_url( $user_email, $user_id, $series_id );
+				if( $wc_restrict_ssp == 'restrict_enable' ) {
+					$ret = $this->get_access_and_product_url_old( $user_email, $user_id, $series_id );
+				}
+				else {
+					$ret = $this->get_access_and_product_url( $user_email, $user_id, $series_id );
+				}
 
 				
 				// メッセージの生成
@@ -419,6 +478,40 @@ EOD;
 	
 	
 	public function get_access_and_product_url( $user_email='', $user_id='', $series_id ) {
+		
+		global $wcr_content;
+		
+		if( $user_email == '' ) { // ユーザーが指定されていない場合
+			if( is_user_logged_in() ) {
+				$user       = wp_get_current_user();					
+				$user_id    = $user->ID;
+				$user_email = $user->user_email;
+			}
+		}
+		
+		// 許可商品の取得
+		$series = get_term( $series_id, 'series' );
+		$wcr_ids = get_field( 'series_products', $series );
+		
+		// 商品URLを取得
+		$offer = $wcr_content->get_offer_product_id( $wcr_ids );
+		$product = wc_get_product( $offer );
+		$product_url = is_object( $product ) ? get_permalink( $product->get_id() ) : '';
+
+		// user 不明なら
+		if( $user_email == '' || $user_id == '' ){
+			return array( 'access' => false, 'url' => $product_url );
+		}
+		
+		// アクセスチェック
+		$access = $wcr_content->check_access( $wcr_ids, $user_id );
+		return array( 'access' => $access, 'url' => $product_url );	
+	}
+	
+	
+	
+	/* 非推奨の方法を使うバージョン（下位互換のために残している） */
+	public function get_access_and_product_url_old( $user_email='', $user_id='', $series_id ) {
 		
 		$product_url = '';
 		

@@ -272,6 +272,10 @@ if ( $podcast_series ) {
 
 // ! ----- オリジナルの改良 ------
 
+// 共通パーツを取り出す
+$series_material = get_field( 'series_material', $series );
+
+
 // 制限を通過
 $restrict_pass   = false;
 
@@ -279,9 +283,17 @@ $restrict_pass   = false;
 $wc_restrict_ssp = false;   // デフォルトチャネルの場合は、false
 $podcast_type = 'ptype_default';
 if ( $podcast_series ) {
-	$wc_restrict_ssp  = get_option( 'ss_podcasting_wc_restrict_ssp_' . $series_id, false );  // デフォルトは false
-	if( $wc_restrict_ssp == 'restrict_enable' ) {
+	
+	// 古いソースコード。いずれは削除する
+	$wc_restrict_ssp_param  = get_option( 'ss_podcasting_wc_restrict_ssp_' . $series_id, false );  // デフォルトは false
+	$wcr_content_ssp  = get_field( 'series_limit',  $series );
+
+	
+	if( $wc_restrict_ssp_param == 'restrict_enable' || $wcr_content_ssp ) {
 		$wc_restrict_ssp = true;
+	}
+	else {
+		$wc_restrict_ssp = false;
 	}
 
 	$podcast_type = get_option( 'ss_podcasting_podcast_type_' . $series_id, 'ptype_default' );  // デフォルトは false
@@ -306,7 +318,7 @@ if ( $wc_restrict_ssp ) {
 		if( isset($tmparr[3]) && is_numeric($tmparr[3]) ){ // user_id があれば
 			
 			$user_id = $tmparr[3];
-			if( ($user = get_userdata( $user_id )) ) {
+			if( ( $user = get_userdata( $user_id ) ) ) {
 				
 				// user のデータを格納する
 				$user_email = $user->user_email;
@@ -317,54 +329,16 @@ if ( $wc_restrict_ssp ) {
 				$add_user_message_email = " (for ".$user_email.")";
 				
 				global $wcr_ssp;
-				$ret = $wcr_ssp->get_access_and_product_url( $user_email, $user_id, $series_id );
+
+				// いずれ修正、ここのソース
+				if( $wc_restrict_ssp_param == 'restrict_enable' ) {
+					$ret = $wcr_ssp->get_access_and_product_url_old( $user_email, $user_id, $series_id );
+				}
+				else {
+					$ret = $wcr_ssp->get_access_and_product_url( $user_email, $user_id, $series_id );
+				}
 				$restrict_pass = $ret['access'];
 				$product_url = $ret['url'];
-
-/*				// 関連商品IDs の取得
-				$wc_prods = array();
-				foreach( array('product_ids', 'sub_ids', 'mem_ids') as $tmp_field ) {
-					$dat = get_option( 'ss_podcasting_' . $tmp_field . '_' . $series_id, false );
-					$ids = explode(',' , $dat);
-					
-					$wc_prods[ $tmp_field ] = $ids;
-				}
-							
-				// 通常商品のチェック
-				foreach($wc_prods['product_ids'] as $i)
-				{
-					$access = wc_customer_bought_product( $user->user_email, $user_id, $i );
-					if($access){
-						$restrict_pass = true;
-						break;
-					}
-				}
-				
-				// subscription のチェック
-				if ( function_exists('wcs_user_has_subscription') &&  $restrict_pass != true )
-				{
-					foreach( $wc_prods['sub_ids'] as $i )
-					{
-						$access = ($i != '') ? wcs_user_has_subscription( $user_id, $i, 'active') : false;
-						if( $access ){
-							$restrict_pass = true;
-							break;
-						}
-					}
-				}
-				
-				// Membership でチェックする
-				if ( function_exists( 'wc_memberships' ) &&  $restrict_pass != true  ) {
-					foreach( $wc_prods['mem_ids'] as $i )
-					{
-						$access = ($i != '') ? wc_memberships_is_user_active_member(  $user_id, $i ) : false;
-						if( $access ){
-							$restrict_pass = true;
-							break;
-						}
-					}
-				}
-*/				
 			}
 		}
 	}
@@ -675,7 +649,7 @@ if ( $wc_restrict_ssp ) {
 					// 非表示にする
 					$enclosure = 'https://d.toiee.org/not-available.m4a';
 					$prefix_episode = '【会員のみ】 ';
-					$prefix_episode_description = '【会員以外の方は、ご利用いただけません（<a href="'.$product_url.'">お申し込みはこちら</a> ）】<br>';					$mime_type = 'audio/mpeg';
+					$prefix_episode_description = '【会員以外の方は、ご利用いただけません（<a href="'.$product_url.'">お申し込みはこちら</a> ）】<br>';	
 				}
 				
 				?>
@@ -685,7 +659,7 @@ if ( $wc_restrict_ssp ) {
 					<pubDate><?php echo $pubDate; ?></pubDate>
 					<dc:creator><?php echo $author; ?></dc:creator>
 					<guid isPermaLink="false"><?php esc_html( the_guid() ); ?></guid>
-					<description><![CDATA[<?php echo $prefix_episode_description . $description; ?>]]></description>
+					<description><![CDATA[<?php echo $prefix_episode_description . $description . $series_material; ?>]]></description>
 					<itunes:subtitle><![CDATA[<?php echo $itunes_subtitle; ?>]]></itunes:subtitle>
 					<?php if ( $keywords ) : ?>
 						<itunes:keywords><?php echo $keywords; ?></itunes:keywords>
