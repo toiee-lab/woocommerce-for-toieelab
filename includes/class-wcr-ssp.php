@@ -253,8 +253,8 @@ class WCR_SSP
 								
 				case 'on_archive':
 					$template = '
-<p><a href="%FEED%" class="uk-button uk-button-secondary" %TARGET_TOGLE%>' .$label_podcast. '</a>
-<a href="%PCAST%" class="uk-button uk-button-secondary" %TARGET_TOGLE%>'  .$label_pcast.   '</a>
+<p uk-margin><a href="%FEED%" class="uk-button uk-button-default uk-box-shadow-small" %TARGET_TOGLE%>' .$label_podcast. '</a>
+<a href="%PCAST%" class="uk-button uk-button-default uk-box-shadow-small" %TARGET_TOGLE%>'  .$label_pcast.   '</a><br>
 <a href="%URL%" %TARGET_TOGLE% class="uk-button uk-button-text">'         .$label_url.     '</a>
 <br>
 <span class="uk-text-meta uk-text-small">%MESSAGE%</span>&nbsp;
@@ -263,8 +263,8 @@ class WCR_SSP
 					
 				default:
 					$template = '
-<p><a href="%FEED%" class="uk-button uk-button-secondary" %TARGET_TOGLE%>' .$label_podcast. '</a>
-<a href="%PCAST%" class="uk-button uk-button-secondary" %TARGET_TOGLE%>'  .$label_pcast.   '</a>
+<p uk-margin><a href="%FEED%" class="uk-button uk-button-default uk-box-shadow-small" %TARGET_TOGLE%>' .$label_podcast. '</a>
+<a href="%PCAST%" class="uk-button uk-button-default uk-box-shadow-small" %TARGET_TOGLE%>'  .$label_pcast.   '</a><br>
 <a href="%URL%" %TARGET_TOGLE% class="uk-button uk-button-text">'         .$label_url.     '</a>
 <a href="%TERM_LINK%" target="_blank" class="uk-button uk-button-text">'         .$label_web.     '</a>
 <br>

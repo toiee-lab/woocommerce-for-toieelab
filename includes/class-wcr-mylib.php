@@ -46,11 +46,11 @@ class toiee_woocommerce_mylibrary
 	public function mylibrary_content()
 	{
 		$tr_text = '
-		<tr class="woocommerce-orders-table__row woocommerce-orders-table__row--status-completed order">
-			<td class="woocommerce-orders-table__cell" data-title="アイコン">%IMG%</td>
-			<td class="woocommerce-orders-table__cell" data-title="名前">%NAME%</td>
-			<td class="woocommerce-orders-table__cell" data-title="視聴する">%VIEW%</td>
-			<td class="woocommerce-orders-table__cell" data-title="オーダー">%ORDER%</td>
+		<tr>
+			<td>%IMG%</td>
+			<td>%NAME%</td>
+			<td>%VIEW%</td>
+			<td>%ORDER%</td>
 		</tr>		
 ';		
 		
@@ -92,7 +92,7 @@ class toiee_woocommerce_mylibrary
 						array(
 							'<img src="'.$p_img.'" style="height:3.5em;">',
 							$p_name, 
-							'<a href="'.$mylib_url.'">視聴する</a>',
+							'<a href="'.$mylib_url.'"><span uk-icon="play"></span> 視聴する</a>',
 							'<a href="'.$order_url.'">注文詳細</a><br><a href="'.$p_url.'">商品情報</a>'
 						), 
 						$tr_text);
@@ -108,7 +108,15 @@ class toiee_woocommerce_mylibrary
 		else{
 			echo $title;
 			echo <<<EOD
-<table class="woocommerce-orders-table woocommerce-MyAccount-orders shop_table shop_table_responsive my_account_orders account-orders-table">
+<table class="uk-table uk-table-responsive uk-table-divider">
+    <thead>
+        <tr>
+            <th>アイコン</th>
+            <th>名前</th>
+            <th>視聴リンク</th>
+            <th>注文履歴</th>
+        </tr>
+    </thead>
 	<tbody>		
 		{$table_content}
 	</tbody>
