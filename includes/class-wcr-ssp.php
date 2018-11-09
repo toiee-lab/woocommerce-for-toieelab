@@ -226,29 +226,16 @@ class WCR_SSP
 			'redirect_url'      => '',
 		), $atts );
 		extract( $atts );
-				
-		$na_audio_img = $this->plugin_url. '/images/na-audio.png';
-		$na_video_img = $this->plugin_url. '/images/na-video.png';
 		
 		// template の決定
 		if( $template == '' ) {
 			switch( $template_name ) {
 				case 'on_episode_audio':
-					$template = '
-<div class="uk-margin-medium-top uk-margin-small-bottom">
-<img src="'.$na_audio_img.'" /><br>
-<span class="uk-text-meta uk-text-small">%MESSAGE%</span>&nbsp;
-</div>					
-';
+					$template = $this->get_dummy_player( 'audio', '%MESSAGE%' );
 					break;
 
 				case 'on_episode_video':
-					$template = '
-<div class="uk-margin-medium-top uk-margin-small-bottom">
-<img src="'.$na_video_img.'" /><br>
-<span class="uk-text-meta uk-text-small">%MESSAGE%</span>&nbsp;
-</div>					
-';
+					$template = $this->get_dummy_player( 'video', '%MESSAGE%' );
 					break;
 								
 				case 'on_archive':
@@ -476,6 +463,121 @@ EOD;
 			) . $modal_html;	
 	}
 	
+	
+	public function get_wc_login_form_modal( $redirect_url = '' ) {
+				
+		// error message がある場合、モーダルウィンドウを表示する（ための準備）
+		ob_start();
+		wc_print_notices();
+		$wc_notices = ob_get_contents();
+		ob_end_clean();
+		
+		$js = ( $wc_notices != '') ? 
+			"<script>el = document.getElementById('modal_login_form');UIkit.modal(el).show();</script>"
+			: '';
+
+		// ログインフォームの取得
+		if( $redirect_url == '' ){
+			$redirect_url = get_permalink();
+		}
+		
+		ob_start();
+		echo $wc_notices;
+		woocommerce_login_form( array('redirect'=> $redirect_url) );
+		echo $js;
+		$login_form = ob_get_contents();
+		ob_end_clean();
+
+		// 登録フォームの取得
+		ob_start();
+?>				
+		<h2><?php esc_html_e( 'Register', 'woocommerce' ); ?></h2>
+
+		<form method="post" class="woocommerce-form woocommerce-form-register register">
+
+			<?php do_action( 'woocommerce_register_form_start' ); ?>
+
+			<?php if ( 'no' === get_option( 'woocommerce_registration_generate_username' ) ) : ?>
+
+				<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
+					<label for="reg_username"><?php esc_html_e( 'Username', 'woocommerce' ); ?>&nbsp;<span class="required">*</span></label>
+					<input type="text" class="woocommerce-Input woocommerce-Input--text input-text" name="username" id="reg_username" autocomplete="username" value="<?php echo ( ! empty( $_POST['username'] ) ) ? esc_attr( wp_unslash( $_POST['username'] ) ) : ''; ?>" /><?php // @codingStandardsIgnoreLine ?>
+				</p>
+
+			<?php endif; ?>
+
+			<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
+				<label for="reg_email"><?php esc_html_e( 'Email address', 'woocommerce' ); ?>&nbsp;<span class="required">*</span></label>
+				<input type="email" class="woocommerce-Input woocommerce-Input--text input-text" name="email" id="reg_email" autocomplete="email" value="<?php echo ( ! empty( $_POST['email'] ) ) ? esc_attr( wp_unslash( $_POST['email'] ) ) : ''; ?>" /><?php // @codingStandardsIgnoreLine ?>
+			</p>
+
+			<?php if ( 'no' === get_option( 'woocommerce_registration_generate_password' ) ) : ?>
+
+				<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
+					<label for="reg_password"><?php esc_html_e( 'Password', 'woocommerce' ); ?>&nbsp;<span class="required">*</span></label>
+					<input type="password" class="woocommerce-Input woocommerce-Input--text input-text" name="password" id="reg_password" autocomplete="new-password" />
+				</p>
+
+			<?php endif; ?>
+
+			<?php do_action( 'woocommerce_register_form' ); ?>
+
+			<p class="woocommerce-FormRow form-row">
+				<?php wp_nonce_field( 'woocommerce-register', 'woocommerce-register-nonce' ); ?>
+				<button type="submit" class="woocommerce-Button button" name="register" value="<?php esc_attr_e( 'Register', 'woocommerce' ); ?>"><?php esc_html_e( 'Register', 'woocommerce' ); ?></button>
+			</p>
+
+			<?php do_action( 'woocommerce_register_form_end' ); ?>
+
+		</form>
+<?php
+		$register_form = ob_get_contents();
+		ob_end_clean();   //登録フォーム取得、ここまで
+
+
+		// <a href="#" uk-toggle="target: #modal_login_form">ログインはこちら</a> で開く
+		$modal_html = <<<EOD
+<!-- This is the modal -->
+<div id="modal_login_form" uk-modal>
+    <div class="uk-modal-dialog uk-modal-body">
+        <h4>会員ログインが必要です</h4>
+        <div class="uk-alert-success" uk-alert><p>無料登録することで、一部をご覧いただけます。<br>
+        <a href="#toggle-form" uk-toggle="target: #toggle-form; animation: uk-animation-fade">無料登録はこちらをクリック</a>
+        </p>
+        </div>
+        <div id="toggle-form" hidden class="uk-card uk-card-default uk-card-body uk-margin-small">
+        {$register_form}
+        </div>
+        {$login_form}
+        <p class="uk-text-right">
+            <button class="uk-button uk-button-default uk-modal-close" type="button">閉じる</button>
+        </p>
+    </div>
+</div>
+EOD;
+
+
+		return $modal_html;
+	}
+	
+	public function get_dummy_player( $type = 'video' , $message = '') {
+		
+		
+		if( $type == 'video' ) {
+			$img = $this->plugin_url. '/images/na-video.png';
+		}
+		else {
+			$img = $this->plugin_url. '/images/na-audio.png';
+		}
+			
+		return str_replace( array('%IMG%', '%MESSAGE%'), array($img, $msg), 		
+'
+<div class="uk-margin-medium-top uk-margin-small-bottom">
+<img src="%IMG%" /><br>
+<span class="uk-text-meta uk-text-small">%MESSAGE%</span>&nbsp;
+</div>					
+'				);
+	}
 	
 	public function get_access_and_product_url( $user_email='', $user_id='', $series_id ) {
 		
