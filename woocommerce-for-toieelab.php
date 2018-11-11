@@ -56,6 +56,7 @@ require_once( 'includes/class-wcr-content.php' );
 require_once( 'includes/class-wcr-ssp.php' );
 require_once( 'includes/wcr-functions.php' );
 require_once( 'includes/class-wcr-mylib.php' );
+require_once( 'includes/class-wcr-ctag.php' );
 
 
 global $wcr_content;
@@ -73,4 +74,7 @@ if(is_plugin_active( 'seriously-simple-podcasting/seriously-simple-podcasting.ph
 
 global $wcr_mylibrary;
 $wcr_mylibrary = new toiee_woocommerce_mylibrary();
+
+global $wcr_customtab;
+$wcr_customtab = new Woocommerce_CustomTabs();
 
