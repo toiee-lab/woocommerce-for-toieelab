@@ -51,6 +51,7 @@ class Woocommerce_SimpleRestrictContent
 				'show_ui'				=> true,
 				'show_in_menu'			=> true,
 				'menu_position'			=> 5,
+				'menu_icon'             => 'dashicons-portfolio',
 				'hierarchical'			=> false,
 				'has_archive'			=> false,
 				'supports'				=> array(

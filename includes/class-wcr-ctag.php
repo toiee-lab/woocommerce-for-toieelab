@@ -55,6 +55,7 @@ class Woocommerce_CustomTabs
 				'exclude_from_search'	=> false,
 				'show_ui'				=> true,
 				'show_in_menu'			=> true,
+				'menu_icon'             => 'dashicons-tag',
 				'menu_position'			=> 5,
 				'hierarchical'			=> false,
 				'has_archive'			=> false,
@@ -68,12 +69,9 @@ class Woocommerce_CustomTabs
 	
 	public function register_tab( $ret_tabs ) {
 		
-		// すべてのカスタムタブを取得（ publish されているもののみ )
-		
 		// 現在の商品を取得
 		global $product;
 		$cat_ids = $product->get_category_ids();
-		
 		$tabs = $this->get_tabs();
 		
 		foreach( $tabs as $tab ) {
@@ -84,7 +82,7 @@ class Woocommerce_CustomTabs
 			}
 			else {
 				foreach( $tab['ctab-category'] as $cat_id) {
-					if( array_search( $cat_id , $cat_ids ) ){
+					if( array_search( $cat_id , $cat_ids ) !== FALSE ){
 						$add_tab = true;
 						break;
 					}
