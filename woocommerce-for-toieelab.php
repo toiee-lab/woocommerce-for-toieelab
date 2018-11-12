@@ -52,6 +52,7 @@ require_once( 'includes/custom-fields-by-acf.php' );  // custom fields
 
 
 // include some feature
+require_once( 'includes/woocommerce_settings.php' );
 require_once( 'includes/class-wcr-content.php' );
 require_once( 'includes/class-wcr-ssp.php' );
 require_once( 'includes/wcr-functions.php' );
