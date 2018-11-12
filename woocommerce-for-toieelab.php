@@ -59,6 +59,8 @@ require_once( 'includes/wcr-functions.php' );
 require_once( 'includes/class-wcr-mylib.php' );
 require_once( 'includes/class-wcr-ctag.php' );
 
+require_once( 'includes/toiee-shortcodes.php' );
+
 
 global $wcr_content;
 $wcr_content = new Woocommerce_SimpleRestrictContent();
