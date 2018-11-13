@@ -13,6 +13,7 @@ class Woocommerce_CustomTabs
 		add_action('init',  array( $this, 'create_post_type') );
 		
 		add_filter( 'woocommerce_product_tabs',  array( $this, 'register_tab')  );
+		add_filter( 'woocommerce_product_tabs',  array( $this, 'remove_tabs'), 98 );
 
 		$this->tabs = null;
 	}
@@ -65,6 +66,11 @@ class Woocommerce_CustomTabs
 				)
 			)
 		);
+	}
+	
+	public function remove_tabs( $tabs ) {
+		unset( $tabs['additional_information'] );
+		return $tabs;
 	}
 	
 	public function register_tab( $ret_tabs ) {
