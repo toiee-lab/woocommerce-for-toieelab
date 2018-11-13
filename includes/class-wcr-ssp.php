@@ -53,6 +53,9 @@ class WCR_SSP
 		//RSS の表示数を増やす
 		add_filter('ssp_feed_number_of_posts', function($num){ return 300; } );
 		
+		//Slug が日本語にされてしまうkとを抑制する
+		add_filter( 'ssp_archive_slug' , function(){ return 'podcast'; } );
+		
 		$this->options = get_option( 'wcr_ssp_options' );
 	}
 	

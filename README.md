@@ -29,14 +29,10 @@ ver0.4 からは、マイライブラリ機能や、Advanced Custom Fieldsを統
 
 [詳しくは、Wiki をご覧ください](https://github.com/toiee-lab/woocommerce-for-toieelab/wiki)
 
-## メンバーシップについて
 
+## 履歴
 
-なお、WooCommerce Membership は、[Membership専用のショートコード](https://docs.woocommerce.com/document/woocommerce-memberships-restrict-content/#section-6)を持っています。シンプルに「メンバーに対してだけ見せたい」場合は、こちらのショートコードを使えば良いでしょう。
-
-
-
-
+- v0.4.3 : slug が翻訳ファイルによって変更されてしまうので、podcast を `ssp_archive_slug` フィルターで指定（rewrite rule を flash しないといけない）
 
 
 
