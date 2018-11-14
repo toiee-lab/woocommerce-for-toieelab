@@ -302,6 +302,7 @@ if ( $podcast_series ) {
 // 閲覧制限なら、アクセス権を調べる
 $add_user_message       =  '';   //制限されたシリーズに追加するメッセージ
 $add_user_message_email = '';
+$add_guid = '';
 
 if ( $wc_restrict_ssp ) {
 
@@ -311,6 +312,7 @@ if ( $wc_restrict_ssp ) {
 	
 	// token を取り出す
 	if( isset($_GET['wcr_token']) && !is_null($_GET['wcr_token']) ){
+		$add_guid = $_GET['wcr_token'];
 		
 		$de_text = toiee_xor_decrypt( $_GET['wcr_token'] , $seckey  );
 		$tmparr  = explode(',', $de_text);
@@ -640,6 +642,7 @@ if ( $wc_restrict_ssp ) {
 				
 				// エピソードの制限
 				$episode_restrict = get_post_meta( get_the_ID(), 'wcr_ssp_episode_restrict', 'disable' );
+				if( $episode_restrict == 'enable' ){ $block_flag = 'yes'; }
 				if( $restrict_pass || ($episode_restrict != 'enable' ) ){
 					// 表示
 					$prefix_episode = '';
@@ -658,7 +661,7 @@ if ( $wc_restrict_ssp ) {
 					<link><?php esc_url( the_permalink_rss() ); ?></link>
 					<pubDate><?php echo $pubDate; ?></pubDate>
 					<dc:creator><?php echo $author; ?></dc:creator>
-					<guid isPermaLink="false"><?php esc_html( the_guid() ); ?></guid>
+					<guid isPermaLink="false"><?php esc_html( the_guid() ); ?><?php echo $add_guid; ?></guid>
 					<description><![CDATA[<?php echo $prefix_episode_description . $description . $series_material; ?>]]></description>
 					<itunes:subtitle><![CDATA[<?php echo $itunes_subtitle; ?>]]></itunes:subtitle>
 					<?php if ( $keywords ) : ?>
