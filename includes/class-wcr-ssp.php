@@ -38,12 +38,16 @@ class WCR_SSP
 		
 		add_filter( 'request', array( $this , 'podcast_column_orderby_post_date' ) );
 		add_filter( 'manage_edit-podcast_sortable_columns', array( $this, 'podcasts_register_sortable' ) );
-
+		
+		// Episode の size を　filesize を返す
+//		add_filter( 'ssp_feed_item_size', array($this, 'get_size'), 10, 2 );
 
 		//管理画面設定
 		if( is_admin() ){
 	        add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
-			add_action( 'admin_init', array( $this, 'page_init' ) );			
+			add_action( 'admin_init', array( $this, 'page_init' ) );
+	        add_action( 'admin_menu', array( $this, 'add_plugin_page_episodeupdate' ) );
+			add_action( 'admin_init', array( $this, 'page_init_episodeupdate' ) );
 		}
 		
 		//表示数を変更
@@ -763,6 +767,7 @@ EOD;
     public function add_plugin_page()
     {
         // This page will be under "Settings"
+/*
         add_options_page(
             'WC Restrict SSP設定', 
             'WC Restrict SSP', 
@@ -770,6 +775,15 @@ EOD;
             'wcr-ssp-admin', 
             array( $this, 'create_admin_page' )
         );
+*/
+		add_submenu_page( 
+			'edit.php?post_type=podcast',
+			'WC Restrict SSP設定',
+			'WC Restrict SSP', 
+			'administrator',
+			'wc4toiee-ssp',
+			array( $this, 'create_admin_page' )
+		);
     }
     /**
      * Options page callback
@@ -856,6 +870,103 @@ EOD;
 <?php
 	}
 	
+	
+	
+	function add_plugin_page_episodeupdate() {
+		add_submenu_page( 
+			'edit.php?post_type=podcast',
+			'エピソードの更新',
+			'エピソードの更新', 
+			'administrator',
+			'wc4toiee-ssp-update',
+			array( $this, 'create_update_page' )
+		);		
+	}
+	
+	function create_update_page() {
+
+        if ( isset($_POST['updated_series_term'])) {
+            check_admin_referer('update_options');
+            
+            // カテゴリのepisode (podcast) を取得
+            $term_id = $_POST['updated_series_term'];            
+            $posts = get_posts( array(
+				'post_type' => 'podcast',
+				'posts_per_page'   => -1,
+				'order'     => 'ASC',
+				'post_status' => 'publish',
+				'tax_query' => array(
+					array(
+						'taxonomy' => 'series',
+						'field'    => 'term_id',
+						'terms'    => $term_id,
+					),
+				)
+			));
+			
+			// ssl check を無視
+			stream_context_set_default( [
+			    'ssl' => [
+			        'verify_peer' => false,
+			        'verify_peer_name' => false,
+			    ],
+			]);
+			
+			$log = '<h3>log</h3><ul>';
+			foreach( $posts as $e ) {
+				$e_id = $e->ID;
+				$enclosure = filter_var(get_post_meta( $e_id, 'enclosure', true ), FILTER_VALIDATE_URL );
+				get_post_meta( $e_id, 'enclosure', true );
+				
+				$location = $enclosure;
+				for ( $i=0; $i<5; $i++ ) { //5回までのリダイレクトを処理する
+					$header = get_headers( $location ,  1 );					
+					if( isset($header['Location'] ) ) {
+						$location = $header['Location'];
+					}
+					else {
+						break;
+					}
+				}
+				
+				$length = isset( $header['Content-Length'] ) ? $header['Content-Length'] : 10000;
+				update_post_meta( $e_id, 'filesize_raw', $length );
+				
+				
+				$log .= "<li>id:{$e_id}, name:{$e->name}, size: {$length}</li>";
+			}
+			$log .= '</ul>';
+
+        }
+
+		$terms = get_terms('series');
+        ?>
+        <div class="wrap">
+
+            <h2>エピソードの更新</h2>           
+            <p>エピソードのlengthを、一度に更新します。</p>
+	           
+            <form method="post" action="edit.php?post_type=podcast&page=wc4toiee-ssp-update">
+	            <?php wp_nonce_field('update_options'); ?>            
+	            <select name="updated_series_term">
+            	<?php foreach( $terms as $t ): ?>
+            		<option value="<?php echo $t->term_id; ?>"><?php echo $t->name; ?></option>
+            	<?php endforeach; ?>
+	            </select>
+            	<input type="hidden" name="update_episodes" value="update_episodes">
+            	<?php submit_button( "更新を実行する" ); ?>
+            </form>
+            <p>実行には、そこそこ時間がかかります（問い合わせを繰り返すので）</p>
+            <?php if( isset($log) ){ echo $log; } ?>
+        </div>
+        <?php
+	}
+	
+	function page_init_episodeupdate() {
+	
+	}
+
+	
 	/** episode の一覧数（seriesタクソノミーのアーカイブ表示の場合）を制御
 		
 		表示数を増やす。
@@ -897,7 +1008,13 @@ EOD;
 	
 	}
 	
-	
+	public function get_size($size , $id) {
+		if( $size == 1) {
+			return get_post_meta( $id, 'filesize', true );
+		}
+		else {
+			return $size;
+		}
+	}
 }
-
 
