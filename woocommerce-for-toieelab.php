@@ -58,6 +58,7 @@ require_once( 'includes/class-wcr-ssp.php' );
 require_once( 'includes/wcr-functions.php' );
 require_once( 'includes/class-wcr-mylib.php' );
 require_once( 'includes/class-wcr-ctag.php' );
+require_once( 'includes/class-simple-event.php' );
 
 require_once( 'includes/toiee-shortcodes.php' );
 
@@ -81,3 +82,5 @@ $wcr_mylibrary = new toiee_woocommerce_mylibrary();
 global $wcr_customtab;
 $wcr_customtab = new Woocommerce_CustomTabs();
 
+global $toiee_simple_event;
+$toiee_simple_event = new Toiee_SimpleEvent();
