@@ -63,7 +63,8 @@ class Woocommerce_CustomTabs
 				'supports'				=> array(
 					'title',
 					'editor',
-				)
+				),
+				'capability_type' => 'product',
 			)
 		);
 	}

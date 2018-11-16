@@ -57,7 +57,8 @@ class Woocommerce_SimpleRestrictContent
 				'supports'				=> array(
 					'title',
 					'editor',
-				)
+				),
+				'capability_type' => 'product',
 			)
 		);
 	}
