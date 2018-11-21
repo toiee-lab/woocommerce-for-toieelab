@@ -63,6 +63,7 @@ require_once( 'includes/class-simple-event.php' );
 require_once( 'includes/toiee-shortcodes.php' );
 
 
+// generate instances
 global $wcr_content;
 $wcr_content = new Woocommerce_SimpleRestrictContent();
 $wcr_content->plugin_url = plugins_url( '', __FILE__ );
@@ -84,3 +85,14 @@ $wcr_customtab = new Woocommerce_CustomTabs();
 
 global $toiee_simple_event;
 $toiee_simple_event = new Toiee_SimpleEvent();
+
+
+// JetPack を WooCommerce Productページでは実行しない
+function exclude_jetpack_related_from_products( $options ) {
+    if ( is_product() ) {
+        $options['enabled'] = false;
+    }
+ 
+    return $options;
+}
+add_filter( 'jetpack_relatedposts_filter_options', 'exclude_jetpack_related_from_products' );
