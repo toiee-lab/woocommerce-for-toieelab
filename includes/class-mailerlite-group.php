@@ -32,11 +32,9 @@ class Toiee_Mailerlite_Group {
 			add_action( 'admin_init', array( $this, 'page_init' ) );
 		}
 		
-		//購入時などに使う
-		add_action('woocommerce_order_status_changed', array( $this, 'update_mailerlite_group' ) , 10, 3);
-		
-		//! TODO Subscription への対応をする
-		
+		//注文の状態変化を検知する
+		add_action( 'woocommerce_order_status_changed', array( $this, 'update_mailerlite_group' ) , 10, 3);
+		add_action( 'woocommerce_subscription_status_updated', array( $this, 'update_mailerlite_group_subscription' ), 10, 3 );
 	}
 	
 	private function get_key(){
@@ -59,6 +57,24 @@ class Toiee_Mailerlite_Group {
 			$this->delete_group( $order_id );
 		}
 	}
+
+    /**
+     * サブスクリプションの状態変化に対して、Mailerliteのグループを設定する
+     * @param $subscription
+     * @param $new_status
+     * @param $old_status
+     */
+	public function update_mailerlite_group_subscription( $subscription, $new_status, $old_status ) {
+
+        $order_id = $subscription->get_order_number();
+
+	    if( $new_status == 'active' ) {
+            $this->add_group( $order_id );
+        }
+        else if( $old_status == 'active' ){
+            $this->delete_group( $order_id );
+        }
+    }
 
 
     /**
@@ -106,7 +122,7 @@ class Toiee_Mailerlite_Group {
             }
         }
 
-        return false;
+        return $subscriber;
 	}
 
 	public function add_group( $order_id ) {
