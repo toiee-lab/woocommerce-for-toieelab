@@ -50,6 +50,8 @@ include_once( plugin_dir_path( __FILE__ ) . '/acf/acf.php' );
 
 require_once( 'includes/custom-fields-by-acf.php' );  // custom fields
 
+//mailerlite
+require 'vendor/autoload.php';
 
 // include some feature
 require_once( 'includes/woocommerce_settings.php' );
@@ -59,7 +61,7 @@ require_once( 'includes/wcr-functions.php' );
 require_once( 'includes/class-wcr-mylib.php' );
 require_once( 'includes/class-wcr-ctag.php' );
 require_once( 'includes/class-simple-event.php' );
-
+require_once( 'includes/class-mailerlite-group.php' );
 require_once( 'includes/toiee-shortcodes.php' );
 
 
@@ -85,6 +87,9 @@ $wcr_customtab = new Woocommerce_CustomTabs();
 
 global $toiee_simple_event;
 $toiee_simple_event = new Toiee_SimpleEvent();
+
+global $toiee_ml_group;
+$toiee_ml_group = new Toiee_Mailerlite_Group();
 
 
 // JetPack を WooCommerce Productページでは実行しない
