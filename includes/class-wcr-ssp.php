@@ -67,6 +67,10 @@ class WCR_SSP
 	// Series に、アクセス制限のための項目と、Podcastの形式（オーディオ、デフォルト）を追加する
 	function ssp_setting_fields( $settings ){
 
+		if( ! array_key_exists('feed-series', $_GET) ){
+			return $settings;
+		}
+
 		$series_slug = $_GET['feed-series'];
 		$term = get_term_by('slug', $series_slug, 'series');
 		
