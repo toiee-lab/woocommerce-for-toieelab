@@ -146,7 +146,9 @@ class Toiee_Mailerlite_Group {
     /**
      * ユーザーをアップデートする（必要なら追加する）
      * subscriber を返す
-     * @throws Exception
+     * @param $user_id
+     * @return array
+     * @throws \MailerLiteApi\Exceptions\MailerLiteSdkException
      */
 	function update_user( $user_id ) {
 		// get wordpress user data
@@ -216,7 +218,7 @@ class Toiee_Mailerlite_Group {
 			)
 		);
 		
-		echo '<p><a href="edit.php?post_type=product&page=update-mlg">グループリストの更新はこちら</a></p>';
+		echo '<p><a href="'. admin_url( 'edit.php?post_type=product&page=update-mlg' ) .'">グループリストの更新はこちら</a></p>';
 
 	}
 	
@@ -229,12 +231,14 @@ class Toiee_Mailerlite_Group {
 	/* ----------------------------------------------------------------------------- 
 		Variation Product に追加、保存
 		
-	--------------------------------------------------------------------------------	*/	
-	/**
-	*
-	* Ref : https://gist.github.com/maddisondesigns/e7ee7eef7588bbba2f6d024a11e8875a
-	*
-	*/
+	--------------------------------------------------------------------------------	*/
+    /**
+     *
+     * Ref : https://gist.github.com/maddisondesigns/e7ee7eef7588bbba2f6d024a11e8875a
+     * @param $loop
+     * @param $variation_data
+     * @param $variation
+     */
 	public function create_ml_select_variation( $loop, $variation_data, $variation ) {
 		
 		// options から値を取得
@@ -356,34 +360,71 @@ class Toiee_Mailerlite_Group {
 		foreach($groups as $id => $name ) {
 			$text .= "{$name} ({$id})\n";
 		}
+
+
+		//TODO : ユーザー同期
+        // https://developers.mailerlite.com/v2/reference#add-many-subscribers
+
+        //TODO : 商品同期
+        // https://developers.mailerlite.com/v2/reference#add-many-subscribers
+
+        //TODO : 全部同期
+
 ?>	    
         <div class="wrap">
 
-            <h2>Mailerliteグループの取得</h2>           
-            <p>Mailerlite に問い合わせて、グループを取得します。<br>
-	            ここで取得したグループ一覧を、各商品にて登録できます。
-            </p>
-            <p><a href="admin.php?page=wc-settings&tab=advanced&section=mailerlite_group">Mailerlite APIの設定はこちら</a></p>
-	           
-            <form method="post" action="edit.php?post_type=product&page=update-mlg">
+            <h2>Mailerliteグループ設定</h2>
+
+            <h3>グループ一覧を取得</h3>
+            <p>Mailerlite に問い合わせて、グループを取得します。ここで取得したグループ一覧を、各商品にて登録できます。<br>
+            <a href="<?php echo admin_url( 'admin.php?page=wc-settings&tab=advanced&section=mailerlite_group' ); ?>">Mailerlite APIの設定はこちら</a></p>
+            <textarea readonly="readonly" style="width: 100%" rows="10" title="mailerlite group list"><?php echo $text; ?></textarea>
+
+            <form method="post" action="<?php echo admin_url( 'edit.php?post_type=product&page=update-mlg' ); ?>">
 	            <?php wp_nonce_field('update_options'); ?>
             	<input type="hidden" name="update_mlg" value="update_mlg">
             	<?php submit_button( "グループの更新を実行する" ); ?>
+                <label>前回の更新日時: <?php echo $modified_date; ?></label>
             </form>
-			<p>前回の更新日時: <?php echo $modified_date; ?></p>
             
-            <h2>グループ一覧</h2>
-            <textarea readonly="readonly" style="width: 100%" rows="10"><?php echo $text; ?></textarea>
+
+            <br>
+            <hr>
+
+            <h2>ユーザーを登録</h2>
+            <p>現在のユーザーをMailerliteに登録します。（状態は変更せず、Mailerlite上のユーザーは削除せず）</p>
+            <form method="post" action="<?php echo admin_url( 'edit.php?post_type=product&page=update-mlg' ); ?>">
+                <?php wp_nonce_field('update_options'); ?>
+                <input type="hidden" name="update_users" value="update_users">
+                <?php submit_button( "ユーザーの登録を実行する" ); ?>
+            </form>
+
+            <br>
+            <hr>
+
+            <h2>商品を選んで登録</h2>
+            <p>指定した商品を購入しているユーザーを同期します（グループを初期化します）</p>
+            <form method="post" action="<?php echo admin_url( 'edit.php?post_type=product&page=update-mlg' ); ?>">
+                <?php wp_nonce_field('update_options'); ?>
+                <input type="hidden" name="update_product" value="update_product">
+                <?php submit_button( "商品のユーザーの初期化を実行する" ); ?>
+            </form>
+
+            <br>
+            <hr>
+
+            <h2>全てのユーザー登録、全ての商品を登録</h2>
+            <p>ユーザーを登録し、指定した商品を購入しているユーザーを同期します（グループを初期化します）</p>
+            <form method="post" action="<?php echo admin_url( 'edit.php?post_type=product&page=update-mlg' ); ?>">
+                <?php wp_nonce_field('update_options'); ?>
+                <input type="hidden" name="update_all" value="update_all">
+                <?php submit_button( "商品のユーザーの初期化を実行する" ); ?>
+            </form>
+
+
         </div>
         
-<?php	    
-		$order_id = '15740'; //variation を買ったオーダーID
-		$order_id = '15730'; // シンプルな商品を購入したID
-
-		//! テスト
-        //$this->add_group( '15740' );
-        //$this->delete_group( '15740' );
-  
+<?php
     }
     
     public function page_init() {
