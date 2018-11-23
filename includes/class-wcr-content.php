@@ -153,7 +153,8 @@ EOD;
 				$wc_param[$vname] = explode(',', $_POST[$vname]);
 			}
 		}
-		update_post_meta( $post_id, 'wcr_param', serialize($wc_param) );
+		$ret = update_post_meta( $post_id, 'wcr_param', serialize($wc_param) );
+		return $ret;
 	}
 	
 
@@ -175,8 +176,12 @@ EOD;
 			'show_to_not_grantee_mode' => false,
 			'show_to_grantee_mode' => false,
 		), $atts );
-		extract( $atts );
-		
+
+		$ids     = $atts[ 'ids' ];
+		$offer   = $atts[ 'offer' ];
+		$message = $atts[ 'message' ];
+		$show_to_not_grantee_mode = $atts[ 'show_to_not_grantee_mode' ];
+		$show_to_grantee_mode = $atts[ 'show_to_grantee_mode' ];
 		
 		$ids = explode(',', $ids);
 		if( $offer == '' ) {
@@ -186,10 +191,7 @@ EOD;
 		
 		// ----------------------------------------
 		// アクセス制限時のメッセージボックスの作成
-		// ----------------------------------------		
-		
-		// message の取得と調整
-		$not_access_message = $this->options['message'];
+		// ----------------------------------------
 
 		// message の取得と調整
 		$not_access_message = $this->options['message'];
@@ -287,7 +289,14 @@ EOD;
 			'show_to_not_grantee_mode' => false,
 			'show_to_grantee_mode' => false,
 		), $atts );
-		extract( $atts );
+
+		$id = $atts[ 'id' ];
+		$sub_id = $atts[ 'sub_id' ];
+		$mem_id = $atts[ 'mem_id' ];
+		$wcr_id = $atts[ 'wcr_id' ];
+		$message = $atts[ 'message' ];
+		$show_to_not_grantee_mode = $atts[ 'show_to_not_grantee_mode' ];
+		$show_to_grantee_mode = $atts[ 'show_to_grantee_mode' ];
 		
 		// ----------------------------------------
 		// アクセス制限パラメータの取得 
@@ -552,7 +561,8 @@ EOD;
 		$atts = shortcode_atts( array(
 			'cat' => '',
 		), $atts );
-		extract( $atts );
+
+		$cat = $atts[ 'cat' ];
 		
 		$current_user = wp_get_current_user();
 		if( $current_user->ID == 0 ){
@@ -822,7 +832,7 @@ here is contents
             <h2>WooCommerce Simple Restrict Content設定</h2>           
             <p>コンテンツ閲覧制限メッセージを設定します</p>
 	           
-            <form method="post" action="options.php">
+            <form method="post" action="<?php admin_url( 'options.php' ); ?>">
             <?php
                 // This prints out all hidden setting fields
                 settings_fields( 'wc_src_group' );   
@@ -866,12 +876,12 @@ here is contents
     {
 	    return $input;
 	    // サニタイズしない
-        $new_input = array();
-
-        if( isset( $input['message'] ) )
-            $new_input['message'] = wp_kses_post( $input['message'] );
-
-        return $new_input;
+//        $new_input = array();
+//
+//        if( isset( $input['message'] ) )
+//            $new_input['message'] = wp_kses_post( $input['message'] );
+//
+//        return $new_input;
     }
     /** 
      * Print the Section text
@@ -902,12 +912,12 @@ here is contents
 	<li>{{message}} は、ショートコードで指定したメッセージに置き換えます</li>
 </ul>
 
-<p><b>ショートコード例:</b><br>
+<p><b>ショートコード例:</b><br></p>
 <pre style="border: 1px solid #999;padding:0.5em;">[wc-restrict id="111,222" message="無料でご利用いただけます"]
 ここにコンテンツ
 [/wc-restrict]
 </pre>		
-</p>
+
 
 <?php
 	}
