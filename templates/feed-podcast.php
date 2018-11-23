@@ -630,15 +630,15 @@ if ( $wc_restrict_ssp ) {
 	$podcast_type = 'ptype_seminar' の場合は、順番を入れ替え、日付を変えて出力する
 */
 				// 一番先頭のepisodeの日付で初期化
-				if( $last_mod_time == '' ) { 
-					$last_mod_time = strtotime( $pubDate );
-				}
-				
-				// 日付の書き換え（一律7:00 JPT に合わせた）
-				if( $podcast_type == 'ptype_seminar' ) {
-					$episode_count--;
-					$pubDate = date('D, d M Y 20:00:00 +0000' , $last_mod_time - ( $episode_count * 24 * 60 * 60 ) );
-				}
+//				if( $last_mod_time == '' ) {
+//					$last_mod_time = strtotime( $pubDate );
+//				}
+//
+//				// 日付の書き換え（一律7:00 JPT に合わせた）
+//				if( $podcast_type == 'ptype_seminar' ) {
+//					$episode_count--;
+//					$pubDate = date('D, d M Y 20:00:00 +0000' , $last_mod_time - ( $episode_count * 24 * 60 * 60 ) );
+//				}
 				
 				// エピソードの制限
 				$episode_restrict = get_post_meta( get_the_ID(), 'wcr_ssp_episode_restrict', 'disable' );
