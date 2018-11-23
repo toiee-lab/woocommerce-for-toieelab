@@ -104,7 +104,7 @@ class Toiee_SimpleEvent
 			
 			// 1ヶ月前のデータ以後を取り出す
 			$time_prev_month = strtotime('-1 month', $time_now);
-			$date_prev_month = date('Y-m-d H:i:s', $time_next_week);
+			$date_prev_month = date('Y-m-d H:i:s', $time_prev_month);
 			
 			$posts = get_posts(array(
 				'posts_per_page'	=> -1,

@@ -215,8 +215,9 @@
 	);	
 	
 	$products = array();
-	
-	$$term = get_term_by('name', $cat, 'product_cat' );
+
+	//TODO 一応テストする
+     $term = get_term_by('name', $cat, 'product_cat' );
 	
 	$args = array(
 		'post_type' => 'product',
@@ -225,7 +226,7 @@
 			array(
 				'taxonomy'  => 'product_cat',
 				'field'     => 'id',
-				'terms'     => $$term->term_id
+				'terms'     => $term->term_id
 			),
 		),
 		'posts_per_page' => -1,
