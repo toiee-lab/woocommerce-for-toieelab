@@ -220,7 +220,7 @@ class WCR_SSP
 	
 	/* [wcr_ssp id="x" /] */
 	function add_wcr_ssp_shortcode($atts) {
-		$atts = shortcode_atts( array(
+		$atts = shortcode_atts( [
 			'id'                => '',
 			'label_podcast'     => 'iPhone、iPad、スマホ',
 			'label_pcast'       => 'Mac、パソコン',
@@ -230,12 +230,11 @@ class WCR_SSP
 			'label_trial'       => '一部コンテンツをご覧いただけます',
 			'label_ok_offer'    => '全編のお申し込みはこちら',
 			'label_offer_trial' => '無料登録で、一部コンテンツをご覧いただけます',
-			'label_web'         => 'Web視聴',
 			'label_toc'         => '(目次一覧)',
 			'template'          => '',
 			'template_name'     => 'default',
 			'redirect_url'      => '',
-		), $atts );
+        ], $atts );
 		extract( $atts );
 		
 		// template の決定
@@ -581,7 +580,7 @@ EOD;
 			$img = $this->plugin_url. '/images/na-audio.png';
 		}
 			
-		return str_replace( array('%IMG%', '%MESSAGE%'), array($img, $msg), 		
+		return str_replace( array('%IMG%', '%MESSAGE%'), array($img, $message),
 '
 <div class="uk-margin-medium-top uk-margin-small-bottom">
 <img src="%IMG%" /><br>
@@ -624,7 +623,7 @@ EOD;
 	
 	
 	/* 非推奨の方法を使うバージョン（下位互換のために残している） */
-	public function get_access_and_product_url_old( $user_email='', $user_id='', $series_id ) {
+	public function get_access_and_product_url_old( $user_email, $user_id, $series_id ) {
 		
 		$product_url = '';
 		
@@ -802,7 +801,7 @@ EOD;
             <h2>WooCommerce Restrict Seriously Simple Podcast設定</h2>           
             <p>暗号用のキーを設定します</p>
 	           
-            <form method="post" action="options.php">
+            <form method="post" action="<?php echo admin_url( 'options.php' ); ?>">
             <?php
                 // This prints out all hidden setting fields
                 settings_fields( 'wcr_ssp_group' );   
@@ -846,12 +845,12 @@ EOD;
     {
 	    return $input;
 	    // サニタイズしない
-        $new_input = array();
-
-        if( isset( $input['seckey'] ) )
-            $new_input['seckey'] = wp_kses_post( $input['seckey'] );
-
-        return $new_input;
+//        $new_input = array();
+//
+//        if( isset( $input['seckey'] ) )
+//            $new_input['seckey'] = wp_kses_post( $input['seckey'] );
+//
+//        return $new_input;
     }
     /** 
      * Print the Section text
@@ -950,7 +949,7 @@ EOD;
             <h2>エピソードの更新</h2>           
             <p>エピソードのlengthを、一度に更新します。</p>
 	           
-            <form method="post" action="edit.php?post_type=podcast&page=wc4toiee-ssp-update">
+            <form method="post" action="<?php admin_url( 'edit.php?post_type=podcast&page=wc4toiee-ssp-update' ); ?>">
 	            <?php wp_nonce_field('update_options'); ?>            
 	            <select name="updated_series_term">
             	<?php foreach( $terms as $t ): ?>
