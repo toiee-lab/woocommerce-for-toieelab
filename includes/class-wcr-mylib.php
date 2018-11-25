@@ -8,12 +8,7 @@ defined( 'ABSPATH' ) or die( 'Nope, not accessing this' );
 class toiee_woocommerce_mylibrary
 {
 	public function __construct()
-	{
-		register_activation_hook(__FILE__, array($this,'plugin_activate')); //activate hook
-		register_deactivation_hook(__FILE__, array($this,'plugin_deactivate')); //deactivate hook
-		register_uninstall_hook(__FILE__, array(&$this, 'plugin_uninstall')); //uninstall hook
-		
-		
+	{		
 		// woocommerce add product meta
 		add_action( 'woocommerce_product_options_advanced', array($this, 'create_custom_field') );
 		add_action( 'woocommerce_process_product_meta', array($this, 'save_custom_field') );	
@@ -190,20 +185,5 @@ EOD;
 		}
 		
 		return '';
-	}
-
-	public function plugin_activate()
-	{
-		// 何かあれば実装する
-	}
-	
-	public function plugin_deactivate()
-	{
-		// 何かあれば実装する
-	}
-	
-	public function plugin_uninstall()
-	{
-		// 使ったオプションを削除する（将来的に・・・）
 	}
 }
