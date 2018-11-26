@@ -10,8 +10,8 @@ class toiee_woocommerce_mylibrary
 	public function __construct()
 	{		
 		// woocommerce add product meta
-		add_action( 'woocommerce_product_options_advanced', array($this, 'create_custom_field') );
-		add_action( 'woocommerce_process_product_meta', array($this, 'save_custom_field') );	
+//		add_action( 'woocommerce_product_options_advanced', array($this, 'create_custom_field') );
+//		add_action( 'woocommerce_process_product_meta', array($this, 'save_custom_field') );
 		
 		// woocommerce add new tab on user's my-account page
 		add_action( 'init',
@@ -62,7 +62,7 @@ class toiee_woocommerce_mylibrary
 		foreach($customer_orders as $order ){
 		
 		    // Order ID (added WooCommerce 3+ compatibility)
-		    $order_id = method_exists( $order, 'get_id' ) ? $order->get_id() : $order->id;
+		    $order_id = $order->get_id();
 		    $order_url = $order->get_view_order_url();
 		    		
 		    // Iterating through current orders items

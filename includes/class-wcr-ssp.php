@@ -4,6 +4,8 @@
  * 
  */
 
+define('WC4T_WCRTOKEN', 'wcrtoken');
+
 class WCR_SSP
 {
 	private   $options;
@@ -13,7 +15,7 @@ class WCR_SSP
 	function __construct()
 	{
 		$this->plugin_slug   = 'seriously-simple-podcasting';
-				
+
 		// Series の拡張
 		add_filter( 'ssp_settings_fields' , array($this, 'ssp_setting_fields'), 10, 1);
 		add_action( 'series_edit_form_fields', array($this, 'add_detail_url') );
@@ -62,7 +64,11 @@ class WCR_SSP
 		
 		$this->options = get_option( 'wcr_ssp_options' );
 	}
-	
+
+
+	public static function rewrite_flush(){
+
+    }
 	
 	// Series に、アクセス制限のための項目と、Podcastの形式（オーディオ、デフォルト）を追加する
 	function ssp_setting_fields( $settings ){
@@ -95,72 +101,6 @@ class WCR_SSP
 					'callback'    => '',
 					'class'       => 'regular-text',
 				));
-
-
-		
-		$settings['feed-details']['fields'][] = array(
-					'id'          => 'wc_restrict_ssp',
-					'label'       => __( '【非推奨】 購入者制限をする<br><a href="'.$series_edit_url.'">こちらを使ってください</a>', 'seriously-simple-podcasting' ),
-					'description' => __( '', 'seriously-simple-podcasting' ),
-					'type'        => 'radio',
-					'options'     => array( 'restrict_enable' => __( 'Yes, Restrict', 'seriously-simple-podcasting' ), 'restrict_disable' => __( 'No, Restrict', 'seriously-simple-podcasting' ) ),
-					'default'     => 'restrict_disable',
-				);
-		
-		$settings['feed-details']['fields'][] = array(
-					'id'          => 'wcr_ids',
-					'label'       => __( '【非推奨】WC Restrict IDs<br><a href="'.$series_edit_url.'">こちらを使ってください</a>', 'seriously-simple-podcasting' ),
-					'description' => __( '', 'seriously-simple-podcasting' ),
-					'type'        => 'text',
-					'default'     => '',
-					'placeholder' => __( '1,2,3...', 'seriously-simple-podcasting' ),
-					'callback'    => 'wp_strip_all_tags',
-					'class'       => 'regular-text',
-				);
-		
-		$settings['feed-details']['fields'][] = array(
-					'id'          => 'product_ids',
-					'label'       => __( '【非推奨】WC Product IDs<br><a href="'.$series_edit_url.'">こちらを使ってください</a>', 'seriously-simple-podcasting' ),
-					'description' => __( '', 'seriously-simple-podcasting' ),
-					'type'        => 'text',
-					'default'     => '',
-					'placeholder' => __( '1,2,3...', 'seriously-simple-podcasting' ),
-					'callback'    => 'wp_strip_all_tags',
-					'class'       => 'regular-text',
-				);
-				
-		$settings['feed-details']['fields'][] = array(
-					'id'          => 'sub_ids',
-					'label'       => __( '【非推奨】WC Subscription IDs<br><a href="'.$series_edit_url.'">こちらを使ってください</a>', 'seriously-simple-podcasting' ),
-					'description' => __( '', 'seriously-simple-podcasting' ),
-					'type'        => 'text',
-					'default'     => '',
-					'placeholder' => __( '10,20,...', 'seriously-simple-podcasting' ),
-					'callback'    => 'wp_strip_all_tags',
-					'class'       => 'regular-text',
-				);
-				
-		$settings['feed-details']['fields'][] = array(
-					'id'          => 'mem_ids',
-					'label'       => __( '【非推奨】WC Membership IDs<br><a href="'.$series_edit_url.'">こちらを使ってください</a>', 'seriously-simple-podcasting' ),
-					'description' => __( '', 'seriously-simple-podcasting' ),
-					'type'        => 'text',
-					'default'     => '',
-					'placeholder' => __( '100,200,...', 'seriously-simple-podcasting' ),
-					'callback'    => 'wp_strip_all_tags',
-					'class'       => 'regular-text',
-				);
-		
-/*
-		$settings['feed-details']['fields'][] = array(
-					'id'          => 'podcast_type',
-					'label'       => __( 'Podcastタイプ', 'seriously-simple-podcasting' ),
-					'description' => __( 'セミナー型、Podcast型かを選んでください', 'seriously-simple-podcasting' ),
-					'type'        => 'radio',
-					'options'     => array( 'ptype_seminar' => __( 'セミナー型', 'seriously-simple-podcasting' ), 'ptype_default' => __( 'Podcast型', 'seriously-simple-podcasting' ) ),
-					'default'     => 'ptype_default',
-				);
-*/
 		
 		return $settings;	
 	}
@@ -235,8 +175,22 @@ class WCR_SSP
 			'template_name'     => 'default',
 			'redirect_url'      => '',
         ], $atts );
-		extract( $atts );
-		
+
+		$id = $atts['id'];
+		$label_podcast = $atts['label_podcast'];
+		$label_pcast = $atts['label_pcast'];
+		$label_url = $atts['label_url'];
+        $label_web = $atts['label_web'];
+        $label_ok = $atts['label_ok'];
+        $label_trial = $atts['label_trial'];
+        $label_ok_offer = $atts['label_ok_offer'];
+        $label_offer_trial = $atts['label_offer_trial'];
+        $label_toc = $atts['label_toc'];
+        $template = $atts['template'];
+        $template_name = $atts['template_name'];
+        $redirect_url = $atts['redirect_url'];
+
+
 		// template の決定
 		if( $template == '' ) {
 			switch( $template_name ) {
@@ -306,6 +260,8 @@ class WCR_SSP
 		}
 		
 		//seckey から、feed url に付属させるパラメタを作成
+        //TODO ここで token を作るのではなく「登録しておいたもの」を使うこととする
+        // uniqid を使う( wctoken )
 		$user       = wp_get_current_user();
 		$user_id    = $user->ID;
 		$user_email = $user->user_email;
@@ -313,13 +269,7 @@ class WCR_SSP
 		if( $user_id != 0 ) {
 			$user_logined = true;
 			
-			$seckey = ( isset( $this->options['seckey'] ) && $this->options['seckey'] != '' ) ? 
-				$this->options['seckey'] : 
-				WCR_SSP_SECKEY;
-			$text      = 'wcr,' . $user->user_login . ',ssp,' . $user->ID;
-			$enc_text  = toiee_xor_encrypt($text, $seckey);
-			
-			$add_param = '/?wcr_token='.$enc_text;
+			$add_param = '/'.WC4T_WCRTOKEN.'/'.$this->get_user_wcrtoken();
 		}
 		else {
 			$user_logined = false;
@@ -344,14 +294,8 @@ class WCR_SSP
 				
 				$product_url = '';
 				$modal_html = '';
-				
-				if( $wc_restrict_ssp == 'restrict_enable' ) {
-					$ret = $this->get_access_and_product_url_old( $user_email, $user_id, $series_id );
-				}
-				else {
-					$ret = $this->get_access_and_product_url( $user_email, $user_id, $series_id );
-				}
 
+				$ret = $this->get_access_and_product_url( $user_email, $user_id, $series_id );
 				
 				// メッセージの生成
 				if( $ret['access'] ) {
@@ -619,106 +563,6 @@ EOD;
 		$access = $wcr_content->check_access( $wcr_ids, $user_id );
 		return array( 'access' => $access, 'url' => $product_url );	
 	}
-	
-	
-	
-	/* 非推奨の方法を使うバージョン（下位互換のために残している） */
-	public function get_access_and_product_url_old( $user_email, $user_id, $series_id ) {
-		
-		$product_url = '';
-		
-		// 関連商品IDs の取得
-		$wc_prods = array();
-		foreach( array('product_ids', 'sub_ids', 'mem_ids') as $tmp_field ) {
-			$dat = get_option( 'ss_podcasting_' . $tmp_field . '_' . $series_id, false );
-			$ids = explode(',' , $dat);
-			
-			$wc_prods[ $tmp_field ] = $ids;
-		}
-				
-		// WC Restrict の情報を取得し設定
-		$wcr_id = get_option( 'ss_podcasting_wcr_ids_' . $series_id );
-		if( $wcr_id != '' && is_numeric($wcr_id) ){
-			$wcr_dat  = get_post_meta($wcr_id, 'wcr_param', true);
-			$wcr_arr = unserialize( $wcr_dat );
-			
-			$tmp_arr = array( 'product', 'sub','mem' );
-			foreach($tmp_arr as $name) {				
-				$wc_prods[ $name.'_ids' ] = array_merge( $wc_prods[ $name.'_ids' ], $wcr_arr['wcr_'.$name.'_ids'] );
-			}
-		}
-
-		if( $user_email == '' ) { // ユーザーが指定されていない場合
-			if( is_user_logged_in() ) {
-				$user       = wp_get_current_user();					
-				$user_id    = $user->ID;
-				$user_email = $user->user_email;
-			}
-		}
-									
-		// 通常商品のチェック
-		$access = false;
-		foreach($wc_prods['product_ids'] as $i)
-		{
-			if( $user_email != '' ) {
-				$access = wc_customer_bought_product( $user_email, $user_id, $i );
-			}
-			
-			if( $product_url == '') {  // 商品ページを探す
-				$product = wc_get_product( $i );
-				$product_url = is_object( $product ) ? get_permalink( $product->get_id() ) : '';
-			}
-			
-			if($access){
-				return array(
-					'access' => true,
-					'url'    => $product_url
-				);
-			}
-		}
-		
-		// user が指定されていない場合
-		if( $user_email == '' || $user_id == '' ){
-			return array( 'access' => false, 'url' => $product_url );
-		}
-		
-		// subscription のチェック
-		if ( function_exists('wcs_user_has_subscription') )
-		{
-			foreach( $wc_prods['sub_ids'] as $i )
-			{
-				if( $product_url == '') {  // 商品ページを探す
-					$product = wc_get_product( $i );
-					$product_url = is_object( $product ) ? get_permalink( $product->get_id() ) : '';
-				}
-				
-				$access = ($i != '') ? wcs_user_has_subscription( $user_id, $i, 'active') : false;
-				if( $access ){
-					return array(
-						'access' => true,
-						'url'    => $product_url
-					);
-				}
-			}
-		}
-		
-		// Membership でチェックする
-		if ( function_exists( 'wc_memberships' )  ) {
-			foreach( $wc_prods['mem_ids'] as $i )
-			{
-				$access = ($i != '') ? wc_memberships_is_user_active_member(  $user_id, $i ) : false;
-				if( $access ){
-					return array(
-						'access' => true,
-						'url'    => $product_url
-					);
-				}
-			}
-		}
-		
-		return array( 'access' => false, 'url' => $product_url );
-	}
-	
 	
 	public function edit_series_columns( $columns ) {
 		$columns['shortcode'] = __( 'Shortcode', 'wcr-ssp' );
@@ -1019,5 +863,27 @@ EOD;
 			return $size;
 		}
 	}
+
+	/*
+	 * Podcast feed のアクセス許可を出すために、ユーザーを識別する固有のIDを取得する。
+	 * もし、ユーザーが持っていなければ生成する
+	 */
+	public function get_user_wcrtoken(){
+
+	    if( is_user_logged_in() ){
+
+	        $user_id = get_current_user_id();
+	        $wcrtoken = get_user_meta( $user_id, WC4T_WCRTOKEN, true );
+
+	        if( $wcrtoken == '' ){
+                $wcrtoken = uniqid();
+	            update_user_meta( $user_id, WC4T_WCRTOKEN, $wcrtoken);
+            }
+
+            return $wcrtoken;
+        }
+
+	    return null;
+    }
 }
 
