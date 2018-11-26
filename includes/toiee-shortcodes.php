@@ -3,26 +3,31 @@
  //! 商品プレビューを出すためのショートコード（二回め！）
  add_shortcode( 'toiee_preview_list' , function ( $atts, $content = null ) {
 	 
-	extract( 
-		shortcode_atts (
+	$atts = shortcode_atts (
 			array(
 				'series' => '',
 				'open' => '1-4',
 				'free' => '5-7'
 			),
-			$atts
-		)
-	); 
-	
+			$atts,
+        'toiee_preview_list'
+		);
+
+	$series = $atts[ 'series' ];
+	$open_free = array(
+	    'open' =>  $atts[ 'open' ],
+        'free' => $atts[ 'free' ]
+    );
+
 	// parameter check
 	$no = array();
-	foreach( array('open', 'free' ) as $key ) {
-		if( preg_match('/^([0-9]+)-([0-9]+)$/', $$key , $matches) ) {
+	foreach( $open_free as $key=>$value ) {
+		if( preg_match('/^([0-9]+)-([0-9]+)$/', $value , $matches) ) {
 			$no[ $key ]['s'] = $matches[1];
 			$no[ $key ]['e'] = $matches[2];
 		}
 		else{
-			return '<p>invalid number of '.$$key.'. like this (1-5)</p>';
+			return '<p>invalid number of '.$value.'. like this (1-5)</p>';
 		}
 	}
 	
@@ -158,16 +163,18 @@
  // 一応、num="3" とかで適当にします
  add_shortcode( 'toiee_list_series', function ( $atts, $content = null ) {
 	 
-	extract( 
-		shortcode_atts (
+	$atts = shortcode_atts (
 			array(
 				'search' => '^ポケてら',
 				'num' => 4
 			),
-			$atts
-		)
-	);
-	 
+			$atts,
+            'toiee_list_series'
+		);
+
+	$search = $atts[ 'search' ];
+	$num    = $atts[ 'num' ];
+
 	$terms = get_terms( 'series', array( 'hide_empty=0' ) );
 	
 	if( is_wp_error( $terms ) ){
@@ -204,15 +211,18 @@
  // [toiee_list_product cat="耳デミー"] で「耳デミー」の一覧を出す
  // [toiee_list_product cat="ポケてら"] で「ポケてら」の一覧を出す
  add_shortcode( 'toiee_list_product', function ( $atts, $content = null ) {
-	extract( 
-		shortcode_atts (
+	$atts =	shortcode_atts (
 			array(
 				'cat' => '耳デミー',
 				'num' => 4
 			),
-			$atts
-		)
-	);	
+			$atts,
+            'toiee_list_product'
+		);
+
+	$cat = $atts[ 'cat' ];
+	$num = $atts[ 'num' ];
+
 	
 	$products = array();
 
@@ -237,7 +247,7 @@
 	$content = '<div class="uk-grid-small uk-child-width-1-'.$num.'@s uk-flex-left uk-text-center" uk-grid>'."\n";	
 	while ($featured_query->have_posts()) :
 		$featured_query->the_post();
-		$product = get_product( $featured_query->post->ID );
+		$product = new WC_Product( $featured_query->post->ID );
 		// By doing this, we will be able to fetch all information related to single WooCommerce Product
 		
 		$name = $product->get_name();

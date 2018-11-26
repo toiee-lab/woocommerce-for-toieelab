@@ -8,15 +8,10 @@ defined( 'ABSPATH' ) or die( 'Nope, not accessing this' );
 class toiee_woocommerce_mylibrary
 {
 	public function __construct()
-	{
-		register_activation_hook(__FILE__, array($this,'plugin_activate')); //activate hook
-		register_deactivation_hook(__FILE__, array($this,'plugin_deactivate')); //deactivate hook
-		register_uninstall_hook(__FILE__, array(&$this, 'plugin_uninstall')); //uninstall hook
-		
-		
+	{		
 		// woocommerce add product meta
-		add_action( 'woocommerce_product_options_advanced', array($this, 'create_custom_field') );
-		add_action( 'woocommerce_process_product_meta', array($this, 'save_custom_field') );	
+//		add_action( 'woocommerce_product_options_advanced', array($this, 'create_custom_field') );
+//		add_action( 'woocommerce_process_product_meta', array($this, 'save_custom_field') );
 		
 		// woocommerce add new tab on user's my-account page
 		add_action( 'init',
@@ -67,7 +62,7 @@ class toiee_woocommerce_mylibrary
 		foreach($customer_orders as $order ){
 		
 		    // Order ID (added WooCommerce 3+ compatibility)
-		    $order_id = method_exists( $order, 'get_id' ) ? $order->get_id() : $order->id;
+		    $order_id = $order->get_id();
 		    $order_url = $order->get_view_order_url();
 		    		
 		    // Iterating through current orders items
@@ -190,20 +185,5 @@ EOD;
 		}
 		
 		return '';
-	}
-
-	public function plugin_activate()
-	{
-		// 何かあれば実装する
-	}
-	
-	public function plugin_deactivate()
-	{
-		// 何かあれば実装する
-	}
-	
-	public function plugin_uninstall()
-	{
-		// 使ったオプションを削除する（将来的に・・・）
 	}
 }

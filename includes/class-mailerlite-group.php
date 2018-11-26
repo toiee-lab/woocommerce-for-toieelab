@@ -129,7 +129,9 @@ class Toiee_Mailerlite_Group {
         try {
             $this->add_delete_group($order_id);
         } catch (\MailerLiteApi\Exceptions\MailerLiteSdkException $e) {
+            //TODO
         } catch (Exception $e) {
+            //TODO
         }
     }
     /**
@@ -139,7 +141,9 @@ class Toiee_Mailerlite_Group {
         try {
             $this->add_delete_group($order_id, false);
         } catch (\MailerLiteApi\Exceptions\MailerLiteSdkException $e) {
+            //TODO
         } catch (Exception $e) {
+            //TODO
         }
     }
 
@@ -171,9 +175,13 @@ class Toiee_Mailerlite_Group {
 
 		// user check
 		$subscribersApi = (new \MailerLiteApi\MailerLite( $this->get_key() ))->subscribers();
-        $subscriber = $subscribersApi->find( $email );
+        try {
+            $subscriber = $subscribersApi->find($email);
+        } catch (Exception $e) {
+            //TODO ユーザーがアップデートできなかったときの処理
+        }
 
-		if( isset( $subscriber->error ) ) { // ユーザーがいないなら、登録
+        if( isset( $subscriber->error ) ) { // ユーザーがいないなら、登録
 			$subscriber = [
 			  'email' => $email,
 			  'name' => $name,
@@ -325,52 +333,69 @@ class Toiee_Mailerlite_Group {
     }
 
     /**
-     * @throws \MailerLiteApi\Exceptions\MailerLiteSdkException
      */
     public function create_admin_page() {
-	    
-        if ( isset($_POST['update_mlg'])) {
+
+        // mailerlite group をアップデート
+        if ( isset($_POST['do_action']) &&
+            isset( $_POST['_wpnonce'] ) &&
+            wp_verify_nonce( $_POST['_wpnonce'], 'update_options' )
+        ) {
+
             check_admin_referer('update_options');
-                        
-            //apiを取得
-   			$apikey = get_option( 'woocommerce_mailerlite_group_apikey' );
-   			
-   			//問い合わせ
-   			$mailerliteClient = new \MailerLiteApi\MailerLite( $apikey );
-   			$groupsApi = $mailerliteClient->groups();
-   			$allGroups = $groupsApi->get();
 
-   			//配列にする
-   			$items = $allGroups->toArray();
-   			$groups = array();
-   			$groups[0] = '---';
-   			foreach( $items as $group ) {
-	   			$groups[ $group->id ] = $group->name;
-   			}
-            
-            //optionsに保存する
-			update_option( 'woocommerce_mailerlite_group_list', $groups, 'no');
-			update_option( 'woocommerce_mailerlite_group_list_modified', date("Y-m-d H:i:s"), 'no' );
+            switch( $_POST['do_action'] ) {
+
+                case 'update_mlg' :
+                    $this->update_mlg();
+                    break;
+                case 'update_users' :
+                    $ret_update_users = $this->update_users_to_mailerlite();
+                    break;
+                case 'update_product' :
+                    $ret_update_product = $this->update_product_to_mailerlite();
+                    break;
+                case 'update_all' :
+                    $this->update_all_to_mailerlite();
+                    break;
+            }
         }
-        
-		$groups = get_option( 'woocommerce_mailerlite_group_list' , false);
-		$modified_date = get_option( 'woocommerce_mailerlite_group_list_modified', 'なし');
-		$text = '';
-		asort($groups);
-		foreach($groups as $id => $name ) {
-			$text .= "{$name} ({$id})\n";
-		}
 
 
-		//TODO : ユーザー同期
-        // https://developers.mailerlite.com/v2/reference#add-many-subscribers
 
-        //TODO : 商品同期
-        // https://developers.mailerlite.com/v2/reference#add-many-subscribers
+        //全商品リストを取得
+        $posts = get_posts(
+                array(
+                    'post_type' => 'product',
+                    'posts_per_page' => -1,
+                    'post_status' => 'publish,private,draft'
+                ) );
 
-        //TODO : 全部同期
+        $product_list = array();
+        foreach( $posts as $key=>$post ) {
+            $product = wc_get_product( $post->ID );
+            $type = $product->get_type();
 
-?>	    
+            if ( $type == 'variable' ) { //variation を取得して設定する
+                $variations = $product->get_available_variations();
+                $mlg_id = get_post_meta($product->get_id(), '_mailerlite_group');
+
+            } else {
+
+                $mlg_id = get_post_meta($product->get_id(), '_mailerlite_group');
+            }
+        }
+
+        //グループリストを取得
+        $groups = get_option( 'woocommerce_mailerlite_group_list' , false);
+        $modified_date = get_option( 'woocommerce_mailerlite_group_list_modified', 'なし');
+        $text = '';
+        asort($groups);
+        foreach($groups as $id => $name ) {
+            $text .= "{$name} ({$id})\n";
+        }
+
+        ?>
         <div class="wrap">
 
             <h2>Mailerliteグループ設定</h2>
@@ -382,44 +407,58 @@ class Toiee_Mailerlite_Group {
 
             <form method="post" action="<?php echo admin_url( 'edit.php?post_type=product&page=update-mlg' ); ?>">
 	            <?php wp_nonce_field('update_options'); ?>
-            	<input type="hidden" name="update_mlg" value="update_mlg">
+            	<input type="hidden" name="do_action" value="update_mlg">
             	<?php submit_button( "グループの更新を実行する" ); ?>
                 <label>前回の更新日時: <?php echo $modified_date; ?></label>
             </form>
-            
+
+            <br>
+
+            <hr>
+
+            <h1>既存ユーザーを同期</h1>
+
+            <h2>顧客リスト</h2>
+            <p>このWordPressのユーザーを登録、もしくはダウンロードします。登録時に自動で
+                「wc import 2018-11-18 11:08」のようなグループを作成し、インポートします。</p>
+            <form method="post" action="<?php echo admin_url( 'edit.php?post_type=product&page=update-mlg' ); ?>">
+                <?php wp_nonce_field('update_options'); ?>
+                <input type="hidden" name="do_action" value="update_users">
+                <?php submit_button( "ユーザーを同期する" ); ?>
+            </form>
+            <?php if( ! is_null( $ret_update_users ) ): ?>
+                <textarea readonly="readonly" style="width: 100%;height:10em;"><?php echo $ret_update_users; ?></textarea>
+            <?php endif; ?>
 
             <br>
             <hr>
 
-            <h2>ユーザーを登録</h2>
-            <p>現在のユーザーをMailerliteに登録します。（状態は変更せず、Mailerlite上のユーザーは削除せず）</p>
+            <h2>特定の商品を購入したユーザーを取得</h2>
+            <p>指定した商品を購入しているユーザーを取得します。</p>
             <form method="post" action="<?php echo admin_url( 'edit.php?post_type=product&page=update-mlg' ); ?>">
                 <?php wp_nonce_field('update_options'); ?>
-                <input type="hidden" name="update_users" value="update_users">
-                <?php submit_button( "ユーザーの登録を実行する" ); ?>
+                <input type="hidden" name="do_action" value="update_product">
+                <select name="product_id">
+
+
+                </select>
+                <?php submit_button( "商品のユーザーを取得する" ); ?>
             </form>
+            <?php if( ! is_null( $ret_update_product ) ): ?>
+                <textarea readonly="readonly" style="width: 100%;height:10em;"><?php echo $ret_update_product; ?></textarea>
+            <?php endif; ?>
+
 
             <br>
             <hr>
 
-            <h2>商品を選んで登録</h2>
-            <p>指定した商品を購入しているユーザーを同期します（グループを初期化します）</p>
-            <form method="post" action="<?php echo admin_url( 'edit.php?post_type=product&page=update-mlg' ); ?>">
-                <?php wp_nonce_field('update_options'); ?>
-                <input type="hidden" name="update_product" value="update_product">
-                <?php submit_button( "商品のユーザーの初期化を実行する" ); ?>
-            </form>
-
-            <br>
-            <hr>
-
-            <h2>全てのユーザー登録、全ての商品を登録</h2>
-            <p>ユーザーを登録し、指定した商品を購入しているユーザーを同期します（グループを初期化します）</p>
-            <form method="post" action="<?php echo admin_url( 'edit.php?post_type=product&page=update-mlg' ); ?>">
-                <?php wp_nonce_field('update_options'); ?>
-                <input type="hidden" name="update_all" value="update_all">
-                <?php submit_button( "商品のユーザーの初期化を実行する" ); ?>
-            </form>
+<!--            <h2>全てのユーザー登録、全ての商品を登録</h2>-->
+<!--            <p>ユーザーを登録し、指定した商品を購入しているユーザーを同期します（グループを初期化します）</p>-->
+<!--            <form method="post" action="--><?php //echo admin_url( 'edit.php?post_type=product&page=update-mlg' ); ?><!--">-->
+<!--                --><?php //wp_nonce_field('update_options'); ?>
+<!--                <input type="hidden" name="do_action" value="update_all">-->
+<!--                --><?php //submit_button( "商品のユーザーの初期化を実行する" ); ?>
+<!--            </form>-->
 
 
         </div>
@@ -429,5 +468,87 @@ class Toiee_Mailerlite_Group {
     
     public function page_init() {
 	    
+    }
+
+    public function update_mlg(){
+        //apiを取得
+        $apikey = get_option( 'woocommerce_mailerlite_group_apikey' );
+
+        //問い合わせ
+        $mailerliteClient = new \MailerLiteApi\MailerLite( $apikey );
+        $groupsApi = $mailerliteClient->groups();
+        $allGroups = $groupsApi->get();
+
+        //配列にする
+        $items = $allGroups->toArray();
+        $groups = array();
+        $groups[0] = '---';
+        foreach( $items as $group ) {
+            $groups[ $group->id ] = $group->name;
+        }
+
+        //optionsに保存する
+        update_option( 'woocommerce_mailerlite_group_list', $groups, 'no');
+        update_option( 'woocommerce_mailerlite_group_list_modified', date("Y-m-d H:i:s"), 'no' );
+
+    }
+
+    public function update_users_to_mailerlite( ){
+        //TODO
+        // 1. ユーザー情報を作成する（ユーザーID一覧を作る。ユーザーIDからフィールドを作る）
+        // 2. 今の時間でグループを作る
+        // 3. ユーザーリストを500ずつに分ける
+        // 4. グループに向かって登録作業を繰り返す
+        // 5. ログを表示する
+        $users = get_users();
+
+
+
+    }
+
+    public function download_users(){
+        ob_start();
+
+        $stream = fopen('php://output', 'w');
+        fputcsv( $stream, array('email', 'name', 'last_name', 'country', 'city', 'phone', 'state', 'zip' ) );
+        foreach( $users as $user ) {
+            $user_meta_data = get_user_meta( $user->ID );
+            fputcsv( $stream, array(
+                $user->user_email,
+                $name = $user_meta_data['first_name'][0],
+                $user_meta_data['last_name'][0],
+                $user_meta_data['billing_country'][0],
+                $user_meta_data['billing_city'][0],
+                $user_meta_data['billing_phone'][0],
+                $user_meta_data['billing_state'][0],
+                $user_meta_data['billing_postcode'][0]
+            ) );
+        }
+
+        fclose( $stream );
+
+        $content = ob_get_contents();
+        ob_end_clean();
+
+        return $content;
+    }
+
+    public function update_product_to_mailerlite(){
+        //TODO
+        /*
+         * 1.商品を購入したユーザーIDのリストを作る
+         * 2.IDからユーザー情報を作成する
+         * 3.グループを500ずつに分ける
+         * 4.指定されたグループに登録する
+         *
+         */
+    }
+
+    public function update_all_to_mailerlite() {
+        //TODO
+        /*
+         * 1. 商品一覧を作る
+         * 2. update_product_to_mailerlite を順番に実行する
+         */
     }
 }

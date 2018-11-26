@@ -101,3 +101,11 @@ function exclude_jetpack_related_from_products( $options ) {
     return $options;
 }
 add_filter( 'jetpack_relatedposts_filter_options', 'exclude_jetpack_related_from_products' );
+
+
+
+// プラグインを有効化した時の動作
+function wc4t_rewrite_flush() {
+    flush_rewrite_rules();
+}
+register_activation_hook( __FILE__, 'wc4t_rewrite_flush' );

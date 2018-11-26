@@ -281,68 +281,47 @@ $restrict_pass   = false;
 
 // 閲覧制限設定を取得
 $wc_restrict_ssp = false;   // デフォルトチャネルの場合は、false
-$podcast_type = 'ptype_default';
 if ( $podcast_series ) {
-	
-	// 古いソースコード。いずれは削除する
-	$wc_restrict_ssp_param  = get_option( 'ss_podcasting_wc_restrict_ssp_' . $series_id, false );  // デフォルトは false
-	$wcr_content_ssp  = get_field( 'series_limit',  $series );
-
-	
-	if( $wc_restrict_ssp_param == 'restrict_enable' || $wcr_content_ssp ) {
-		$wc_restrict_ssp = true;
-	}
-	else {
-		$wc_restrict_ssp = false;
-	}
-
-	$podcast_type = get_option( 'ss_podcasting_podcast_type_' . $series_id, 'ptype_default' );  // デフォルトは false
+    $wc_restrict_ssp  = get_field( 'series_limit',  $series );
 }
 
 // 閲覧制限なら、アクセス権を調べる
 $add_user_message       =  '';   //制限されたシリーズに追加するメッセージ
 $add_user_message_email = '';
 $add_guid = '';
+$add_channel_block = '';
 
 if ( $wc_restrict_ssp ) {
 
-	// シークレットキーを入手、なければデフォルトを使う
-	$wcr_ssp_options = get_option( 'wcr_ssp_options', '' );
-	$seckey = isset( $wcr_ssp_options['seckey'] ) &&  ($wcr_ssp_options['seckey'] != '' )  ? $wcr_ssp_options['seckey'] : WCR_SSP_SECKEY;
-	
-	// token を取り出す
-	if( isset($_GET['wcr_token']) && !is_null($_GET['wcr_token']) ){
-		$add_guid = $_GET['wcr_token'];
-		
-		$de_text = toiee_xor_decrypt( $_GET['wcr_token'] , $seckey  );
-		$tmparr  = explode(',', $de_text);
-				
-		if( isset($tmparr[3]) && is_numeric($tmparr[3]) ){ // user_id があれば
-			
-			$user_id = $tmparr[3];
-			if( ( $user = get_userdata( $user_id ) ) ) {
-				
-				// user のデータを格納する
-				$user_email = $user->user_email;
-				$user_lname = $user->last_name;
-				$user_fname = $user->first_name;
-				
-				$add_user_message = " (【ライセンスについて】この教材は、{$user_lname} {$user_fname} ({$user_email}) さんに対してのみ提供しています)";
-				$add_user_message_email = " (for ".$user_email.")";
-				
-				global $wcr_ssp;
+    $add_channel_block = '<itunes:block>yes</itunes:block>
+        <googleplay:block>yes</googleplay:block>
+';
 
-				// いずれ修正、ここのソース
-				if( $wc_restrict_ssp_param == 'restrict_enable' ) {
-					$ret = $wcr_ssp->get_access_and_product_url_old( $user_email, $user_id, $series_id );
-				}
-				else {
-					$ret = $wcr_ssp->get_access_and_product_url( $user_email, $user_id, $series_id );
-				}
-				$restrict_pass = $ret['access'];
-				$product_url = $ret['url'];
-			}
-		}
+    preg_match( '|/wcrtoken/([^/]+)/?|', $_SERVER['REQUEST_URI'], $matches);
+    $wcrtoken = $matches[1];
+
+	if( $wcrtoken != '' ){
+		$add_guid = 'wcrtoken/'.$wcrtoken;
+
+        $user_query = get_users( array( 'meta_key' => 'wcrtoken', 'meta_value' => $wcrtoken ) );
+        $user_id = $user_query[0]->ID;
+
+        if( ( $user = get_userdata( $user_id ) ) ) {
+
+            // user のデータを格納する
+            $user_email = $user->user_email;
+            $user_lname = $user->last_name;
+            $user_fname = $user->first_name;
+
+            $add_user_message = " (【ライセンスについて】この教材は、{$user_lname} {$user_fname} ({$user_email}) さんに対してのみ提供しています)";
+            $add_user_message_email = " (for " . $user_email . ")";
+
+            global $wcr_ssp;
+            $ret = $wcr_ssp->get_access_and_product_url($user_email, $user_id, $series_id);
+
+            $restrict_pass = $ret['access'];
+            $product_url = $ret['url'];
+        }
 	}
 }
 
@@ -435,6 +414,9 @@ if ( $wc_restrict_ssp ) {
 		<?php if ( $new_feed_url ) { ?>
 			<itunes:new-feed-url><?php echo esc_url( $new_feed_url ); ?></itunes:new-feed-url>
 		<?php }
+
+		// もし制限付きのPodcastならブロックフラグを出力する
+		echo $add_channel_block;
 		
 		// Prevent WP core from outputting an <image> element
 		remove_action( 'rss2_head', 'rss2_site_icon' );
@@ -448,26 +430,6 @@ if ( $wc_restrict_ssp ) {
 		$args = ssp_episodes( $num_posts, $podcast_series, true, 'feed' );
 
 		$qry = new WP_Query( $args );
-		
-/*  --------------------------------------
-	セミナー型の場合、表示される順序を変更する。
-	セミナー型の場合、セミナーの最初の episode を最新（rss末尾）にしたい。
-	rssの先頭は、セミナーの最後の episode となる。
-*/		
-/*
-		if( $podcast_type == 'ptype_seminar' ) {
-			$args['orderby'] = 'post_date';
-			$args['order']   = 'DESC';
-			
-			$last_mod_time = '';
-			$episode_count = $qry->found_posts;
-		}
-		else{
-			$args['orderby'] = 'post_date';
-			$args['order']   = 'ASC';			
-		}
-*/
-/* ---------------------------------------- */		
 
 		if ( $qry->have_posts() ) {
 			while ( $qry->have_posts() ) {
@@ -626,23 +588,14 @@ if ( $wc_restrict_ssp ) {
 				
 /*  -----------------------------------------------------------------------------------------------
 	エピソードの出力は、 $wc_restrict_ssp などを考慮して、決定される。
-	$podcast_type = 'ptype_default' の場合は、そのまま出力
-	$podcast_type = 'ptype_seminar' の場合は、順番を入れ替え、日付を変えて出力する
 */
-				// 一番先頭のepisodeの日付で初期化
-				if( $last_mod_time == '' ) { 
-					$last_mod_time = strtotime( $pubDate );
-				}
-				
-				// 日付の書き換え（一律7:00 JPT に合わせた）
-				if( $podcast_type == 'ptype_seminar' ) {
-					$episode_count--;
-					$pubDate = date('D, d M Y 20:00:00 +0000' , $last_mod_time - ( $episode_count * 24 * 60 * 60 ) );
-				}
-				
 				// エピソードの制限
+                $add_enclosure = '';
 				$episode_restrict = get_post_meta( get_the_ID(), 'wcr_ssp_episode_restrict', 'disable' );
-				if( $episode_restrict == 'enable' ){ $block_flag = 'yes'; }
+				if( $episode_restrict == 'enable' ){
+				    $block_flag = 'yes';
+				    $add_enclosure = '?wcrtoken='.$wcrtoken;
+				}
 				if( $restrict_pass || ($episode_restrict != 'enable' ) ){
 					// 表示
 					$prefix_episode = '';
@@ -686,7 +639,7 @@ if ( $wc_restrict_ssp ) {
 						<itunes:image href="<?php echo esc_url( $episode_image ); ?>"></itunes:image>
 						<googleplay:image href="<?php echo esc_url( $episode_image ); ?>"></googleplay:image>
 					<?php } ?>
-					<enclosure url="<?php echo esc_url( $enclosure ); ?>" length="<?php echo esc_attr( $size ); ?>" type="<?php echo esc_attr( $mime_type ); ?>"></enclosure>
+					<enclosure url="<?php echo esc_url( $enclosure ).$add_enclosure; ?>" length="<?php echo esc_attr( $size ); ?>" type="<?php echo esc_attr( $mime_type ); ?>"></enclosure>
 					<itunes:explicit><?php echo esc_html( $itunes_explicit_flag ); ?></itunes:explicit>
 					<googleplay:explicit><?php echo esc_html( $googleplay_explicit_flag ); ?></googleplay:explicit>
 					<itunes:block><?php echo esc_html( $block_flag ); ?></itunes:block>
