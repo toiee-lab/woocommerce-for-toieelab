@@ -59,6 +59,7 @@ class toiee_woocommerce_mylibrary
 						) );
 		
 		$table_content = '';
+		$index = array();
 		foreach($customer_orders as $order ){
 		
 		    // Order ID (added WooCommerce 3+ compatibility)
@@ -73,14 +74,13 @@ class toiee_woocommerce_mylibrary
 		        $product = wc_get_product( $product_id );
 		        $mylib_url = get_field( 'wcmylib_url' , $product_id); //ACF様様、足を向けて寝れない・・・
 		        				
-				if( $mylib_url != ''){
+				if( $mylib_url != '' && ( !isset($index[ $product_id ]) ) ) {
+
 			        $product->get_image_id();
 					$p_img = get_the_post_thumbnail_url( $product->get_id(), 'full' );
 					
 					$p_name = $product->get_name();
 					$p_url = get_permalink( $product->get_id() );
-		        
-				//echo "mylib: {$mylib_url}, img:{$p_img}, title:{$p_name}, order:{$order_url}, product page:$p_url<br>";
 
 					$table_content .= str_replace(
 						array('%IMG%', '%NAME%', '%VIEW%', '%ORDER%'), 
@@ -91,6 +91,9 @@ class toiee_woocommerce_mylibrary
 							'<a href="'.$order_url.'">注文詳細</a><br><a href="'.$p_url.'">商品情報</a>'
 						), 
 						$tr_text);
+
+					// for avoiding duplication of my lib
+					$index[ $product_id ] = 'registered';
 				}
 		    }
 		}
