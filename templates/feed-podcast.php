@@ -614,7 +614,7 @@ if ( $wc_restrict_ssp ) {
 					<link><?php esc_url( the_permalink_rss() ); ?></link>
 					<pubDate><?php echo $pubDate; ?></pubDate>
 					<dc:creator><?php echo $author; ?></dc:creator>
-					<guid isPermaLink="false"><?php esc_html( the_guid() ); ?><?php echo $add_guid; ?></guid>
+					<guid isPermaLink="false"><?php esc_html( the_permalink() ); ?><?php echo $add_guid; ?></guid>
 					<description><![CDATA[<?php echo $prefix_episode_description . $description . $series_material; ?>]]></description>
 					<itunes:subtitle><![CDATA[<?php echo $itunes_subtitle; ?>]]></itunes:subtitle>
 					<?php if ( $keywords ) : ?>
