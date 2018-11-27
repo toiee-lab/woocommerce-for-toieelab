@@ -46,8 +46,6 @@ class WCR_SSP
 
 		//管理画面設定
 		if( is_admin() ){
-	        add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
-			add_action( 'admin_init', array( $this, 'page_init' ) );
 	        add_action( 'admin_menu', array( $this, 'add_plugin_page_episodeupdate' ) );
 			add_action( 'admin_init', array( $this, 'page_init_episodeupdate' ) );
 		}
@@ -611,75 +609,7 @@ EOD;
 	// ! Admin settings
 	//
 	// -----------------------------------------------------------------------------
-    public function add_plugin_page()
-    {
-        // This page will be under "Settings"
-/*
-        add_options_page(
-            'WC Restrict SSP設定', 
-            'WC Restrict SSP', 
-            'manage_options', 
-            'wcr-ssp-admin', 
-            array( $this, 'create_admin_page' )
-        );
-*/
-		add_submenu_page( 
-			'edit.php?post_type=podcast',
-			'WC Restrict SSP設定',
-			'WC Restrict SSP', 
-			'administrator',
-			'wc4toiee-ssp',
-			array( $this, 'create_admin_page' )
-		);
-    }
-    /**
-     * Options page callback
-     */
-    public function create_admin_page()
-    {
-        // Set class property
-        $this->options = get_option( 'wcr_ssp_options' );
-        ?>
-        <div class="wrap">
 
-            <h2>WooCommerce Restrict Seriously Simple Podcast設定</h2>           
-            <p>暗号用のキーを設定します</p>
-	           
-            <form method="post" action="<?php echo admin_url( 'options.php' ); ?>">
-            <?php
-                // This prints out all hidden setting fields
-                settings_fields( 'wcr_ssp_group' );   
-                do_settings_sections( 'wcr-ssp-setting-admin' );
-                submit_button(); 
-            ?>
-            </form>
-        </div>
-        <?php
-    }
-    /**
-     * Register and add settings
-     */
-    public function page_init()
-    {        
-        register_setting(
-            'wcr_ssp_group', // Option group
-            'wcr_ssp_options', // Option name
-            array( $this, 'sanitize' ) // Sanitize
-        );
-        add_settings_section(
-            'setting_section_id', // ID
-            '暗号キー', // Title
-            array( $this, 'print_section_info' ), // Callback
-            'wcr-ssp-setting-admin' // Page
-        );  
-        add_settings_field(
-            'seckey', // ID
-            '暗号キー', // Title 
-            array( $this, 'seckey_callback' ), // Callback
-            'wcr-ssp-setting-admin', // Page
-            'setting_section_id' // Section           
-        );
-    }
     /**
      * Sanitize each setting field as needed
      *
