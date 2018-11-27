@@ -73,6 +73,7 @@
 	
 	
 	// user check
+	 $modal = '';
 	if( is_user_logged_in() ) {
 		$user_logined = true;
 	}
