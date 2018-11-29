@@ -35,18 +35,24 @@ class Toiee_Mailerlite_Group {
 		//注文の状態変化を検知する
 		add_action( 'woocommerce_order_status_changed', array( $this, 'update_mailerlite_group' ) , 10, 3);
 		add_action( 'woocommerce_subscription_status_updated', array( $this, 'update_mailerlite_group_subscription' ), 10, 3 );
+
+		//ユーザーのプロフィール設定
+		add_action( 'woocommerce_save_account_details', array( $this, 'update_user'), 10, 1);
+		add_action( 'woocommerce_checkout_update_user_meta', array( $this, 'update_user'), 10, 1);
+		add_action( 'woocommerce_customer_save_address', array( $this, 'update_user'), 10, 2);
+
+		add_action( 'personal_options_update', array( $this, 'update_user'), 10, 1);
+		add_action( 'edit_user_profile_update', array( $this, 'update_user'), 10, 1);
+		add_action( 'user_register', array( $this, 'update_user'), 10, 1 ); //ユーザーの作成
 	}
-	
+
 	private function get_key(){
-		
 		if( is_null( $this->apikey ) ){
 			$this->apikey = get_option( 'woocommerce_mailerlite_group_apikey' );
 		}
-		
 		return $this->apikey;
 	}
-	
-	
+
 	/* オーダーの状態が変わったことを検知して、行動する */
 	public function update_mailerlite_group( $order_id, $old_status, $new_status ) {
 
@@ -154,7 +160,7 @@ class Toiee_Mailerlite_Group {
      * @return array
      * @throws \MailerLiteApi\Exceptions\MailerLiteSdkException
      */
-	function update_user( $user_id ) {
+	function update_user( $user_id , $load_address = '') {
 		// get wordpress user data
 		$user_data = get_userdata( $user_id );
 		$user_meta_data = get_metadata( 'user', $user_id, '', true );
@@ -196,7 +202,8 @@ class Toiee_Mailerlite_Group {
 			
 			$subscriberEmail = $email;
 			$subscriberData = [
-			  'fields' => $fields
+				'name' => $name,
+                'fields' => $fields
 			];
 			
 			$subscriber = $subscribersApi->update($subscriberEmail, $subscriberData); // returns object of updated subscriber
@@ -657,25 +664,41 @@ AND meta_key = '_customer_user'", $product_id), ARRAY_A);
 
 	    // 登録するユーザー一覧を作る
 	    $subscribers = array();
+	    $subscribers_hash = array();
+	    $i = 0;
 	    foreach( $result as $id ) {
 	        $user = get_user_by('id', $id['meta_value']);
 		    $user_meta_data = get_metadata( 'user', $user->ID, '', true);
 		    $subscribers[] = $this->get_subscriber_array( $user, $user_meta_data );
+
+		    $subscribers_hash[ $user->user_email ] = $user->ID;
 	    }
+
+	    //Mailerlite Group インスタンスを作成
+	    $MailerLiteApi = (new \MailerLiteApi\MailerLite( $this->get_key() ));
+	    $groupsApi = $MailerLiteApi->groups();
 
 	    // グループの取得
 	    $ret = $this->get_group_id_by_product_id( $product_id );
 	    $group_id = $ret['group_id'];
 
-        // グループに登録
-	    $MailerLiteApi = (new \MailerLiteApi\MailerLite( $this->get_key() ));
-	    $groupsApi = $MailerLiteApi->groups();
+	    // 存在しないユーザーをグループから削除
+	    $groupSubscribers = $groupsApi->getSubscribers( $group_id );
+	    $deleted = array();
+	    foreach( $groupSubscribers as $single_sub ){
+	        $email = $single_sub->email;
+	        if( !isset( $subscribers_hash[ $email ] ) ){ //現在のユーザーの中にいない
+	            //削除
+		        $groupsApi->removeSubscriber($group_id, $single_sub->id);
+		        $deleted[] = $single_sub;
+            }
+        }
 
+        // グループに登録
 	    $options = [
 		    'resubscribe' => false,
 		    'autoresponders' => false // send autoresponders for successfully imported subscribers
 	    ];
-
 	    $addedSubscribers = $groupsApi->importSubscribers($group_id, $subscribers, $options);
 
 	    return "商品別のグループ登録が完了しました。";
