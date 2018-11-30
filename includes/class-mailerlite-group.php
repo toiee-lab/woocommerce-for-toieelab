@@ -12,43 +12,53 @@ class Toiee_Mailerlite_Group {
 	var $apikey;
 
 	public function __construct() {
-		
-		
-		//グループ選択を追加（通常商品）
-		add_action( 'woocommerce_product_options_general_product_data', array( $this, 'create_ml_select' ) );
-		add_action( 'woocommerce_process_product_meta', array( $this, 'save_ml_select' ) );
-		
-		//グループ選択を追加（バリエーション）
-		add_action( 'woocommerce_product_after_variable_attributes', array( $this, 'create_ml_select_variation'), 10, 3 );
-		add_action( 'woocommerce_save_product_variation', array( $this, 'save_ml_select_variation'), 10, 2 );
-		
+
 		//設定を追加
 		add_filter( 'woocommerce_get_sections_advanced', array($this, 'ml_group_section') );
 		add_filter( 'woocommerce_get_settings_advanced', array($this, 'ml_group_setting'), 10, 2 );
 
-		//管理画面設定
-		if( is_admin() ){
-	        add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
-			add_action( 'admin_init', array( $this, 'page_init' ) );
+
+		if( $this->get_key() ) {
+
+			//グループ選択を追加（通常商品）
+			add_action( 'woocommerce_product_options_general_product_data', array( $this, 'create_ml_select' ) );
+			add_action( 'woocommerce_process_product_meta', array( $this, 'save_ml_select' ) );
+
+			//グループ選択を追加（バリエーション）
+			add_action( 'woocommerce_product_after_variable_attributes', array(
+				$this,
+				'create_ml_select_variation'
+			), 10, 3 );
+			add_action( 'woocommerce_save_product_variation', array( $this, 'save_ml_select_variation' ), 10, 2 );
+
+
+			//管理画面設定
+			if ( is_admin() ) {
+				add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
+				add_action( 'admin_init', array( $this, 'page_init' ) );
+			}
+
+			//注文の状態変化を検知する
+			add_action( 'woocommerce_order_status_changed', array( $this, 'update_mailerlite_group' ), 10, 3 );
+			add_action( 'woocommerce_subscription_status_updated', array(
+				$this,
+				'update_mailerlite_group_subscription'
+			), 10, 3 );
+
+			//ユーザーのプロフィール設定
+			add_action( 'woocommerce_save_account_details', array( $this, 'update_user' ), 10, 1 );
+			add_action( 'woocommerce_checkout_update_user_meta', array( $this, 'update_user' ), 10, 1 );
+			add_action( 'woocommerce_customer_save_address', array( $this, 'update_user' ), 10, 2 );
+
+			add_action( 'personal_options_update', array( $this, 'update_user' ), 10, 1 );
+			add_action( 'edit_user_profile_update', array( $this, 'update_user' ), 10, 1 );
+			add_action( 'user_register', array( $this, 'update_user' ), 10, 1 ); //ユーザーの作成
 		}
-		
-		//注文の状態変化を検知する
-		add_action( 'woocommerce_order_status_changed', array( $this, 'update_mailerlite_group' ) , 10, 3);
-		add_action( 'woocommerce_subscription_status_updated', array( $this, 'update_mailerlite_group_subscription' ), 10, 3 );
-
-		//ユーザーのプロフィール設定
-		add_action( 'woocommerce_save_account_details', array( $this, 'update_user'), 10, 1);
-		add_action( 'woocommerce_checkout_update_user_meta', array( $this, 'update_user'), 10, 1);
-		add_action( 'woocommerce_customer_save_address', array( $this, 'update_user'), 10, 2);
-
-		add_action( 'personal_options_update', array( $this, 'update_user'), 10, 1);
-		add_action( 'edit_user_profile_update', array( $this, 'update_user'), 10, 1);
-		add_action( 'user_register', array( $this, 'update_user'), 10, 1 ); //ユーザーの作成
 	}
 
 	private function get_key(){
 		if( is_null( $this->apikey ) ){
-			$this->apikey = get_option( 'woocommerce_mailerlite_group_apikey' );
+			$this->apikey = get_option( 'woocommerce_mailerlite_group_apikey' ); //TODO false を返す
 		}
 		return $this->apikey;
 	}
