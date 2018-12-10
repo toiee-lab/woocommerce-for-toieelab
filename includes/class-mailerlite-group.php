@@ -13,11 +13,6 @@ class Toiee_Mailerlite_Group {
 
 	public function __construct() {
 
-		//設定を追加
-		add_filter( 'woocommerce_get_sections_advanced', array($this, 'ml_group_section') );
-		add_filter( 'woocommerce_get_settings_advanced', array($this, 'ml_group_setting'), 10, 2 );
-
-
 		if( $this->get_key() ) {
 
 			//グループ選択を追加（通常商品）
@@ -37,6 +32,9 @@ class Toiee_Mailerlite_Group {
 				add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
 				add_action( 'admin_init', array( $this, 'page_init' ) );
 			}
+
+			//設定タブ（連携）を追加
+			add_filter( 'plugins_loaded', array( $this, 'init_integration' ) );
 
 			//注文の状態変化を検知する
 			add_action( 'woocommerce_order_status_changed', array( $this, 'update_mailerlite_group' ), 10, 3 );
@@ -58,7 +56,8 @@ class Toiee_Mailerlite_Group {
 
 	private function get_key(){
 		if( is_null( $this->apikey ) ){
-			$this->apikey = get_option( 'woocommerce_mailerlite_group_apikey' ); //TODO false を返す
+			$settings = get_option( 'woocommerce_integration-mailerlite-group_settings' );
+			$this->apikey = ( isset( $settings['api_key'] ) ) ? $settings['api_key'] : false;
 		}
 		return $this->apikey;
 	}
@@ -203,9 +202,22 @@ class Toiee_Mailerlite_Group {
 			  'name' => $name,
 			  'fields' => $fields
 			];
-			
-			$addedSubscriber = $subscribersApi->create($subscriber);
-			
+
+			// default group に追加
+            if( $group_id = get_option( 'woocommerce_mailerlite_group_default', false) ) {
+	            $MailerLiteApi = ( new \MailerLiteApi\MailerLite( $this->get_key() ) );
+	            $groupsApi     = $MailerLiteApi->groups();
+	            // グループに登録
+	            $options          = [
+		            'resubscribe'    => true,
+		            'autoresponders' => true // send autoresponders for successfully imported subscribers
+	            ];
+	            $addedSubscriber = $groupsApi->importSubscribers( $group_id, $subscriber, $options );
+            }
+            else {
+	            $addedSubscriber = $subscribersApi->create( $subscriber );
+            }
+
 			return $addedSubscriber;
 		}
 		else { // 更新する
@@ -294,45 +306,6 @@ class Toiee_Mailerlite_Group {
 	}
 	
 	
-	/*
-	* 設定ページ
-	*/
-	public function ml_group_section( $sections ) { 
-		$sections['mailerlite_group'] = __( 'MailerLiteグループ', 'wc-ext-toiee');
-		return $sections;
-	}
-		
-	public function ml_group_setting( $settings, $current_section ) {
-		
-		if( 'mailerlite_group' === $current_section ) {
-			
-			
-			$my_settings = array(
-				array(
-					'title'     => __( 'Mailerlite Group設定', 'wc-ext-toiee' ),
-					'type'      => 'title',
-					'id'        => 'mlg_setting_title',
-				),
-				array(
-					'id'       => 'woocommerce_mailerlite_group_apikey',
-					'type'     => 'text',
-					'title'    => __( 'Mailerlite APIキー', 'wc-ext-toiee' ),
-					'default'  => '',
-					'desc'     => __( 'MailerLiteにて取得してください', 'wc-ext-toiee' ),
-					'desc_tip' => true,
-				),
-				array('type' => 'sectionend', 'id' => 'test-options'),
-			);
-			
-			return $my_settings;
-		}
-		else {
-			return $settings;
-		}
-	}
-	
-	
-	
 	
 	/* ----------------------------------------------------------
 		管理ページ作成
@@ -368,6 +341,9 @@ class Toiee_Mailerlite_Group {
                 case 'update_mlg' :
                     $ret = $this->update_mlg();
                     break;
+	            case 'update_default' :
+		            $ret = $this->update_default( $_POST['group_id'] );
+		            break;
                 case 'update_users' :
                     $ret = $this->update_users_to_mailerlite();
                     break;
@@ -407,14 +383,32 @@ class Toiee_Mailerlite_Group {
             ?>
             <h3>グループ一覧を取得</h3>
             <p>Mailerlite に問い合わせて、グループを取得します。ここで取得したグループ一覧を、各商品にて登録できます。<br>
-            <a href="<?php echo admin_url( 'admin.php?page=wc-settings&tab=advanced&section=mailerlite_group' ); ?>">Mailerlite APIの設定はこちら</a></p>
+            <a href="<?php echo admin_url( 'admin.php?page=wc-settings&tab=integration&section=integration-mailerlite-group' ); ?>">Mailerlite APIの設定はこちら</a></p>
             <textarea readonly="readonly" style="width: 100%" rows="10" title="mailerlite group list"><?php echo $text; ?></textarea>
+            <label>前回の更新日時: <?php echo $modified_date; ?></label>
 
             <form method="post" action="<?php echo admin_url( 'edit.php?post_type=product&page=update-mlg' ); ?>">
 	            <?php wp_nonce_field('update_options'); ?>
             	<input type="hidden" name="do_action" value="update_mlg">
             	<?php submit_button( "グループの更新を実行する" ); ?>
-                <label>前回の更新日時: <?php echo $modified_date; ?></label>
+            </form>
+
+
+            <h3>デフォルトグループを設定</h3>
+            <p>無料登録ユーザーを追加するグループを指定してください。</p>
+            <form method="post" action="<?php echo admin_url( 'edit.php?post_type=product&page=update-mlg' ); ?>">
+		        <?php wp_nonce_field('update_options'); ?>
+                <input type="hidden" name="do_action" value="update_default">
+                <select name="group_id">
+                    <?php
+                    $default_gid = get_option('woocommerce_mailerlite_group_default', null);
+                    foreach($groups as $id => $name ) {
+                        $selected = ($id == $default_gid ) ? ' selected="selected"' : '';
+	                    echo '<option value="'.$id.'"'.$selected.'>'.$name.'</option>'."\n";
+                    }
+                    ?>
+                </select>
+		        <?php submit_button( "デフォルトグループを更新する" ); ?>
             </form>
 
             <br>
@@ -425,7 +419,8 @@ class Toiee_Mailerlite_Group {
 
             <h2>顧客リスト</h2>
             <p>このWordPressのユーザーを登録します。登録時に自動で
-                「wc import 2018-11-18 11:08」のようなグループを作成し、インポートします。</p>
+                「wc import 2018-11-18 11:08」のようなグループを作成し、インポートします。デフォルトグループには、追加しません。
+                必要に応じて、Mailerlite上でグループ登録を行なってください。</p>
             <form method="post" action="<?php echo admin_url( 'edit.php?post_type=product&page=update-mlg' ); ?>">
                 <?php wp_nonce_field('update_options'); ?>
                 <input type="hidden" name="do_action" value="update_users">
@@ -532,7 +527,7 @@ class Toiee_Mailerlite_Group {
 
     public function update_mlg(){
         //apiを取得
-        $apikey = get_option( 'woocommerce_mailerlite_group_apikey' );
+        $apikey = $this->get_key();
 
         //問い合わせ
         $mailerliteClient = new \MailerLiteApi\MailerLite( $apikey );
@@ -554,7 +549,16 @@ class Toiee_Mailerlite_Group {
         return "グループ一覧を取得、更新しました";
 
     }
-    
+
+	public function update_default( $group_id ){
+
+		//optionsに保存する
+		update_option( 'woocommerce_mailerlite_group_default', $group_id, 'no');
+		return "デフォルトグループ更新しました";
+
+	}
+
+
     public function get_subscriber_array( $user, $user_meta_data ) {
 	    $subscriber = [
 		    'email' => $user->user_email,
@@ -721,4 +725,25 @@ AND meta_key = '_customer_user'", $product_id), ARRAY_A);
 	        $this->update_product_to_mailerlite( $p['post_id'] );
         }
     }
+
+	public function init_integration( $integrations ) {
+
+		// Checks if WooCommerce is installed.
+		if ( class_exists( 'WC_Integration' ) ) {
+			// Include our integration class.
+			include_once 'class-wc-integration-tab.php';
+			// Register the integration.
+			add_filter( 'woocommerce_integrations', array( $this, 'add_integration' ) );
+		} else {
+			// throw an admin error if you like
+		}
+
+	}
+
+	public function add_integration( $integrations ) {
+		$integrations[] = 'ToieeLab_Integration';
+		return $integrations;
+    }
 }
+
+
