@@ -12,6 +12,8 @@ class Toiee_Mailerlite_Group {
 	var $apikey;
 
 	public function __construct() {
+		//設定タブ（連携）を追加
+		add_filter( 'plugins_loaded', array( $this, 'init_integration' ) );
 
 		if( $this->get_key() ) {
 
@@ -33,8 +35,6 @@ class Toiee_Mailerlite_Group {
 				add_action( 'admin_init', array( $this, 'page_init' ) );
 			}
 
-			//設定タブ（連携）を追加
-			add_filter( 'plugins_loaded', array( $this, 'init_integration' ) );
 
 			//注文の状態変化を検知する
 			add_action( 'woocommerce_order_status_changed', array( $this, 'update_mailerlite_group' ), 10, 3 );
