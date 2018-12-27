@@ -222,7 +222,7 @@ EOD;
 	* 現在のユーザーで、アクセスをチェックします。様々なプロダクトが混ざった状態で動作する設計です
 	* wcrestrict、product、
 	*/
-	function check_access( $ids , $user_id = '') {
+	public function check_access( $ids , $user_id = '') {
 
 		// user check
 		if($user_id == '') {
