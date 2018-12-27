@@ -269,7 +269,8 @@ EOD;
 					$product_type = $product->get_type();
 					
 					// subscription
-					if( $product_type == 'subscription' && function_exists('wcs_user_has_subscription') ) {
+					if( function_exists('wcs_user_has_subscription') &&
+                        ($product_type == 'subscription' || $product_type == 'variable-subscription' ) ) {
 						$ret = ($i != '') ? wcs_user_has_subscription( $user_id, $i, 'active') : false;
 					}
 					else {  // 今の所、 product_varidation ぐらいか？						

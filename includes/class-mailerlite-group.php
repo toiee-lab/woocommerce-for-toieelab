@@ -469,6 +469,10 @@ class Toiee_Mailerlite_Group {
 	    
     }
 
+	/**
+     * Mailerlite Groupが設定されている商品一覧を取得する
+	 * @return array
+	 */
     public function get_products_related_mailerlite() {
         $posts        = get_posts(
             array(
@@ -481,7 +485,7 @@ class Toiee_Mailerlite_Group {
 
 	        $ret = $this->get_group_id_by_product_id( $post->ID );
 	        if( is_array($ret) ){
-	            $product_list[] = $ret;
+	            $product_list = array_merge($product_list, $ret);
             }
         }
 
@@ -490,10 +494,13 @@ class Toiee_Mailerlite_Group {
 
     public function get_group_id_by_product_id( $product_id ) {
 
+        //TODO : variable-subscription に対応させる
+        $group_ids = array();
+
 	    $product = wc_get_product( $product_id );
 	    $type    = $product->get_type();
 
-	    if ( $type == 'variable' ) { //variation を取得して設定する
+	    if ( $type == 'variable' || $type=="variable-subscription" ) { //variation を取得して設定する
 		    $variations = $product->get_available_variations();
 		    foreach ( $variations as $v ) {
 			    $post_id = $v['variation_id'];
@@ -501,7 +508,7 @@ class Toiee_Mailerlite_Group {
 			    $atts    = array_shift( $v['attributes'] );
 			    $label   = wc_attribute_label( $atts, $product ); //ToDo そのうち適切なものが表示されるように調べる
 			    if ( $mlg_id != '' ) {
-				    return [
+				    $group_ids[] = [
 					    'group_id'      => $mlg_id,
 					    'post_id'      => $post_id,
 					    'product_name' => $product->get_name() . ' - ' . $label,
@@ -509,11 +516,22 @@ class Toiee_Mailerlite_Group {
 				    ];
 			    }
 		    }
-
-	    } else {
+	    }
+	    else if( $type == 'subscription_variation' ){ //variable-subscription の product の1つが指定された場合
+		    $mlg_id  = get_post_meta( $product_id, '_variation_mailerlite_group', true );
+		    if( $mlg_id != '' ){
+			    $group_ids[] = [
+				    'group_id'      => $mlg_id,
+				    'post_id'      => $product->get_id(),
+				    'product_name' => $product->get_name(),
+				    'product_type' => 'subscription_variation'
+			    ];
+            }
+        }
+	    else {
 		    $mlg_id = get_post_meta( $product->get_id(), '_mailerlite_group', true );
 		    if ( $mlg_id != '' ) {
-			    return [
+			    $group_ids[] = [
 				    'group_id'      => $mlg_id,
 				    'post_id'      => $product->get_id(),
 				    'product_name' => $product->get_name(),
@@ -522,7 +540,10 @@ class Toiee_Mailerlite_Group {
 		    }
 	    }
 
-	    return false;
+	    if( count($group_ids) )
+	        return $group_ids;
+	    else
+	        return false;
     }
 
     public function update_mlg(){
@@ -605,7 +626,6 @@ class Toiee_Mailerlite_Group {
     }
 
     public function update_product_to_mailerlite( $product_id ) {
-        //TODO
         /*
          * 1.商品を購入したユーザーIDのリストを作る
          * 2.IDからユーザー情報を作成する
@@ -619,6 +639,8 @@ class Toiee_Mailerlite_Group {
         $wpre = $wpdb->prefix;
         $product = wc_get_product( $product_id );
 	    $type    = $product->get_type();
+
+	    $product_id_first = $product_id;  // $product_id を親で上書きすることがあるので、バックアップ
 
 	    switch( $type ) {
 		    case 'variation' :
@@ -638,6 +660,8 @@ WHERE  post_id IN (
 AND meta_key = '_customer_user'", $product_id ), ARRAY_A );
 			    break;
 
+            case 'subscription_variation':
+                $product_id = $product->get_parent_id();
             case 'subscription' :
 	            $result = $wpdb->get_results( $wpdb->prepare("SELECT meta_value
 FROM wp_postmeta
@@ -693,8 +717,13 @@ AND meta_key = '_customer_user'", $product_id), ARRAY_A);
 	    $groupsApi = $MailerLiteApi->groups();
 
 	    // グループの取得
-	    $ret = $this->get_group_id_by_product_id( $product_id );
-	    $group_id = $ret['group_id'];
+	    $ret = $this->get_group_id_by_product_id( $product_id_first );
+	    if( isset($ret[0]) ) {
+		    $group_id = $ret[0]['group_id'];
+	    }
+	    else{
+	        return "グループが登録されていませんでした。";
+        }
 
 	    // 存在しないユーザーをグループから削除
 	    $groupSubscribers = $groupsApi->getSubscribers( $group_id );
