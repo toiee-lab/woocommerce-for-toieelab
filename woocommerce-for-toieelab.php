@@ -63,6 +63,7 @@ require_once( 'includes/class-wcr-ctag.php' );
 require_once( 'includes/class-simple-event.php' );
 require_once( 'includes/class-mailerlite-group.php' );
 require_once( 'includes/toiee-shortcodes.php' );
+require_once( 'includes/class-wcr-login.php' );
 
 
 // generate instances
@@ -90,6 +91,9 @@ $toiee_simple_event = new Toiee_SimpleEvent();
 
 global $toiee_ml_group;
 $toiee_ml_group = new Toiee_Mailerlite_Group();
+
+global $wcr_login;
+$wdr_login = new Toiee_WCLogin();
 
 
 // JetPack を WooCommerce Productページでは実行しない
