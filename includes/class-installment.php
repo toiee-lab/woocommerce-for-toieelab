@@ -59,7 +59,9 @@ class ToieeLab_Installment {
 
 		$installment = get_post_meta($product_id, '_installment_subscription', true);
 		if( $installment == 'yes' ){
+			remove_filter( 'wcs_user_has_subscription', array($this, 'installment_check'), 99);
 			$has_subscription = wcs_user_has_subscription( $user_id, $product_id, 'expired' );
+			add_filter( 'wcs_user_has_subscription', array($this, 'installment_check'), 99, 4);
 		}
 
 		return $has_subscription;
