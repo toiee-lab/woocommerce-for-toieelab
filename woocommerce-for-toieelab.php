@@ -5,7 +5,7 @@
  * Plugin URI: http://toiee.jp
  * Description: WooCommerceの商品と商品をまとめるデータと連動して、コンテンツの閲覧制限、Seriously Simple Podcastの閲覧制限・機能拡張、ユーザー固有のフィードURL生成、マイライブラリ機能、ショートコードなどを実装
  * Author: toiee Lab
- * Version: 0.7.1
+ * Version: 0.8
  * Author URI: http://toiee.jp
  */
  
@@ -64,6 +64,7 @@ require_once( 'includes/class-simple-event.php' );
 require_once( 'includes/class-mailerlite-group.php' );
 require_once( 'includes/toiee-shortcodes.php' );
 require_once( 'includes/class-wcr-login.php' );
+require_once( 'includes/class-installment.php' );
 
 
 // generate instances
@@ -79,6 +80,8 @@ if(is_plugin_active( 'seriously-simple-podcasting/seriously-simple-podcasting.ph
 	$wcr_ssp->plugin_url = plugins_url( '', __FILE__ );
 }
 
+global $wc_installment;
+$wc_installment = new ToieeLab_Installment();
 
 global $wcr_mylibrary;
 $wcr_mylibrary = new toiee_woocommerce_mylibrary();

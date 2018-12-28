@@ -83,6 +83,18 @@ class Toiee_Mailerlite_Group {
 
         $order_id = $subscription->get_order_number();
 
+        // istallement の場合、expire を active として処理する
+		$order = wc_get_order( $order_id );
+		foreach ( $order->get_items() as $item_id => $item_values ) {
+		    $product_id = $item_values->get_product_id();
+		    $installment = get_post_meta($product_id, '_installment_subscription', true);
+		    if( $installment && $new_status == 'expired'){
+		        $new_status = 'active';
+		        break;
+            }
+		}
+
+
 	    if( $new_status == 'active' ) {
             $this->add_group( $order_id );
         }
@@ -494,7 +506,6 @@ class Toiee_Mailerlite_Group {
 
     public function get_group_id_by_product_id( $product_id ) {
 
-        //TODO : variable-subscription に対応させる
         $group_ids = array();
 
 	    $product = wc_get_product( $product_id );
@@ -506,7 +517,7 @@ class Toiee_Mailerlite_Group {
 			    $post_id = $v['variation_id'];
 			    $mlg_id  = get_post_meta( $post_id, '_variation_mailerlite_group', true );
 			    $atts    = array_shift( $v['attributes'] );
-			    $label   = wc_attribute_label( $atts, $product ); //ToDo そのうち適切なものが表示されるように調べる
+			    $label   = wc_attribute_label( $atts, $product );
 			    if ( $mlg_id != '' ) {
 				    $group_ids[] = [
 					    'group_id'      => $mlg_id,
@@ -663,6 +674,15 @@ AND meta_key = '_customer_user'", $product_id ), ARRAY_A );
             case 'subscription_variation':
                 $product_id = $product->get_parent_id();
             case 'subscription' :
+
+                $installment = get_post_meta( $product_id, '_installment_subscription', true);
+                if( $installment ){
+	                $status_condition = "( post_status = 'wc-active' OR post_status = 'wc-expired' )";
+                }
+                else{
+	                $status_condition = "post_status = 'wc-active'";
+                }
+
 	            $result = $wpdb->get_results( $wpdb->prepare("SELECT meta_value
 FROM wp_postmeta
 WHERE post_id IN (
@@ -678,7 +698,7 @@ WHERE post_id IN (
    )
   AND order_item_type = 'line_item'
  )
-AND post_type = 'shop_subscription' AND post_status = 'wc-active'
+AND post_type = 'shop_subscription' AND {$status_condition}
 )
 AND meta_key = '_customer_user'", $product_id), ARRAY_A);
 	            break;
