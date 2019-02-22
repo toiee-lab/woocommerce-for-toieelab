@@ -17,6 +17,7 @@ class Woocommerce_SimpleRestrictContent
 
 		//shortcode の追加
 		add_shortcode( 'wcr-content' , array( $this, 'wcr_content_shortdode') );
+		add_shortcode( 'wcr-content-free' , array( $this, 'wcr_content_free_shortdode') );
 		
 		//管理画面設定
 		if( is_admin() ){
@@ -107,7 +108,131 @@ EOD;
 	// ! Shortcode
 	//
 	// -----------------------------------------------------------------------------
-	
+
+    function wcr_content_free_shortdode( $atts, $content ) {
+	    $atts = shortcode_atts( array(
+	            'title' => '会員限定',
+	            'message'  => 'このコンテンツをご覧になるには、会員ログインが必要です。',
+        ), $atts);
+
+	    $content = do_shortcode( $content );
+
+	    if( is_user_logged_in()  ){
+	        if( is_super_admin() ){
+		        return '<div style="border:#f99 dashed 1px"><p style="background-color:#fcc;">このコンテンツは制限付きです</p>'.$content.'</div>';
+            }
+	        else{
+		        return $content;
+            }
+	    }
+	    else {
+	        //TODO ログインフォームを生成する
+
+		    // error message がある場合、モーダルウィンドウを表示する（ための準備）
+		    ob_start();
+		    wc_print_notices();
+		    $wc_notices = ob_get_contents();
+		    ob_end_clean();
+
+		    $js = ( $wc_notices != '') ?
+			    "<script>el = document.getElementById('modal_login_form');UIkit.modal(el).show();</script>"
+			    : '';
+
+		    // ログインフォームの取得
+		    ob_start();
+		    echo $wc_notices;
+		    woocommerce_login_form( array('redirect'=> get_permalink()) );
+		    echo $js;
+		    $login_form = ob_get_contents();
+		    ob_end_clean();
+
+		    // 登録フォームの取得
+		    ob_start();
+		    ?>
+            <h2><?php esc_html_e( 'Register', 'woocommerce' ); ?></h2>
+
+            <form method="post" class="woocommerce-form woocommerce-form-register register">
+
+			    <?php do_action( 'woocommerce_register_form_start' ); ?>
+
+			    <?php if ( 'no' === get_option( 'woocommerce_registration_generate_username' ) ) : ?>
+
+                    <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
+                        <label for="reg_username"><?php esc_html_e( 'Username', 'woocommerce' ); ?>&nbsp;<span class="required">*</span></label>
+                        <input type="text" class="woocommerce-Input woocommerce-Input--text input-text" name="username" id="reg_username" autocomplete="username" value="<?php echo ( ! empty( $_POST['username'] ) ) ? esc_attr( wp_unslash( $_POST['username'] ) ) : ''; ?>" /><?php // @codingStandardsIgnoreLine ?>
+                    </p>
+
+			    <?php endif; ?>
+
+                <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
+                    <label for="reg_email"><?php esc_html_e( 'Email address', 'woocommerce' ); ?>&nbsp;<span class="required">*</span></label>
+                    <input type="email" class="woocommerce-Input woocommerce-Input--text input-text" name="email" id="reg_email" autocomplete="email" value="<?php echo ( ! empty( $_POST['email'] ) ) ? esc_attr( wp_unslash( $_POST['email'] ) ) : ''; ?>" /><?php // @codingStandardsIgnoreLine ?>
+                </p>
+
+			    <?php if ( 'no' === get_option( 'woocommerce_registration_generate_password' ) ) : ?>
+
+                    <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
+                        <label for="reg_password"><?php esc_html_e( 'Password', 'woocommerce' ); ?>&nbsp;<span class="required">*</span></label>
+                        <input type="password" class="woocommerce-Input woocommerce-Input--text input-text" name="password" id="reg_password" autocomplete="new-password" />
+                    </p>
+
+			    <?php endif; ?>
+
+			    <?php do_action( 'woocommerce_register_form' ); ?>
+
+                <p class="woocommerce-FormRow form-row">
+				    <?php wp_nonce_field( 'woocommerce-register', 'woocommerce-register-nonce' ); ?>
+                    <button type="submit" class="woocommerce-Button button" name="register" value="<?php esc_attr_e( 'Register', 'woocommerce' ); ?>"><?php esc_html_e( 'Register', 'woocommerce' ); ?></button>
+                </p>
+
+			    <?php do_action( 'woocommerce_register_form_end' ); ?>
+
+            </form>
+		    <?php
+		    $register_form = ob_get_contents();
+		    ob_end_clean();   //登録フォーム取得、ここまで
+
+
+		    $html = <<<EOD
+<!-- This is the modal -->
+<div id="modal_login_form" uk-modal>
+    <div class="uk-modal-dialog uk-modal-body">
+        <h4>会員ログイン</h4>
+        <div class="uk-alert-success" uk-alert><p>無料登録で、ご覧になれます。<br>
+        <a href="#toggle-form" uk-toggle="target: #toggle-form; animation: uk-animation-fade">無料登録はこちらをクリック</a>
+        </p>
+        </div>
+        <div id="toggle-form" hidden class="uk-card uk-card-default uk-card-body uk-margin-small">
+        {$register_form}
+        </div>
+        {$login_form}
+        <p class="uk-text-right">
+            <button class="uk-button uk-button-default uk-modal-close" type="button">閉じる</button>
+        </p>
+    </div>
+</div>
+EOD;
+
+
+            //表示するもの
+            $html .= <<<EOD
+    <div class="uk-inline uk-padding-small uk-width-1-1">
+    
+        {$content}
+    
+        <div class="uk-overlay-primary uk-position-cover"></div>
+        <div class="uk-overlay uk-position-top uk-light">
+            <h3>{$atts['title']}</h3>
+            <p>{$atts['message']}</p>
+            <p><button class="uk-button uk-button-primary" uk-toggle="target: #modal_login_form">ログインする</button></p>
+            <p>会員登録は、無料です</p>
+        </div>    
+    </div>
+EOD;
+
+            return $html;
+        }
+    }
 	
 	function wcr_content_shortdode( $atts, $content ) {
 		$atts = shortcode_atts( array(
