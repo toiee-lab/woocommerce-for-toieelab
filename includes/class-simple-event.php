@@ -14,8 +14,8 @@ class Toiee_SimpleEvent
 		
 		//作成者を出す
 		add_action('admin_menu', array($this, 'add_custom_box' ) );
-		add_filter('manage_posts_columns', array( $this, 'manage_columns') );
-		add_action('manage_posts_custom_column', array($this, 'add_column'), 10, 2);
+		add_filter('manage_toiee-event_posts_columns', array( $this, 'manage_columns') );
+		add_action('manage_toiee-event_posts_custom_column', array($this, 'add_column'), 10, 2);
 		
 		add_shortcode('toiee_show_event_tabel', array($this, 'shortcode__toiee_show_event_tabel'));
 
