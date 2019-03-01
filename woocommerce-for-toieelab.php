@@ -5,7 +5,7 @@
  * Plugin URI: http://toiee.jp
  * Description: WooCommerceの商品と商品をまとめるデータと連動して、コンテンツの閲覧制限、Seriously Simple Podcastの閲覧制限・機能拡張、ユーザー固有のフィードURL生成、マイライブラリ機能、ショートコードなどを実装
  * Author: toiee Lab
- * Version: 0.8.2
+ * Version: 0.9
  * Author URI: http://toiee.jp
  */
  
@@ -65,6 +65,7 @@ require_once( 'includes/class-mailerlite-group.php' );
 require_once( 'includes/toiee-shortcodes.php' );
 require_once( 'includes/class-wcr-login.php' );
 require_once( 'includes/class-installment.php' );
+require_once( 'includes/class-scrum-post.php' );
 
 
 // generate instances
@@ -98,6 +99,8 @@ $toiee_ml_group = new Toiee_Mailerlite_Group();
 global $wcr_login;
 $wdr_login = new Toiee_WCLogin();
 
+global $toiee_scrum;
+$toiee_scrum = new Toiee_Scrum_Post();
 
 // JetPack を WooCommerce Productページでは実行しない
 function exclude_jetpack_related_from_products( $options ) {
