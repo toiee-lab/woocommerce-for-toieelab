@@ -2,7 +2,7 @@
     "name" : "WooCommerce Simple Restrict Content",
     "slug" : "woocommerce-simple-restrict-content",
     "download_url" : "https://github.com/toiee-lab/wc-restrict/archive/master.zip",
-    "version" : "0.9",
+    "version" : "0.9.1",
     "author" : "toiee Lab",
     "sections" : {
         "description" : "<a href=\"https://github.com/toiee-lab/wc-restrict\">詳細は、こちら</a></li>"

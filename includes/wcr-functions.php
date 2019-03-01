@@ -38,22 +38,24 @@ function w4t_podcast_card( $sid ){
 
 	$card = <<<EOD
                 <div class="uk-card uk-card-default uk-card-small uk-card-body">
-                    <div class="uk-grid-collapse " uk-grid>
+                    <div class="uk-grid-collapse uk-height-1-1" uk-grid>
                         <div><img src="%IMG%" alt="" width="100px"></div>
                         <div class="uk-width-expand">
                             <h3 class="uk-card-title uk-margin-left">%TITLE%</h3>
                             <p class=" uk-margin-left uk-text-small">%DESCRIPTION%</p>
                         </div>
                     </div>
+   	                <a href="%URL%" class="uk-display-block uk-position-cover"></a>
                 </div>
 EOD;
 
 	$series = get_term( $sid, 'series');
+	$series_url   = get_term_link( $series );
 	$series_image = get_option( 'ss_podcasting_data_image_' . $sid, 'no-image' );
 
 	return str_replace(
-		array('%IMG%', '%TITLE%', '%DESCRIPTION%'),
-		array($series_image, $series->name, $series->description),
+		array('%URL%','%IMG%', '%TITLE%', '%DESCRIPTION%'),
+		array($series_url, $series_image, $series->name, $series->description),
 		$card
 	);
 }
