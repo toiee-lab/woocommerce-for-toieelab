@@ -413,7 +413,16 @@ class Toiee_Scrum_Post
 							'class' => '',
 							'id' => '',
 						),
-						'default_value' => ':spiral_note_pad: *ブログを更新しました！* '."\n".'<%URL%|%TITLE%>',
+						'default_value' => ":spiral_note_pad: *ブログを更新しました！* 
+内容は、以下の通りです
+```
+タイトル : %TITLE%
+内容 :
+%DESP%
+```
+
+<%URL%|Webサイト> でご覧ください！
+",
 						'placeholder' => '',
 						'maxlength' => '',
 						'rows' => '',
@@ -424,7 +433,7 @@ class Toiee_Scrum_Post
 						'label' => '【Slack自動通知】お知らせPodcast',
 						'name' => 'scrum_slack_notification_news_podcast',
 						'type' => 'textarea',
-						'instructions' => '%URL% で「Podcastページへのリンク」を挿入できます。 %EPISODE% でエピソードのリンクを設定できます。',
+						'instructions' => '%EPISODE_URL% : エピソードのURL、%EPISODE_TITLE% : エピソードのタイトル、%EPISODE_DESP% : エピソードの内容、 %SERIES_URL% : シリーズのURL、%SERIES_TITLE% : シリーズのタイトル',
 						'required' => 0,
 						'conditional_logic' => 0,
 						'wrapper' => array(
@@ -432,7 +441,16 @@ class Toiee_Scrum_Post
 							'class' => '',
 							'id' => '',
 						),
-						'default_value' => ':studio_microphone: *お知らせPodcastを追加しました！* '."\n".'<%URL%|Webで視聴> するか、Podcastアプリをどうぞ！',
+						'default_value' => ":studio_microphone: *お知らせPodcastを追加しました！*
+内容は以下の通りです。
+
+```
+タイトル : %EPISODE_TITLE%
+内容 :
+%EPISODE_DESP%
+```
+
+<%SERIES_URL%|Webで視聴> するか、Podcastアプリで、どうぞ！！",
 						'placeholder' => '',
 						'maxlength' => '',
 						'rows' => '',
@@ -443,7 +461,7 @@ class Toiee_Scrum_Post
 						'label' => '【Slack自動通知】アーカイブPodcast',
 						'name' => 'scrum_slack_notification_archive_podcast',
 						'type' => 'textarea',
-						'instructions' => '%URL% で「Podcastページへのリンク」を挿入できます。 %EPISODE% でエピソードのリンクを設定できます。',
+						'instructions' => '%EPISODE_URL% : エピソードのURL、%EPISODE_TITLE% : エピソードのタイトル、%EPISODE_DESP% : エピソードの内容、 %SERIES_URL% : シリーズのURL、%SERIES_TITLE% : シリーズのタイトル',
 						'required' => 0,
 						'conditional_logic' => 0,
 						'wrapper' => array(
@@ -451,7 +469,16 @@ class Toiee_Scrum_Post
 							'class' => '',
 							'id' => '',
 						),
-						'default_value' => ':studio_microphone: *アーカイブPodcastを追加しました！* '."\n".'<%URL%|Webで視聴> するか、Podcastアプリをどうぞ！',
+						'default_value' => ":studio_microphone: *アーカイブPodcastを追加しました！*
+内容は以下の通りです。
+
+```
+タイトル : %EPISODE_TITLE%
+内容 :
+%EPISODE_DESP%
+```
+
+<%SERIES_URL%|Webで視聴> するか、Podcastアプリで、どうぞ！！",
 						'placeholder' => '',
 						'maxlength' => '',
 						'rows' => '',
@@ -501,10 +528,12 @@ class Toiee_Scrum_Post
 				$webhook_url = $scrum_fields['scrum_slack_webhook'];
 
 				$url = get_term_link( $scrum[0] );
+				$post_desp = substr( wp_strip_all_tags( $post->post_content ), 0, 300);
+
 
 				$message = str_replace(
-					array( '%URL%', '%TITLE%' ),
-					array( $url, $post->post_title),
+					array( '%URL%', '%TITLE%' , '%DESP%'),
+					array( $url, $post->post_title, $post_desp ),
 					$scrum_fields['scrum_slack_notification_blog']
 				);
 				$this->send_slack( $message, $webhook_url);
@@ -515,6 +544,7 @@ class Toiee_Scrum_Post
 
 				// エピソードのurl
 				$episode_url = get_permalink( $post->ID );
+				$episode_desp = substr( wp_strip_all_tags( $post->post_content ), 0, 300);
 
 				// エピソードの series を取得する
 				$rets = wp_get_post_terms( $post->ID, 'series');
@@ -525,14 +555,22 @@ class Toiee_Scrum_Post
 				foreach( $rets as $series) {
 					$series_url = get_term_link( $series );
 
+					$replace = array(
+						'episode_url'    => $episode_url,
+						'episode_title'  => $post->post_title,
+						'episode_desp'   => $episode_desp,
+						'series_url'     => $series_url,
+						'series_title'   => $series->name,
+					);
+
 					// お知らせ Podcastに $series を登録している scrum を見つける
 					$scrums = $this->get_scrums_by_series_id( $series->term_id, 'updates_news_podcast');
 					// 見つかった scrums に通知を送る
-					$this->send_slack_from_scrums($scrums, 'scrum_slack_notification_news_podcast', $episode_url, $series_url );
+					$this->send_slack_from_scrums($scrums, 'scrum_slack_notification_news_podcast', $replace );
 
 					// アーカイブ podcast の通知
 					$scrums = $this->get_scrums_by_series_id( $series->term_id, 'updates_archive_podcast');
-					$this->send_slack_from_scrums($scrums, 'scrum_slack_notification_archive_podcast', $episode_url, $series_url );
+					$this->send_slack_from_scrums($scrums, 'scrum_slack_notification_archive_podcast', $replace );
 				}
 			}
 		}
@@ -550,16 +588,18 @@ class Toiee_Scrum_Post
 		return $scrums;
 	}
 
-	function send_slack_from_scrums( $scrums, $name, $episode_url, $series_url ){
+	function send_slack_from_scrums( $scrums, $name, $replace ){
 
 		foreach( $scrums as $scrum ) {
 			$webhook_url = get_field( 'scrum_slack_webhook', $scrum);
+			$keys = array_keys( $replace );
+			$search = array_map( function($str){ return '%'.strtoupper($str).'%'; }, $keys );
 
 			if( $webhook_url != null ) {
 				$body = get_field( $name, $scrum );
 				$body = str_replace(
-					array( '%URL%', '%EPISODE%' ),
-					array( $series_url, $episode_url ),
+					$search,
+					$replace,
 					$body
 				);
 
