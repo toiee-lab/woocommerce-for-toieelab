@@ -168,7 +168,16 @@ EOD;
 		if( $offer == '' ) {
 			$offer = $this->get_offer_product_id( $ids );
 		}
-				
+
+		// admin の場合は制限せず、表示する。ただし、制限コンテンツの範囲を示す
+		if( is_super_admin() ) {
+			return '<div style="border:#f99 dashed 1px"><p style="background-color:#fcc;">このコンテンツは制限付きです</p>'.do_shortcode($content).'</div>';
+		}
+		// アクセスOKの場合、表示する
+        $access = $this->check_access( $ids );
+		if( $access ) {
+			return do_shortcode( $content );
+		}
 		
 		// ----------------------------------------
 		// アクセス制限時のメッセージボックスの作成
@@ -244,17 +253,7 @@ EOD;
 		if( $current_user->ID == 0){
 			return $not_access_message;
 		}
-		
-		// admin の場合は制限せず、表示する。ただし、制限コンテンツの範囲を示す
-		if( is_super_admin() )
-		{
-			return '<div style="border:#f99 dashed 1px"><p style="background-color:#fcc;">このコンテンツは制限付きです</p>'.do_shortcode($content).'</div>';
-		}
-		
-		if( $this->check_access( $ids ) ) {
-			return do_shortcode( $content );
-		}
-		
+
 		return $not_access_message;
 	}
 
