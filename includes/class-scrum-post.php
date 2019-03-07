@@ -544,7 +544,7 @@ class Toiee_Scrum_Post
 
 				// エピソードのurl
 				$episode_url = get_permalink( $post->ID );
-				$episode_desp = substr( wp_strip_all_tags( $post->post_content ), 0, 300);
+				$episode_desp = mb_substr( wp_strip_all_tags( $post->post_content ), 0, 150);
 
 				// エピソードの series を取得する
 				$rets = wp_get_post_terms( $post->ID, 'series');

@@ -13,7 +13,7 @@ class Woocommerce_SimpleRestrictContent
 		//カスタム投稿タイプの設定
 		add_action('init',  array( $this, 'create_post_type') );
 		add_action( 'add_meta_boxes', array($this, 'add_meta_boxes_wcr') );
-		add_action( 'save_post', array($this, 'save_post_wcr') );
+//		add_action( 'save_post', array($this, 'save_post_wcr') );
 
 		//shortcode の追加
 		add_shortcode( 'wcr-content' , array( $this, 'wcr_content_shortdode') );
