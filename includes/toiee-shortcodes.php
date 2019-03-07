@@ -181,30 +181,15 @@
 	if( is_wp_error( $terms ) ){
 		return 'this is error : '. print_r($terms , true);
 	}
-	
+
 	//マッチするものだけ残す
 	$terms = array_filter( $terms, function( $term ) use( $search ) { return preg_match( "/{$search}/", $term->name ); }  );
-	
-	$terms_a = array();
-	$content = '<div class="uk-grid-small uk-child-width-1-'.$num.'@s uk-flex-left uk-text-center" uk-grid>'."\n";
-	foreach( $terms as $k=>$term ){
-		
-		$name = $term->name;
-		$plink = get_term_link( $term->term_id, 'series' );
-		$series_image = get_option( 'ss_podcasting_data_image_' . $term->term_id, 'no-image' );
-		$terms_a[ ] = array(
-			'name' => $name,
-			'link' => $plink,
-			'img'  => $series_image,
-		);
-		
-		$content .= '<div><a href="'.$plink.'" title="'.$name.'" class="uk-display-block uk-box-shadow-small"><img src="'.$series_image.'" alt="'.$name.'"></a></div>'."\n";
-		
+	$ids = array();
+	foreach( $terms as $term ){
+		$ids[] = $term->term_id;
 	}
-	$content .= '</div>';
-	
-	return  $content;
-	 
+
+	return w4t_podcast_grid_display($ids);
  } );
  
  
