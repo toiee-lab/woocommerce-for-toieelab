@@ -1,34 +1,56 @@
 <?php
 
-/*
- * 
+/**
+ * Seriously Simple Podcast を拡張するためのクラス
+ *
+ * @package woocommerce for toiee lab
  */
 
-define('WC4T_WCRTOKEN', 'wcrtoken');
+define( 'WC4T_WCRTOKEN', 'wcrtoken' );
 
+/**
+ * Class WCR_SSP
+ */
 class WCR_SSP
 {
-	private   $options;
+	/**
+	 * 設定を保存
+	 *
+	 * @var array
+	 */
+	private $options;
+	/**
+	 * プラグインのslugを保持
+	 *
+	 * @var string
+	 */
 	protected $plugin_slug;
-	public    $plugin_url;
-	
-	function __construct()
-	{
-		$this->plugin_slug   = 'seriously-simple-podcasting';
+	/**
+	 * プラグインのURL
+	 *
+	 * @var string
+	 */
+	public $plugin_url;
 
-		// Series の拡張
-		add_filter( 'ssp_settings_fields' , array($this, 'ssp_setting_fields'), 10, 1);
-		add_action( 'series_edit_form_fields', array($this, 'add_detail_url') );
-		
-		
+	/**
+	 * WCR_SSP constructor.
+	 */
+	function __construct() {
+		$this->plugin_slug = 'seriously-simple-podcasting';
+
+		// Series の拡張!
+		add_filter( 'ssp_settings_fields', array( $this, 'ssp_setting_fields' ), 10, 1 );
+		add_action( 'series_edit_form_fields', array( $this, 'add_detail_url' ) );
+
+
 		// Episode の拡張
-		add_filter( 'ssp_episode_fields' , array($this, 'ssp_episode_fields'), 10, 1);
-		
+		add_filter( 'ssp_episode_fields', array( $this, 'ssp_episode_fields' ), 10, 1 );
+
 		// テンプレートの差し替え
-		add_filter( 'ssp_feed_template_file' , array($this, 'ssp_feed_template_file'), 1, 1);
+		add_filter( 'ssp_feed_template_file', array( $this, 'ssp_feed_template_file' ), 1, 1 );
 		
 		// ショートコード
-		add_shortcode('wcr_ssp', array($this, 'add_wcr_ssp_shortcode'));
+		add_shortcode('wcr_ssp', array( $this, 'add_wcr_ssp_shortcode' ) );
 
 		// ショートコードを series column に追加
 		add_filter( 'manage_edit-series_columns', array( $this, 'edit_series_columns' ), 10 );
@@ -576,10 +598,10 @@ EOD;
 	
 	function create_update_page() {
 
+    	// エピソードの length を更新
         if ( isset($_POST['updated_series_term'])) {
             check_admin_referer('update_options');
-            
-            // カテゴリのepisode (podcast) を取得
+
             $term_id = $_POST['updated_series_term'];            
             $posts = get_posts( array(
 				'post_type' => 'podcast',
@@ -630,7 +652,156 @@ EOD;
 
         }
 
-		$terms = get_terms('series');
+        // Vimeo APIキーの保存
+		if ( isset( $_POST['ssp_vimeo_api_access_token'] ) ) {
+			update_option( 'ssp_vimeo_api_access_token', esc_attr( $_POST['ssp_vimeo_api_access_token'] ), false );
+			update_option( 'ssp_vimeo_api_cid', esc_attr( $_POST['ssp_vimeo_api_cid'] ), false );
+			update_option( 'ssp_vimeo_api_csr', esc_attr( $_POST['ssp_vimeo_api_csr'] ), false );
+			?>
+			<div class="notice notice-success is-dismissible">
+				<p><strong>saved Vimeo API settings.</strong></p>
+			</div>
+			<?php
+		}
+		$vimeo_api_access_token = get_option( 'ssp_vimeo_api_access_token', '' );
+		$vimeo_api_cid          = get_option( 'ssp_vimeo_api_cid', '' );
+		$vimeo_api_csr          = get_option( 'ssp_vimeo_api_csr', '' );
+
+
+		// Vimeo から一覧を取得する
+		if ( '' !== $vimeo_api_access_token && isset( $_POST[ 'update_vimeo_list' ] ) ) {
+
+			$lib = new \Vimeo\Vimeo( $vimeo_api_cid, $vimeo_api_csr );
+			$lib->setToken( $vimeo_api_access_token );
+
+			$response = $lib->request('/me/projects', ['direction' => 'desc', 'per_page' => 20, 'sort' => 'date'], 'GET');
+			foreach( $response['body']['data'] as $d ) {
+				$vimeo_list[] = array(
+					'name'  => $d['name'],
+					'value' => $d['uri']
+				);
+			}
+
+			$response = $lib->request('/me/albums', ['direction' => 'desc', 'per_page' => 20, 'sort' => 'date'], 'GET');
+			foreach( $response['body']['data'] as $d ) {
+				$vimeo_list[] = array(
+					'name'  => $d['name'],
+					'value' => $d['uri']
+				);
+			}
+
+			if( count( $vimeo_list ) ) {
+				update_option( 'ssp_vimeo_list', $vimeo_list );
+			}
+		}
+
+
+		// vimeo から podcast をインポート
+		if ( isset( $_POST['vimeo_proj'] ) ) {
+
+			$lib = new \Vimeo\Vimeo( $vimeo_api_cid, $vimeo_api_csr );
+			$lib->setToken( $vimeo_api_access_token );
+
+			if ( null === $lib ) {
+				?>
+				<div class="notice notice-warning is-dismissible">
+					<p><strong>vimeo にアクセスできませんでした。</strong></p>
+				</div>
+				<?php
+			} else {
+
+				//term info
+				$term = get_term_by( 'id', $_POST['updated_series_term'] , 'series' );
+
+				// データの取得
+				$ret = $lib->request( $_POST['vimeo_proj'] . '/videos', [ 'per_page' => 100 ], 'GET' );
+				$videos = $ret['body']['data'];
+				usort($videos, function($a, $b){
+					return strnatcmp($a['name'], $b['name']);
+				});
+
+				// 登録作業
+				$cnt   = 0;
+				$total = count( $videos );
+				$time  = time() - 60 * ($total + 2);
+
+				foreach($videos as $i => $v) {
+					$cnt++;
+					$time += 60;
+
+					$arr = array();
+					$arr['title']     = $v['name'];
+
+					$arr['duration'] = sprintf("%02d:%02d:%02d",
+						floor( $v['duration'] / 3600 ),
+						floor( ($v['duration'] / 60) % 60),
+						$v['duration'] % 60
+					);
+
+					foreach( $v['files'] as $d ) {
+						if( $d['quality'] == 'hd' ) {
+							$link = preg_replace('/&oauth2_token_id=([0-9]+)/', '', $d['link']) . '&download=1';
+							$arr['audio_file'] = $arr['enclosure'] = $link;
+							$arr['filesize'] = $arr['filesize_raw'] = $d['size']; //そのままでいいかも
+							break;
+						}
+					}
+
+					$post = array(
+						'ID' => null,
+						'post_content'   => '',
+						'post_name'      => $term->slug . '-' . $cnt,
+						'post_title'     => $arr['title'],
+						'post_status'    => 'publish',
+						'post_type'      => 'podcast',
+						'post_date'      => date('Y-m-d H:i:s', $time), //TODO 今の時間
+						'tax_input'      => array( 'series' => $term->term_id ),
+					);
+
+					$post_id = wp_insert_post( $post );
+
+					$arr['wcr_ssp_episode_restrict'] = 'enable';
+					$arr['episode_type'] = 'video';
+
+					$meta = array(
+						'audio_file',
+						'enclosure',
+						'episode_type',
+						'filesize',
+						'filesize_raw',
+						'wcr_ssp_episode_restrict',
+						'duration',
+					);
+
+					foreach( $meta as $key ) {
+						update_post_meta( $post_id, $key, $arr[$key] );
+					}
+				}
+
+				$url = admin_url( 'edit.php?series=' . $term->slug . '&post_type=podcast' );
+
+				?>
+				<div class="notice notice-success is-dismissible">
+					<p><strong>登録作業が完了しました。</strong> <a href="<?php echo $url; ?>">結果はこちら</a></p>
+				</div>
+				<?php
+			}
+		}
+
+
+		// シリーズの一覧を取得
+		$terms = get_terms(
+			'series',
+			array(
+				'orderby'    => 'id',
+				'order'      => 'DESC',
+				'hide_empty' => 0,
+			)
+		);
+
+		// vimeo のリストを取得
+		$vimeo_list = get_option( 'ssp_vimeo_list', array() );
+
         ?>
         <div class="wrap">
 
@@ -647,8 +818,48 @@ EOD;
             	<input type="hidden" name="update_episodes" value="update_episodes">
             	<?php submit_button( "更新を実行する" ); ?>
             </form>
-            <p>実行には、そこそこ時間がかかります（問い合わせを繰り返すので）</p>
             <?php if( isset($log) ){ echo $log; } ?>
+
+
+	        <hr>
+	        <h2>Vimeoからインポート</h2>
+	        <h3>インポート</h3>
+	        <p>最新のプロジェクト、アルバム20件のみを表示します。</p>
+	        <form method="post" action="<?php admin_url( 'edit.php?post_type=podcast&page=wc4toiee-ssp-vimeo-import' ); ?>">
+		        <?php wp_nonce_field('update_options'); ?>
+		        <label>インポートするプロジェクト（アルバム）</label>
+		        <select name="vimeo_proj">
+			        <?php foreach( $vimeo_list as $v ) : ?>
+				        <option value="<?php echo $v['value'] ;?>"><?php echo $v['name'] ;?></option>
+			        <?php endforeach; ?>
+		        </select>
+		        <br>
+		        <label>インポート先のシリーズ</label>
+		        <select name="updated_series_term">
+			        <?php foreach( $terms as $t ): ?>
+				        <option value="<?php echo $t->term_id; ?>"><?php echo $t->name; ?></option>
+			        <?php endforeach; ?>
+		        </select>
+		        <?php submit_button( "エピソードのインポート" ); ?>
+	        </form>
+
+	        <form method="post" action="<?php admin_url( 'edit.php?post_type=podcast&page=wc4toiee-ssp-vimeo-import' ); ?>">
+		        <?php wp_nonce_field('update_options'); ?>
+		        <input type="hidden" name="update_vimeo_list" value="true">
+		        <?php submit_button( "vimeoのリスト一覧を更新" ); ?>
+	        </form>
+
+
+	        <h3>Vimeo API Setting</h3>
+	        <form method="post" action="<?php admin_url( 'edit.php?post_type=podcast&page=wc4toiee-ssp-vimeo-api' ); ?>">
+		        <?php wp_nonce_field('update_options'); ?>
+		        <p><label>Client identifier</label><input type="text" name="ssp_vimeo_api_cid" value="<?php echo $vimeo_api_cid; ?>"></p>
+		        <p><label>Access token</label><input type="text" name="ssp_vimeo_api_access_token" value="<?php echo $vimeo_api_access_token; ?>"></p>
+		        <p><label>Client secrets</label><input type="text" name="ssp_vimeo_api_csr" value="<?php echo $vimeo_api_csr; ?>"></p>
+		        <?php submit_button( "API Keyを保存" ); ?>
+	        </form>
+
+
         </div>
         <?php
 	}
