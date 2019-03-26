@@ -45,7 +45,7 @@ class Toiee_Scrum_Post
 			"show_in_rest" => true,
 			"rest_base" => "",
 			"rest_controller_class" => "WP_REST_Posts_Controller",
-			"has_archive" => true,
+			"has_archive" => false,
 			"show_in_menu" => true,
 			"show_in_nav_menus" => true,
 			"exclude_from_search" => true,
