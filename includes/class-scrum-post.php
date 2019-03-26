@@ -405,7 +405,7 @@ class Toiee_Scrum_Post
 						'label' => '【Slack自動通知】ブログ',
 						'name' => 'scrum_slack_notification_blog',
 						'type' => 'textarea',
-						'instructions' => '%URL% で「記事へのリンク」を、%TITLE% で「記事のタイトル」',
+						'instructions' => '%URL% で「記事へのリンク」を、%TITLE% で「記事のタイトル」を、%SCRUM% で「スクラムサイト」',
 						'required' => 0,
 						'conditional_logic' => 0,
 						'wrapper' => array(
@@ -527,13 +527,14 @@ class Toiee_Scrum_Post
 
 				$webhook_url = $scrum_fields['scrum_slack_webhook'];
 
-				$url = get_term_link( $scrum[0] );
+				$scrum_url = get_term_link( $scrum[0] );
+				$url = get_permalink( $post );
 				$post_desp = substr( wp_strip_all_tags( $post->post_content ), 0, 300);
 
 
 				$message = str_replace(
-					array( '%URL%', '%TITLE%' , '%DESP%'),
-					array( $url, $post->post_title, $post_desp ),
+					array( '%SCRUM%', '%URL%', '%TITLE%' , '%DESP%'),
+					array( $scrum_url, $url, $post->post_title, $post_desp ),
 					$scrum_fields['scrum_slack_notification_blog']
 				);
 				$this->send_slack( $message, $webhook_url);
