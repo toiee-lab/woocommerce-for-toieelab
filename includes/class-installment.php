@@ -1,6 +1,5 @@
 <?php
 /**
- *
  * WooCommerce の Subscription を拡張して、installment (分割支払い) を実現する。
  *
  * Created by PhpStorm.
@@ -10,25 +9,25 @@
  */
 class ToieeLab_Installment {
 
+
 	public function __construct() {
 
 		add_action( 'woocommerce_product_options_advanced', array( $this, 'add_options_advanced' ) );
 		add_action( 'woocommerce_process_product_meta', array( $this, 'save_add_fields' ) );
 
-		add_filter( 'wcs_user_has_subscription', array($this, 'installment_check'), 99, 4);
+		add_filter( 'wcs_user_has_subscription', array( $this, 'installment_check' ), 99, 4 );
 
 	}
 
 	/**
 	 * 高度設定に「Installment」を追加する
 	 */
-	public function add_options_advanced(){
+	public function add_options_advanced() {
 		global $woocommerce, $post;
 
 		$product = wc_get_product( $post->ID );
-		$type = $product->get_type();
-		//
-		if($type == 'variable-subscription' || $type == 'subscription') { // $post が、variable-subscription なら
+		$type    = $product->get_type();
+		if ( $type == 'variable-subscription' || $type == 'subscription' ) { // $post が、variable-subscription なら
 			?>
 			<div class="options_group installment">
 			<?php
@@ -37,7 +36,7 @@ class ToieeLab_Installment {
 					'id'            => '_installment_subscription',
 					'wrapper_class' => 'show',
 					'label'         => __( '分割支払い用', 'woocommerce' ),
-					'description'   => __( '分割支払い用にチェックを入れると、expire しても「有効」とみなします', 'woocommerce' )
+					'description'   => __( '分割支払い用にチェックを入れると、expire しても「有効」とみなします', 'woocommerce' ),
 				)
 			);
 			?>
@@ -46,22 +45,22 @@ class ToieeLab_Installment {
 		}
 	}
 
-	public function save_add_fields( $post_id ){
+	public function save_add_fields( $post_id ) {
 		$installment = $_POST['_installment_subscription'];
 		update_post_meta( $post_id, '_installment_subscription', esc_attr( $installment ) );
 	}
 
-	public function installment_check($has_subscription, $user_id, $product_id, $status){
+	public function installment_check( $has_subscription, $user_id, $product_id, $status ) {
 
-		if( $has_subscription ){
+		if ( $has_subscription ) {
 			return $has_subscription;
 		}
 
-		$installment = get_post_meta($product_id, '_installment_subscription', true);
-		if( $installment == 'yes' ){
-			remove_filter( 'wcs_user_has_subscription', array($this, 'installment_check'), 99);
+		$installment = get_post_meta( $product_id, '_installment_subscription', true );
+		if ( $installment == 'yes' ) {
+			remove_filter( 'wcs_user_has_subscription', array( $this, 'installment_check' ), 99 );
 			$has_subscription = wcs_user_has_subscription( $user_id, $product_id, 'expired' );
-			add_filter( 'wcs_user_has_subscription', array($this, 'installment_check'), 99, 4);
+			add_filter( 'wcs_user_has_subscription', array( $this, 'installment_check' ), 99, 4 );
 		}
 
 		return $has_subscription;

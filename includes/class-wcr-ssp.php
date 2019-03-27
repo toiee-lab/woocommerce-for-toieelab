@@ -11,8 +11,8 @@ define( 'WC4T_WCRTOKEN', 'wcrtoken' );
 /**
  * Class WCR_SSP
  */
-class WCR_SSP
-{
+class WCR_SSP {
+
 	/**
 	 * 設定を保存
 	 *
@@ -41,7 +41,6 @@ class WCR_SSP
 		/* Series の拡張 */
 		add_filter( 'ssp_settings_fields', array( $this, 'ssp_setting_fields' ), 10, 1 );
 		add_action( 'series_edit_form_fields', array( $this, 'add_detail_url' ) );
-
 
 		/* Episode の拡張 */
 		add_filter( 'ssp_episode_fields', array( $this, 'ssp_episode_fields' ), 10, 1 );
@@ -80,7 +79,7 @@ class WCR_SSP
 		/* RSS の表示数を増やす */
 		add_filter(
 			'ssp_feed_number_of_posts',
-			function( $num ) {
+			function ( $num ) {
 				return 300;
 			}
 		);
@@ -88,7 +87,7 @@ class WCR_SSP
 		/* Slug が日本語にされてしまうkとを抑制する */
 		add_filter(
 			'ssp_archive_slug',
-			function() {
+			function () {
 				return 'podcast';
 			}
 		);
@@ -102,42 +101,42 @@ class WCR_SSP
 	}
 
 	// Series に、アクセス制限のための項目と、Podcastの形式（オーディオ、デフォルト）を追加する
-	function ssp_setting_fields( $settings ){
+	function ssp_setting_fields( $settings ) {
 
-		if( ! array_key_exists('feed-series', $_GET) ){
+		if ( ! array_key_exists( 'feed-series', $_GET ) ) {
 			return $settings;
 		}
 
 		$series_slug = $_GET['feed-series'];
-		$term = get_term_by('slug', $series_slug, 'series');
+		$term        = get_term_by( 'slug', $series_slug, 'series' );
 
-		if( $term == false ) {
-			$series_url = '#';
+		if ( $term == false ) {
+			$series_url      = '#';
 			$series_edit_url = '#';
+		} else {
+			$series_url      = get_term_link( $term, 'series' );
+			$series_edit_url = get_edit_term_link( $term, 'series' );
 		}
-		else {
-			$series_url  = get_term_link( $term , 'series' );
-			$series_edit_url = get_edit_term_link( $term , 'series' );
-		}
 
-
-
-		array_unshift($settings['feed-details']['fields'], array(
-			'id'          => 'podcast_info',
-			'label'       => __( 'リンク集', 'seriously-simple-podcasting' ),
-			'description' => '<a href="'.$series_url.'">視聴ページ</a> : <a href="'.$series_edit_url.'">編集ページ</a>',
-			'type'        => 'none',
-			'default'     => '',
-			'placeholder' => __( '100,200,...', 'seriously-simple-podcasting' ),
-			'callback'    => '',
-			'class'       => 'regular-text',
-		));
+		array_unshift(
+			$settings['feed-details']['fields'],
+			array(
+				'id'          => 'podcast_info',
+				'label'       => __( 'リンク集', 'seriously-simple-podcasting' ),
+				'description' => '<a href="' . $series_url . '">視聴ページ</a> : <a href="' . $series_edit_url . '">編集ページ</a>',
+				'type'        => 'none',
+				'default'     => '',
+				'placeholder' => __( '100,200,...', 'seriously-simple-podcasting' ),
+				'callback'    => '',
+				'class'       => 'regular-text',
+			)
+		);
 
 		return $settings;
 	}
 
 	// Episode に、アクセス制限のための項目を追加
-	function ssp_episode_fields( $fields ){
+	function ssp_episode_fields( $fields ) {
 
 		$fields['wcr_ssp_episode_restrict'] = array(
 			'name'             => __( 'Restrict :', $this->plugin_slug ),
@@ -145,8 +144,8 @@ class WCR_SSP
 			'type'             => 'radio',
 			'default'          => 'disable',
 			'options'          => array(
-				'enable' => __( '制限する', $this->plugin_slug ),
-				'disable' => __( '制限しない', $this->plugin_slug )
+				'enable'  => __( '制限する', $this->plugin_slug ),
+				'disable' => __( '制限しない', $this->plugin_slug ),
 			),
 			'section'          => 'info',
 			'meta_description' => __( 'The setting of restriction', $this->plugin_slug ),
@@ -157,9 +156,9 @@ class WCR_SSP
 
 	// Series に便利なリンクを用意する
 	function add_detail_url( $term ) {
-		$url = get_admin_url().'edit.php?post_type=podcast&page=podcast_settings&tab=feed-details&feed-series='.$term->slug;
-		$enc_url = htmlentities( $url );
-		$series_url  = get_term_link( $term , 'series' );
+		$url        = get_admin_url() . 'edit.php?post_type=podcast&page=podcast_settings&tab=feed-details&feed-series=' . $term->slug;
+		$enc_url    = htmlentities( $url );
+		$series_url = get_term_link( $term, 'series' );
 		?>
 
 		<tr class="form-field term-meta-text-wrap">
@@ -173,11 +172,11 @@ class WCR_SSP
 			<th scope="row"><hr></th>
 			<td><hr></td>
 		</tr>
-	<?php }
+		<?php
+	}
 
-	function ssp_feed_template_file( $template_file )
-	{
-		$template_file = dirname( dirname( __FILE__ ) ). '/templates/feed-podcast.php';
+	function ssp_feed_template_file( $template_file ) {
+		$template_file = dirname( dirname( __FILE__ ) ) . '/templates/feed-podcast.php';
 		return $template_file;
 	}
 
@@ -188,43 +187,44 @@ class WCR_SSP
 	// ! Shortcode
 	//
 	// -----------------------------------------------------------------------------
-
 	/* [wcr_ssp id="x" /] */
-	function add_wcr_ssp_shortcode($atts) {
-		$atts = shortcode_atts( [
-			'id'                => '',
-			'label_podcast'     => 'iPhone、iPad、スマホ',
-			'label_pcast'       => 'Mac、パソコン',
-			'label_url'         => 'その他(URL)',
-			'label_web'         => 'Web視聴する',
-			'label_ok'          => '全編をご覧いただけます',
-			'label_trial'       => '一部コンテンツをご覧いただけます',
-			'label_ok_offer'    => '全編のお申し込みはこちら',
-			'label_offer_trial' => '無料登録で、一部コンテンツをご覧いただけます',
-			'label_toc'         => '(目次一覧)',
-			'template'          => '',
-			'template_name'     => 'default',
-			'redirect_url'      => '',
-		], $atts );
+	function add_wcr_ssp_shortcode( $atts ) {
+		$atts = shortcode_atts(
+			[
+				'id'                => '',
+				'label_podcast'     => 'iPhone、iPad、スマホ',
+				'label_pcast'       => 'Mac、パソコン',
+				'label_url'         => 'その他(URL)',
+				'label_web'         => 'Web視聴する',
+				'label_ok'          => '全編をご覧いただけます',
+				'label_trial'       => '一部コンテンツをご覧いただけます',
+				'label_ok_offer'    => '全編のお申し込みはこちら',
+				'label_offer_trial' => '無料登録で、一部コンテンツをご覧いただけます',
+				'label_toc'         => '(目次一覧)',
+				'template'          => '',
+				'template_name'     => 'default',
+				'redirect_url'      => '',
+			],
+			$atts
+		);
 
-		$id = $atts['id'];
-		$label_podcast = $atts['label_podcast'];
-		$label_pcast = $atts['label_pcast'];
-		$label_url = $atts['label_url'];
-		$label_web = $atts['label_web'];
-		$label_ok = $atts['label_ok'];
-		$label_trial = $atts['label_trial'];
-		$label_ok_offer = $atts['label_ok_offer'];
+		$id                = $atts['id'];
+		$label_podcast     = $atts['label_podcast'];
+		$label_pcast       = $atts['label_pcast'];
+		$label_url         = $atts['label_url'];
+		$label_web         = $atts['label_web'];
+		$label_ok          = $atts['label_ok'];
+		$label_trial       = $atts['label_trial'];
+		$label_ok_offer    = $atts['label_ok_offer'];
 		$label_offer_trial = $atts['label_offer_trial'];
-		$label_toc = $atts['label_toc'];
-		$template = $atts['template'];
-		$template_name = $atts['template_name'];
-		$redirect_url = $atts['redirect_url'];
-
+		$label_toc         = $atts['label_toc'];
+		$template          = $atts['template'];
+		$template_name     = $atts['template_name'];
+		$redirect_url      = $atts['redirect_url'];
 
 		// template の決定
-		if( $template == '' ) {
-			switch( $template_name ) {
+		if ( $template == '' ) {
+			switch ( $template_name ) {
 				case 'on_episode_audio':
 					$template = $this->get_dummy_player( 'audio', '%MESSAGE%' );
 					break;
@@ -235,9 +235,9 @@ class WCR_SSP
 
 				case 'on_archive':
 					$template = '
-<p uk-margin><a href="%FEED%" class="uk-button uk-button-default uk-box-shadow-small" %TARGET_TOGLE%>' .$label_podcast. '</a>
-<a href="%PCAST%" class="uk-button uk-button-default uk-box-shadow-small" %TARGET_TOGLE%>'  .$label_pcast.   '</a><br>
-<a href="%URL%" %TARGET_TOGLE% class="uk-button uk-button-text">'         .$label_url.     '</a>
+<p uk-margin><a href="%FEED%" class="uk-button uk-button-default uk-box-shadow-small" %TARGET_TOGLE%>' . $label_podcast . '</a>
+<a href="%PCAST%" class="uk-button uk-button-default uk-box-shadow-small" %TARGET_TOGLE%>' . $label_pcast . '</a><br>
+<a href="%URL%" %TARGET_TOGLE% class="uk-button uk-button-text">' . $label_url . '</a>
 <br>
 <span class="uk-text-meta uk-text-small">%MESSAGE%</span>&nbsp;
 </p>';
@@ -245,10 +245,10 @@ class WCR_SSP
 
 				default:
 					$template = '
-<p uk-margin><a href="%FEED%" class="uk-button uk-button-default uk-box-shadow-small" %TARGET_TOGLE%>' .$label_podcast. '</a>
-<a href="%PCAST%" class="uk-button uk-button-default uk-box-shadow-small" %TARGET_TOGLE%>'  .$label_pcast.   '</a><br>
-<a href="%URL%" %TARGET_TOGLE% class="uk-button uk-button-text">'         .$label_url.     '</a>
-<a href="%TERM_LINK%" target="_blank" class="uk-button uk-button-text">'         .$label_web.     '</a>
+<p uk-margin><a href="%FEED%" class="uk-button uk-button-default uk-box-shadow-small" %TARGET_TOGLE%>' . $label_podcast . '</a>
+<a href="%PCAST%" class="uk-button uk-button-default uk-box-shadow-small" %TARGET_TOGLE%>' . $label_pcast . '</a><br>
+<a href="%URL%" %TARGET_TOGLE% class="uk-button uk-button-text">' . $label_url . '</a>
+<a href="%TERM_LINK%" target="_blank" class="uk-button uk-button-text">' . $label_web . '</a>
 <br>
 <span class="uk-text-meta uk-text-small">%MESSAGE%</span>&nbsp;
 <a href="%TERM_LINK%" target="_blank"><span class="uk-text-small">%ARCHIVE%</span></a>
@@ -256,24 +256,20 @@ class WCR_SSP
 			}
 		}
 
-
-
-
 		// check
-
-		if($id == ''){
+		if ( $id == '' ) {
 			return '<p>invalid series id</p>';
 		}
 
 		// feed url の生成
 		global $ss_podcasting;
 
-		$series_id     = $id;
-		$series        = get_term( $series_id, 'series' );
-		$series_url    = get_term_link( $series );
-		$series_slug   = $series->slug;
+		$series_id   = $id;
+		$series      = get_term( $series_id, 'series' );
+		$series_url  = get_term_link( $series );
+		$series_slug = $series->slug;
 
-		if( is_wp_error( $series ) ){
+		if ( is_wp_error( $series ) ) {
 			return '<p>invalid series id</p>';
 		}
 
@@ -290,76 +286,68 @@ class WCR_SSP
 			);
 		}
 
-		//seckey から、feed url に付属させるパラメタを作成
-		//TODO ここで token を作るのではなく「登録しておいたもの」を使うこととする
+		// seckey から、feed url に付属させるパラメタを作成
+		// TODO ここで token を作るのではなく「登録しておいたもの」を使うこととする
 		// uniqid を使う( wctoken )
 		$user       = wp_get_current_user();
 		$user_id    = $user->ID;
 		$user_email = $user->user_email;
 
-		if( $user_id != 0 ) {
+		if ( $user_id != 0 ) {
 			$user_logined = true;
 
-			$add_param = '/'.WC4T_WCRTOKEN.'/'.$this->get_user_wcrtoken();
-		}
-		else {
+			$add_param = '/' . WC4T_WCRTOKEN . '/' . $this->get_user_wcrtoken();
+		} else {
 			$user_logined = false;
-			$add_param = '';
+			$add_param    = '';
 		}
 		$wcr_feed_url = $feed_url . $add_param;
 
-
-
 		// アクセスできる場合は、target="_blank" を入れる。そうでない場合は、uk-toggle="target: #modal" をセットする
 		$target_toggle = 'target="_blank"';
-		$message = '';
+		$message       = '';
 
-		//! いずれ、このソースコードは修正だ（データを入れ替えられたら消す）
-		$wc_restrict_ssp  = get_option( 'ss_podcasting_wc_restrict_ssp_' . $series_id, false );  // デフォルトは false
+		// ! いずれ、このソースコードは修正だ（データを入れ替えられたら消す）
+		$wc_restrict_ssp = get_option( 'ss_podcasting_wc_restrict_ssp_' . $series_id, false );  // デフォルトは false
 
-		//新しい方の設定（ term の場合は、term object を渡す必要がある）
-		$wcr_content_ssp  = get_field( 'series_limit',  $series );
+		// 新しい方の設定（ term の場合は、term object を渡す必要がある）
+		$wcr_content_ssp = get_field( 'series_limit', $series );
 
-		if( $wc_restrict_ssp == 'restrict_enable' || $wcr_content_ssp ) {  // もし、制限ありなら
-			if( $user_logined ){  // ユーザーの制限をチェックして、メッセージを切り替える
+		if ( $wc_restrict_ssp == 'restrict_enable' || $wcr_content_ssp ) {  // もし、制限ありなら
+			if ( $user_logined ) {  // ユーザーの制限をチェックして、メッセージを切り替える
 
 				$product_url = '';
-				$modal_html = '';
+				$modal_html  = '';
 
 				$ret = $this->get_access_and_product_url( $user_email, $user_id, $series_id );
 
 				// メッセージの生成
-				if( $ret['access'] ) {
+				if ( $ret['access'] ) {
 					$message = $label_ok;
-				}
-				else {
+				} else {
 					$message = $label_trial;
-					if( $ret['url'] != '' ){
-						$message .= ' <a href="'.$ret['url'].'" class="uk-button uk-button-text">('.$label_ok_offer.')</a>';
+					if ( $ret['url'] != '' ) {
+						 $message .= ' <a href="' . $ret['url'] . '" class="uk-button uk-button-text">(' . $label_ok_offer . ')</a>';
 					}
 				}
-
-			}
-			else {  // ログインフォームを出す
+			} else {  // ログインフォームを出す
 
 				$modal_html = get_popup_login_form();
 
-				$wcr_feed_url = '#';
+				$wcr_feed_url  = '#';
 				$target_toggle = 'uk-toggle="target: #modal_login_form"';
-				$message = $label_offer_trial;
+				$message       = $label_offer_trial;
 			}
 		}
 
+		$url_scheme_feed  = str_replace( 'https://', 'podcast://', $wcr_feed_url );
+		$url_scheme_pcast = str_replace( 'https://', 'pcast://', $wcr_feed_url );
 
-		$url_scheme_feed  = str_replace('https://', 'podcast://', $wcr_feed_url);
-		$url_scheme_pcast = str_replace('https://', 'pcast://', $wcr_feed_url);
-
-		return
-			str_replace(
-				array('%FEED%',         '%PCAST%',         '%URL%',       '%TARGET_TOGLE%' , '%MESSAGE%', '%ARCHIVE%', '%TERM_LINK%'),
-				array($url_scheme_feed, $url_scheme_pcast, $wcr_feed_url, $target_toggle,    $message   , $label_toc , $series_url),
-				$template
-			) . $modal_html;
+		return str_replace(
+			array( '%FEED%', '%PCAST%', '%URL%', '%TARGET_TOGLE%', '%MESSAGE%', '%ARCHIVE%', '%TERM_LINK%' ),
+			array( $url_scheme_feed, $url_scheme_pcast, $wcr_feed_url, $target_toggle, $message, $label_toc, $series_url ),
+			$template
+		) . $modal_html;
 	}
 
 
@@ -371,18 +359,18 @@ class WCR_SSP
 		$wc_notices = ob_get_contents();
 		ob_end_clean();
 
-		$js = ( $wc_notices != '') ?
-			"<script>el = document.getElementById('modal_login_form');UIkit.modal(el).show();</script>"
-			: '';
+		$js = ( $wc_notices != '' ) ?
+		"<script>el = document.getElementById('modal_login_form');UIkit.modal(el).show();</script>"
+		: '';
 
 		// ログインフォームの取得
-		if( $redirect_url == '' ){
+		if ( $redirect_url == '' ) {
 			$redirect_url = get_permalink();
 		}
 
 		ob_start();
 		echo $wc_notices;
-		woocommerce_login_form( array('redirect'=> $redirect_url) );
+		woocommerce_login_form( array( 'redirect' => $redirect_url ) );
 		echo $js;
 		$login_form = ob_get_contents();
 		ob_end_clean();
@@ -394,45 +382,44 @@ class WCR_SSP
 
 		<form method="post" class="woocommerce-form woocommerce-form-register register">
 
-			<?php do_action( 'woocommerce_register_form_start' ); ?>
+		<?php do_action( 'woocommerce_register_form_start' ); ?>
 
-			<?php if ( 'no' === get_option( 'woocommerce_registration_generate_username' ) ) : ?>
+		<?php if ( 'no' === get_option( 'woocommerce_registration_generate_username' ) ) : ?>
 
 				<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
 					<label for="reg_username"><?php esc_html_e( 'Username', 'woocommerce' ); ?>&nbsp;<span class="required">*</span></label>
 					<input type="text" class="woocommerce-Input woocommerce-Input--text input-text" name="username" id="reg_username" autocomplete="username" value="<?php echo ( ! empty( $_POST['username'] ) ) ? esc_attr( wp_unslash( $_POST['username'] ) ) : ''; ?>" /><?php // @codingStandardsIgnoreLine ?>
 				</p>
 
-			<?php endif; ?>
+		<?php endif; ?>
 
 			<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
 				<label for="reg_email"><?php esc_html_e( 'Email address', 'woocommerce' ); ?>&nbsp;<span class="required">*</span></label>
 				<input type="email" class="woocommerce-Input woocommerce-Input--text input-text" name="email" id="reg_email" autocomplete="email" value="<?php echo ( ! empty( $_POST['email'] ) ) ? esc_attr( wp_unslash( $_POST['email'] ) ) : ''; ?>" /><?php // @codingStandardsIgnoreLine ?>
 			</p>
 
-			<?php if ( 'no' === get_option( 'woocommerce_registration_generate_password' ) ) : ?>
+		<?php if ( 'no' === get_option( 'woocommerce_registration_generate_password' ) ) : ?>
 
 				<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
 					<label for="reg_password"><?php esc_html_e( 'Password', 'woocommerce' ); ?>&nbsp;<span class="required">*</span></label>
 					<input type="password" class="woocommerce-Input woocommerce-Input--text input-text" name="password" id="reg_password" autocomplete="new-password" />
 				</p>
 
-			<?php endif; ?>
+		<?php endif; ?>
 
-			<?php do_action( 'woocommerce_register_form' ); ?>
+		<?php do_action( 'woocommerce_register_form' ); ?>
 
 			<p class="woocommerce-FormRow form-row">
-				<?php wp_nonce_field( 'woocommerce-register', 'woocommerce-register-nonce' ); ?>
+		<?php wp_nonce_field( 'woocommerce-register', 'woocommerce-register-nonce' ); ?>
 				<button type="submit" class="woocommerce-Button button" name="register" value="<?php esc_attr_e( 'Register', 'woocommerce' ); ?>"><?php esc_html_e( 'Register', 'woocommerce' ); ?></button>
 			</p>
 
-			<?php do_action( 'woocommerce_register_form_end' ); ?>
+		<?php do_action( 'woocommerce_register_form_end' ); ?>
 
 		</form>
 		<?php
 		$register_form = ob_get_contents();
-		ob_end_clean();   //登録フォーム取得、ここまで
-
+		ob_end_clean();   // 登録フォーム取得、ここまで
 
 		// <a href="#" uk-toggle="target: #modal_login_form">ログインはこちら</a> で開く
 		$modal_html = <<<EOD
@@ -455,35 +442,35 @@ class WCR_SSP
 </div>
 EOD;
 
-
 		return $modal_html;
 	}
 
-	public function get_dummy_player( $type = 'video' , $message = '') {
+	public function get_dummy_player( $type = 'video', $message = '' ) {
 
-
-		if( $type == 'video' ) {
-			$img = $this->plugin_url. '/images/na-video.png';
-		}
-		else {
-			$img = $this->plugin_url. '/images/na-audio.png';
+		if ( $type == 'video' ) {
+			$img = $this->plugin_url . '/images/na-video.png';
+		} else {
+			$img = $this->plugin_url . '/images/na-audio.png';
 		}
 
-		return str_replace( array('%IMG%', '%MESSAGE%'), array($img, $message),
+		return str_replace(
+			array( '%IMG%', '%MESSAGE%' ),
+			array( $img, $message ),
 			'
 <div class="uk-margin-medium-top uk-margin-small-bottom">
 <img src="%IMG%" /><br>
 <span class="uk-text-meta uk-text-small">%MESSAGE%</span>&nbsp;
 </div>					
-'				);
+'
+		);
 	}
 
-	public function get_access_and_product_url( $user_email='', $user_id='', $series_id ) {
+	public function get_access_and_product_url( $user_email = '', $user_id = '', $series_id ) {
 
 		global $wcr_content;
 
-		if( $user_email == '' ) { // ユーザーが指定されていない場合
-			if( is_user_logged_in() ) {
+		if ( $user_email == '' ) { // ユーザーが指定されていない場合
+			if ( is_user_logged_in() ) {
 				$user       = wp_get_current_user();
 				$user_id    = $user->ID;
 				$user_email = $user->user_email;
@@ -491,22 +478,28 @@ EOD;
 		}
 
 		// 許可商品の取得
-		$series = get_term( $series_id, 'series' );
+		$series  = get_term( $series_id, 'series' );
 		$wcr_ids = get_field( 'series_products', $series );
 
 		// 商品URLを取得
-		$offer = $wcr_content->get_offer_product_id( $wcr_ids );
-		$product = wc_get_product( $offer );
+		$offer       = $wcr_content->get_offer_product_id( $wcr_ids );
+		$product     = wc_get_product( $offer );
 		$product_url = is_object( $product ) ? get_permalink( $product->get_id() ) : '';
 
 		// user 不明なら
-		if( $user_email == '' || $user_id == '' ){
-			return array( 'access' => false, 'url' => $product_url );
+		if ( $user_email == '' || $user_id == '' ) {
+			return array(
+				'access' => false,
+				'url'    => $product_url,
+			);
 		}
 
 		// アクセスチェック
 		$access = $wcr_content->check_access( $wcr_ids, $user_id );
-		return array( 'access' => $access, 'url' => $product_url );
+		return array(
+			'access' => $access,
+			'url'    => $product_url,
+		);
 	}
 
 	public function edit_series_columns( $columns ) {
@@ -517,31 +510,34 @@ EOD;
 	public function add_series_columns( $column_data, $column_name, $term_id ) {
 		switch ( $column_name ) {
 			case 'shortcode':
-				$column_data = '[wcr_ssp id="'.$term_id.'" /]';
+				$column_data = '[wcr_ssp id="' . $term_id . '" /]';
 				break;
 		}
 		return $column_data;
 	}
 
 	public function edit_podcast_columns( $columns ) {
-		$columns[ 'post_date' ] = __( '公開日', 'wcr-ssp');
+		$columns['post_date'] = __( '公開日', 'wcr-ssp' );
 		return $columns;
 	}
 
 	public function add_podcast_columns( $column, $post_id ) {
-		switch ( $column )	{
+		switch ( $column ) {
 			case 'post_date':
-				echo get_the_date( "Y/n/j G:i", $post_id );
+				echo get_the_date( 'Y/n/j G:i', $post_id );
 				break;
 		}
 	}
 
 	public function podcast_column_orderby_post_date( $vars ) {
 		if ( isset( $vars['orderby'] ) && $vars['orderby'] == 'post_data' ) {
-			$vars = array_merge( $vars, array(
-				'meta_key' => 'post_data',
-				'orderby' => 'meta_value'
-			));
+			$vars = array_merge(
+				$vars,
+				array(
+					'meta_key' => 'post_data',
+					'orderby'  => 'meta_value',
+				)
+			);
 		}
 		return $vars;
 	}
@@ -562,29 +558,26 @@ EOD;
 	 *
 	 * @param array $input Contains all settings fields as array keys
 	 */
-	public function sanitize( $input )
-	{
+	public function sanitize( $input ) {
 		return $input;
 		// サニタイズしない
-//        $new_input = array();
-//
-//        if( isset( $input['seckey'] ) )
-//            $new_input['seckey'] = wp_kses_post( $input['seckey'] );
-//
-//        return $new_input;
+		// $new_input = array();
+		//
+		// if( isset( $input['seckey'] ) )
+		// $new_input['seckey'] = wp_kses_post( $input['seckey'] );
+		//
+		// return $new_input;
 	}
 	/**
 	 * Print the Section text
 	 */
-	public function print_section_info()
-	{
+	public function print_section_info() {
 		print '以下に設定を指定し、変更を保存をクリックしてください。';
 	}
 	/**
 	 * Get the settings option array and print one of its values
 	 */
-	public function seckey_callback()
-	{
+	public function seckey_callback() {
 		$text = isset( $this->options['seckey'] ) ? $this->options['seckey'] : '';
 		?>
 
@@ -610,54 +603,56 @@ EOD;
 	function create_update_page() {
 
 		// エピソードの length を更新
-		if ( isset($_POST['updated_series_term'])) {
-			check_admin_referer('update_options');
+		if ( isset( $_POST['updated_series_term'] ) ) {
+			check_admin_referer( 'update_options' );
 
 			$term_id = $_POST['updated_series_term'];
-			$posts = get_posts( array(
-				'post_type' => 'podcast',
-				'posts_per_page'   => -1,
-				'order'     => 'ASC',
-				'post_status' => 'publish',
-				'tax_query' => array(
-					array(
-						'taxonomy' => 'series',
-						'field'    => 'term_id',
-						'terms'    => $term_id,
+			$posts   = get_posts(
+				array(
+					'post_type'      => 'podcast',
+					'posts_per_page' => -1,
+					'order'          => 'ASC',
+					'post_status'    => 'publish',
+					'tax_query'      => array(
+						array(
+							'taxonomy' => 'series',
+							'field'    => 'term_id',
+							'terms'    => $term_id,
+						),
 					),
 				)
-			));
+			);
 
 			// ssl check を無視
-			stream_context_set_default( [
-				'ssl' => [
-					'verify_peer' => false,
-					'verify_peer_name' => false,
-				],
-			]);
+			stream_context_set_default(
+				[
+					'ssl' => [
+						'verify_peer'      => false,
+						'verify_peer_name' => false,
+					],
+				]
+			);
 
 			$log = '<h3>log</h3><ul>';
-			foreach( $posts as $e ) {
-				$e_id = $e->ID;
-				$enclosure = filter_var(get_post_meta( $e_id, 'enclosure', true ), FILTER_VALIDATE_URL );
-				get_post_meta( $e_id, 'enclosure', true );
+			foreach ( $posts as $e ) {
+				   $e_id      = $e->ID;
+				   $enclosure = filter_var( get_post_meta( $e_id, 'enclosure', true ), FILTER_VALIDATE_URL );
+				   get_post_meta( $e_id, 'enclosure', true );
 
-				$location = $enclosure;
-				for ( $i=0; $i<5; $i++ ) { //5回までのリダイレクトを処理する
-					$header = get_headers( $location ,  1 );
-					if( isset($header['Location'] ) ) {
+				   $location = $enclosure;
+				for ( $i = 0; $i < 5; $i++ ) { // 5回までのリダイレクトを処理する
+					$header = get_headers( $location, 1 );
+					if ( isset( $header['Location'] ) ) {
 						$location = $header['Location'];
-					}
-					else {
+					} else {
 						break;
 					}
 				}
 
-				$length = isset( $header['Content-Length'] ) ? $header['Content-Length'] : 10000;
-				update_post_meta( $e_id, 'filesize_raw', $length );
+				   $length = isset( $header['Content-Length'] ) ? $header['Content-Length'] : 10000;
+				   update_post_meta( $e_id, 'filesize_raw', $length );
 
-
-				$log .= "<li>id:{$e_id}, name:{$e->name}, size: {$length}</li>";
+				   $log .= "<li>id:{$e_id}, name:{$e->name}, size: {$length}</li>";
 			}
 			$log .= '</ul>';
 
@@ -678,34 +673,48 @@ EOD;
 		$vimeo_api_cid          = get_option( 'ssp_vimeo_api_cid', '' );
 		$vimeo_api_csr          = get_option( 'ssp_vimeo_api_csr', '' );
 
-
 		// Vimeo から一覧を取得する
-		if ( '' !== $vimeo_api_access_token && isset( $_POST[ 'update_vimeo_list' ] ) ) {
+		if ( '' !== $vimeo_api_access_token && isset( $_POST['update_vimeo_list'] ) ) {
 
 			$lib = new \Vimeo\Vimeo( $vimeo_api_cid, $vimeo_api_csr );
 			$lib->setToken( $vimeo_api_access_token );
 
-			$response = $lib->request('/me/projects', ['direction' => 'desc', 'per_page' => 20, 'sort' => 'date'], 'GET');
-			foreach( $response['body']['data'] as $d ) {
+			$response = $lib->request(
+				'/me/projects',
+				[
+					'direction' => 'desc',
+					'per_page'  => 20,
+					'sort'      => 'date',
+				],
+				'GET'
+			);
+			foreach ( $response['body']['data'] as $d ) {
 				$vimeo_list[] = array(
 					'name'  => $d['name'],
-					'value' => $d['uri']
+					'value' => $d['uri'],
 				);
 			}
 
-			$response = $lib->request('/me/albums', ['direction' => 'desc', 'per_page' => 20, 'sort' => 'date'], 'GET');
-			foreach( $response['body']['data'] as $d ) {
+			$response = $lib->request(
+				'/me/albums',
+				[
+					'direction' => 'desc',
+					'per_page'  => 20,
+					'sort'      => 'date',
+				],
+				'GET'
+			);
+			foreach ( $response['body']['data'] as $d ) {
 				$vimeo_list[] = array(
 					'name'  => $d['name'],
-					'value' => $d['uri']
+					'value' => $d['uri'],
 				);
 			}
 
-			if( count( $vimeo_list ) ) {
+			if ( count( $vimeo_list ) ) {
 				update_option( 'ssp_vimeo_list', $vimeo_list );
 			}
 		}
-
 
 		// vimeo から podcast をインポート
 		if ( isset( $_POST['vimeo_proj'] ) ) {
@@ -721,58 +730,62 @@ EOD;
 				<?php
 			} else {
 
-				//term info
-				$term = get_term_by( 'id', $_POST['updated_series_term'] , 'series' );
+				// term info
+				$term = get_term_by( 'id', $_POST['updated_series_term'], 'series' );
 
 				// データの取得
-				$ret = $lib->request( $_POST['vimeo_proj'] . '/videos', [ 'per_page' => 100 ], 'GET' );
+				$ret    = $lib->request( $_POST['vimeo_proj'] . '/videos', [ 'per_page' => 100 ], 'GET' );
 				$videos = $ret['body']['data'];
-				usort($videos, function($a, $b){
-					return strnatcmp($a['name'], $b['name']);
-				});
+				usort(
+					$videos,
+					function ( $a, $b ) {
+						return strnatcmp( $a['name'], $b['name'] );
+					}
+				);
 
 				// 登録作業
 				$cnt   = 0;
 				$total = count( $videos );
-				$time  = time() - 60 * ($total + 2);
+				$time  = time() - 60 * ( $total + 2 );
 
-				foreach($videos as $i => $v) {
+				foreach ( $videos as $i => $v ) {
 					$cnt++;
 					$time += 60;
 
-					$arr = array();
-					$arr['title']     = $v['name'];
+					$arr          = array();
+					$arr['title'] = $v['name'];
 
-					$arr['duration'] = sprintf("%02d:%02d:%02d",
+					$arr['duration'] = sprintf(
+						'%02d:%02d:%02d',
 						floor( $v['duration'] / 3600 ),
-						floor( ($v['duration'] / 60) % 60),
+						floor( ( $v['duration'] / 60 ) % 60 ),
 						$v['duration'] % 60
 					);
 
-					foreach( $v['files'] as $d ) {
-						if( $d['quality'] == 'hd' ) {
-							$link = preg_replace('/&oauth2_token_id=([0-9]+)/', '', $d['link']) . '&download=1';
+					foreach ( $v['files'] as $d ) {
+						if ( $d['quality'] == 'hd' ) {
+							$link              = preg_replace( '/&oauth2_token_id=([0-9]+)/', '', $d['link'] ) . '&download=1';
 							$arr['audio_file'] = $arr['enclosure'] = $link;
-							$arr['filesize'] = $arr['filesize_raw'] = $d['size']; //そのままでいいかも
+							$arr['filesize']   = $arr['filesize_raw'] = $d['size']; // そのままでいいかも
 							break;
 						}
 					}
 
 					$post = array(
-						'ID' => null,
-						'post_content'   => '',
-						'post_name'      => $term->slug . '-' . $cnt,
-						'post_title'     => $arr['title'],
-						'post_status'    => 'publish',
-						'post_type'      => 'podcast',
-						'post_date'      => date('Y-m-d H:i:s', $time), //TODO 今の時間
-						'tax_input'      => array( 'series' => $term->term_id ),
+						'ID'           => null,
+						'post_content' => '',
+						'post_name'    => $term->slug . '-' . $cnt,
+						'post_title'   => $arr['title'],
+						'post_status'  => 'publish',
+						'post_type'    => 'podcast',
+						'post_date'    => date( 'Y-m-d H:i:s', $time ), // TODO 今の時間
+						'tax_input'    => array( 'series' => $term->term_id ),
 					);
 
 					$post_id = wp_insert_post( $post );
 
 					$arr['wcr_ssp_episode_restrict'] = 'enable';
-					$arr['episode_type'] = 'video';
+					$arr['episode_type']             = 'video';
 
 					$meta = array(
 						'audio_file',
@@ -784,8 +797,8 @@ EOD;
 						'duration',
 					);
 
-					foreach( $meta as $key ) {
-						update_post_meta( $post_id, $key, $arr[$key] );
+					foreach ( $meta as $key ) {
+							  update_post_meta( $post_id, $key, $arr[ $key ] );
 					}
 				}
 
@@ -798,7 +811,6 @@ EOD;
 				<?php
 			}
 		}
-
 
 		// シリーズの一覧を取得
 		$terms = get_terms(
@@ -820,16 +832,20 @@ EOD;
 			<p>エピソードのlengthを、一度に更新します。</p>
 
 			<form method="post" action="<?php admin_url( 'edit.php?post_type=podcast&page=wc4toiee-ssp-update' ); ?>">
-				<?php wp_nonce_field('update_options'); ?>
+		<?php wp_nonce_field( 'update_options' ); ?>
 				<select name="updated_series_term">
-					<?php foreach( $terms as $t ): ?>
+		<?php foreach ( $terms as $t ) : ?>
 						<option value="<?php echo $t->term_id; ?>"><?php echo $t->name; ?></option>
-					<?php endforeach; ?>
+		<?php endforeach; ?>
 				</select>
 				<input type="hidden" name="update_episodes" value="update_episodes">
-				<?php submit_button( "更新を実行する" ); ?>
+		<?php submit_button( '更新を実行する' ); ?>
 			</form>
-			<?php if( isset($log) ){ echo $log; } ?>
+		<?php
+		if ( isset( $log ) ) {
+			echo $log;
+		}
+		?>
 
 
 			<hr>
@@ -837,37 +853,37 @@ EOD;
 			<h3>インポート</h3>
 			<p>最新のプロジェクト、アルバム20件のみを表示します。</p>
 			<form method="post" action="<?php admin_url( 'edit.php?post_type=podcast&page=wc4toiee-ssp-vimeo-import' ); ?>">
-				<?php wp_nonce_field('update_options'); ?>
+		<?php wp_nonce_field( 'update_options' ); ?>
 				<label>インポートするプロジェクト（アルバム）</label>
 				<select name="vimeo_proj">
-					<?php foreach( $vimeo_list as $v ) : ?>
-						<option value="<?php echo $v['value'] ;?>"><?php echo $v['name'] ;?></option>
-					<?php endforeach; ?>
+		<?php foreach ( $vimeo_list as $v ) : ?>
+						<option value="<?php echo $v['value']; ?>"><?php echo $v['name']; ?></option>
+		<?php endforeach; ?>
 				</select>
 				<br>
 				<label>インポート先のシリーズ</label>
 				<select name="updated_series_term">
-					<?php foreach( $terms as $t ): ?>
+		<?php foreach ( $terms as $t ) : ?>
 						<option value="<?php echo $t->term_id; ?>"><?php echo $t->name; ?></option>
-					<?php endforeach; ?>
+		<?php endforeach; ?>
 				</select>
-				<?php submit_button( "エピソードのインポート" ); ?>
+		<?php submit_button( 'エピソードのインポート' ); ?>
 			</form>
 
 			<form method="post" action="<?php admin_url( 'edit.php?post_type=podcast&page=wc4toiee-ssp-vimeo-import' ); ?>">
-				<?php wp_nonce_field('update_options'); ?>
+		<?php wp_nonce_field( 'update_options' ); ?>
 				<input type="hidden" name="update_vimeo_list" value="true">
-				<?php submit_button( "vimeoのリスト一覧を更新" ); ?>
+		<?php submit_button( 'vimeoのリスト一覧を更新' ); ?>
 			</form>
 
 
 			<h3>Vimeo API Setting</h3>
 			<form method="post" action="<?php admin_url( 'edit.php?post_type=podcast&page=wc4toiee-ssp-vimeo-api' ); ?>">
-				<?php wp_nonce_field('update_options'); ?>
+		<?php wp_nonce_field( 'update_options' ); ?>
 				<p><label>Client identifier</label><input type="text" name="ssp_vimeo_api_cid" value="<?php echo $vimeo_api_cid; ?>"></p>
 				<p><label>Access token</label><input type="text" name="ssp_vimeo_api_access_token" value="<?php echo $vimeo_api_access_token; ?>"></p>
 				<p><label>Client secrets</label><input type="text" name="ssp_vimeo_api_csr" value="<?php echo $vimeo_api_csr; ?>"></p>
-				<?php submit_button( "API Keyを保存" ); ?>
+		<?php submit_button( 'API Keyを保存' ); ?>
 			</form>
 
 
@@ -880,30 +896,26 @@ EOD;
 	}
 
 
-	/** episode の一覧数（seriesタクソノミーのアーカイブ表示の場合）を制御
-
-	表示数を増やす。
-
-
+	/**
+	 * episode の一覧数（seriesタクソノミーのアーカイブ表示の場合）を制御
+	   表示数を増やす。
 	 */
 	public function change_episode_per_page( $query ) {
-		if ( is_admin() || ! $query->is_main_query() )
-		{
+		if ( is_admin() || ! $query->is_main_query() ) {
 			return;
 		}
 
 		if ( $query->is_tax( 'series' ) ) {
-			$query->set( 'posts_per_page', '20' ); //表示件数を指定
+			$query->set( 'posts_per_page', '20' ); // 表示件数を指定
 
-			$term       = get_term_by( 'slug', $query->get('series'), 'series');
-			$series_id  = $term->term_id;
-			$consume_order = get_option( 'ss_podcasting_consume_order_'.$series_id, 'episodic' );
+			$term          = get_term_by( 'slug', $query->get( 'series' ), 'series' );
+			$series_id     = $term->term_id;
+			$consume_order = get_option( 'ss_podcasting_consume_order_' . $series_id, 'episodic' );
 
-			if( $consume_order == 'serial' ){ // 順序の変更
+			if ( $consume_order == 'serial' ) { // 順序の変更
 				$query->set( 'orderby', 'post_date' );
 				$query->set( 'order', 'ASC' );
-			}
-			else{
+			} else {
 				$query->set( 'orderby', 'post_date' );
 				$query->set( 'order', 'DESC' );
 			}
@@ -921,29 +933,28 @@ EOD;
 
 	}
 
-	public function get_size($size , $id) {
-		if( $size == 1) {
+	public function get_size( $size, $id ) {
+		if ( $size == 1 ) {
 			return get_post_meta( $id, 'filesize', true );
-		}
-		else {
+		} else {
 			return $size;
 		}
 	}
 
 	/*
-	 * Podcast feed のアクセス許可を出すために、ユーザーを識別する固有のIDを取得する。
-	 * もし、ユーザーが持っていなければ生成する
-	 */
-	public function get_user_wcrtoken(){
+	* Podcast feed のアクセス許可を出すために、ユーザーを識別する固有のIDを取得する。
+	* もし、ユーザーが持っていなければ生成する
+	*/
+	public function get_user_wcrtoken() {
 
-		if( is_user_logged_in() ){
+		if ( is_user_logged_in() ) {
 
-			$user_id = get_current_user_id();
+			$user_id  = get_current_user_id();
 			$wcrtoken = get_user_meta( $user_id, WC4T_WCRTOKEN, true );
 
-			if( $wcrtoken == '' ){
+			if ( $wcrtoken == '' ) {
 				$wcrtoken = uniqid();
-				update_user_meta( $user_id, WC4T_WCRTOKEN, $wcrtoken);
+				update_user_meta( $user_id, WC4T_WCRTOKEN, $wcrtoken );
 			}
 
 			return $wcrtoken;
