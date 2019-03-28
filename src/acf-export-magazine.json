@@ -1,0 +1,267 @@
+[
+    {
+        "key": "group_5c99d96470341",
+        "title": "マガジン",
+        "fields": [
+            {
+                "key": "field_5c99d9817e04f",
+                "label": "サブタイトル",
+                "name": "mag_subtitle",
+                "type": "text",
+                "instructions": "マガジンのサブタイトルです",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "placeholder": "",
+                "prepend": "",
+                "append": "",
+                "maxlength": ""
+            },
+            {
+                "key": "field_5c99db367e055",
+                "label": "オーダー",
+                "name": "mag_order",
+                "type": "select",
+                "instructions": "記事の表示順序です。",
+                "required": 1,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "choices": {
+                    "new": "新しい順（最新がトップ）",
+                    "old": "古い順（古い記事がトップ）",
+                    "name": "名前順（ナンバー付き記事を想定）"
+                },
+                "default_value": [
+                    "date-asc"
+                ],
+                "allow_null": 0,
+                "multiple": 0,
+                "ui": 1,
+                "ajax": 0,
+                "return_format": "value",
+                "placeholder": ""
+            },
+            {
+                "key": "field_5c9ada8d8db83",
+                "label": "タイトルカラー",
+                "name": "mag_title_color",
+                "type": "color_picker",
+                "instructions": "タイトル、サブタイトルの色。背景とコントラストが高くなるように設定してください。",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": ""
+            },
+            {
+                "key": "field_5c99d9bd7e050",
+                "label": "ヘッダー背景色",
+                "name": "mag_bgcolor",
+                "type": "color_picker",
+                "instructions": "どちらを使うか選んでください",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": ""
+            },
+            {
+                "key": "field_5c99da2c7e051",
+                "label": "ヘッダー画像",
+                "name": "mag_bgimg",
+                "type": "image",
+                "instructions": "ヘッダーに使う背景画像。カラーは無視します。",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "return_format": "url",
+                "preview_size": "thumbnail",
+                "library": "all",
+                "min_width": "",
+                "min_height": "",
+                "min_size": "",
+                "max_width": "",
+                "max_height": "",
+                "max_size": "",
+                "mime_types": ""
+            },
+            {
+                "key": "field_5c99da767e052",
+                "label": "追加css",
+                "name": "mag_css",
+                "type": "textarea",
+                "instructions": "追加CSSが必要な場合に利用。本格的に変更する場合は、テンプレートを変更してください。例えば、 .mag-lead { color : #ccc; } でリード文のフォント色を変更できます。",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "placeholder": "",
+                "maxlength": "",
+                "rows": "",
+                "new_lines": ""
+            },
+            {
+                "key": "field_5c9ae1e00f95b",
+                "label": "デフォルトCSSを出力しない",
+                "name": "mag_css_off",
+                "type": "true_false",
+                "instructions": "デフォルトで出力されるCSSを出力しない場合は、true にしてください",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "message": "",
+                "default_value": 0,
+                "ui": 1,
+                "ui_on_text": "",
+                "ui_off_text": ""
+            },
+            {
+                "key": "field_5c9ae5181834f",
+                "label": "オーバーレイ(重なり)",
+                "name": "mag_overlay_height",
+                "type": "number",
+                "instructions": "",
+                "required": 1,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": 200,
+                "placeholder": 200,
+                "prepend": "",
+                "append": "px",
+                "min": "",
+                "max": "",
+                "step": ""
+            },
+            {
+                "key": "field_5c99dabc7e053",
+                "label": "ヘッダーお知らせ",
+                "name": "mag_header_notice",
+                "type": "wysiwyg",
+                "instructions": "ヘッダーに挿入するお知らせ",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "tabs": "all",
+                "toolbar": "full",
+                "media_upload": 1,
+                "delay": 0
+            },
+            {
+                "key": "field_5c99dafd7e054",
+                "label": "フッターお知らせ",
+                "name": "mag_footer_notice",
+                "type": "wysiwyg",
+                "instructions": "フッターに表示するお知らせです",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "tabs": "all",
+                "toolbar": "full",
+                "media_upload": 1,
+                "delay": 0
+            },
+            {
+                "key": "field_5c99dc497e056",
+                "label": "状態",
+                "name": "mag_status",
+                "type": "select",
+                "instructions": "公開、非公開を選びます",
+                "required": 1,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "choices": {
+                    "public": "公開",
+                    "close": "非公開"
+                },
+                "default_value": [],
+                "allow_null": 0,
+                "multiple": 0,
+                "ui": 1,
+                "ajax": 0,
+                "return_format": "value",
+                "placeholder": ""
+            },
+            {
+                "key": "field_5c99dda98baee",
+                "label": "閉鎖時のお知らせ",
+                "name": "mag_close_notice",
+                "type": "wysiwyg",
+                "instructions": "閉鎖時に表示するお知らせです",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "tabs": "all",
+                "toolbar": "full",
+                "media_upload": 1,
+                "delay": 0
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "taxonomy",
+                    "operator": "==",
+                    "value": "magazine"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "acf_after_title",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": true,
+        "description": ""
+    }
+]
