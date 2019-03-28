@@ -8,20 +8,21 @@
 
 class ToieeLab_Subscription_Bank {
 
+
 	public function __construct() {
 
-		add_filter( 'wcs_user_has_subscription', array($this, 'expand_bank_user'), 99, 4);
+		add_filter( 'wcs_user_has_subscription', array( $this, 'expand_bank_user' ), 99, 4 );
 
 	}
 
-	public function expand_bank_user($has_subscription, $user_id, $product_id, $status){
+	public function expand_bank_user( $has_subscription, $user_id, $product_id, $status ) {
 
 		// true なら、true を返す
-		if( $has_subscription ) {
+		if ( $has_subscription ) {
 			return $has_subscription;
 		}
 		// status が 'active' を指定されていなければ、以下調べる必要はない
-		if( $status != 'active' ) {
+		if ( $status != 'active' ) {
 			return $has_subscription;
 		}
 
@@ -30,19 +31,19 @@ class ToieeLab_Subscription_Bank {
 		foreach ( $subscriptions as $subscription ) {
 			// 状態が on-hold で、マニュアルペイメント
 			if ( $subscription->has_product( $product_id )
-			     && $subscription->has_status( 'on-hold' )
-			     && $subscription->is_manual()
-				 && ( count( $subscription->get_related_orders( 'all', 'renewal' ) ) > 0)  //リニューアルのオーダーの場合だけ
+				&& $subscription->has_status( 'on-hold' )
+				&& $subscription->is_manual()
+				&& ( count( $subscription->get_related_orders( 'all', 'renewal' ) ) > 0 )  // リニューアルのオーダーの場合だけ
 			) {
 
-				$next_date  = $subscription->get_date( 'next_payment' );
-				$next_time  = strtotime( $next_date );
+				$next_date = $subscription->get_date( 'next_payment' );
+				$next_time = strtotime( $next_date );
 
-				$now_time   = time();
+				$now_time = time();
 
 				$diff = $now_time - $next_time;
 
-				if( $diff < 60 * 60 * 24 * 10 ) { //10日間
+				if ( $diff < 60 * 60 * 24 * 10 ) { // 10日間
 					$has_subscription = true;
 					break;
 				}
