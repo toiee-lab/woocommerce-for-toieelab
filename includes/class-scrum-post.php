@@ -13,18 +13,47 @@ class Toiee_Scrum_Post {
 	public $tabs;
 
 	/**
-	 * Toiee_Scrum_Post constructor.
+	 * プラグインのルートファイルを格納する
+	 *
+	 * @var string
 	 */
-	public function __construct() {
-		add_action( 'init', array( $this, 'cptui_register_my_cpts_scrum_post' ) );
+	public $file;
 
+	/**
+	 * Toiee_Scrum_Post constructor.
+	 *
+	 * @param $file string
+	 */
+	public function __construct( $file ) {
+
+		$this->file = $file;
+
+		add_action( 'init', array( $this, 'cptui_register_my_cpts_scrum_post' ) );
 		add_action( 'init', array( $this, 'cptui_register_my_taxes_scrum' ) );
+
+		register_activation_hook( $file, array( $this, 'activate' ) );
+		register_deactivation_hook( $file, array( $this, 'deactivate' ) );
 
 		$this->add_acf();
 
 		add_action( 'transition_post_status', array( $this, 'slack_notification' ), 10, 3 );
-
 		add_action( 'wp_head', array( $this, 'noindex' ) );
+	}
+
+	/**
+	 * カスタム投稿タイプ、タクソノミーを rewrite rule に登録する
+	 */
+	public function activate() {
+		$this->cptui_register_my_cpts_scrum_post();
+		$this->cptui_register_my_taxes_scrum();
+		flush_rewrite_rules( true );
+	}
+
+	/**
+	 * リライトルールをキャンセルする
+	 */
+	public function deactivate() {
+		flush_rewrite_rules( true );
 	}
 
 	/**

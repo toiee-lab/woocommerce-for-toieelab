@@ -36,7 +36,7 @@ $MyUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 // Seriously Simple Pocast の会員別のURLを作るときに使う「暗号化シード」のデフォルト値
 // 通常は、設定で置き換えることになる
 define( 'WCR_SSP_SECKEY', 'wLEznoW2QdUjEE' );
-
+define( 'WOOCOMMERCE_FOR_TOIEELAB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
 // include ACF(free)
 add_filter(
@@ -74,7 +74,12 @@ require_once 'includes/class-wcr-login.php';
 require_once 'includes/class-installment.php';
 require_once 'includes/class-scrum-post.php';
 require_once 'includes/class-magazine-post.php';
+require_once 'includes/class-poketera-post.php';
+require_once 'includes/class-mmdmy-post.php';
 require_once 'includes/class-subscription-bank.php';
+require_once 'includes/class-pcast.php';
+require_once 'includes/class-tkb-post.php';
+
 
 
 // generate instances
@@ -112,10 +117,23 @@ global $wcr_login;
 $wdr_login = new Toiee_WCLogin();
 
 global $toiee_scrum;
-$toiee_scrum = new Toiee_Scrum_Post();
+$toiee_scrum = new Toiee_Scrum_Post( __FILE__ );
 
 global $toiee_magazine;
 $toiee_magazine = new Toiee_Magazine_Post();
+
+global $toiee_pocketera;
+$toiee_pocketera = new Toiee_Pocketera_Post();
+
+global $toiee_mimidemy;
+$toiee_mimidemy = new Toiee_Mimidemy_Post();
+
+global $toiee_pcast;
+$toiee_pcast = new Toiee_Pcast();
+
+global $toiee_knowledge;
+$toiee_knowledge = new Toiee_Tkb_Post();
+
 
 // JetPack を WooCommerce Productページでは実行しない
 function exclude_jetpack_related_from_products( $options ) {
@@ -126,11 +144,3 @@ function exclude_jetpack_related_from_products( $options ) {
 	return $options;
 }
 add_filter( 'jetpack_relatedposts_filter_options', 'exclude_jetpack_related_from_products' );
-
-
-
-// プラグインを有効化した時の動作
-function wc4t_rewrite_flush() {
-	flush_rewrite_rules();
-}
-register_activation_hook( __FILE__, 'wc4t_rewrite_flush' );

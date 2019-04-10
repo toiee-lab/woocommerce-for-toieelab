@@ -633,6 +633,27 @@ here is contents
 
 		<?php
 	}
-}
 
+	/*
+	* Podcast feed のアクセス許可を出すために、ユーザーを識別する固有のIDを取得する。
+	* もし、ユーザーが持っていなければ生成する
+	*/
+	public function get_user_wcrtoken() {
+
+		if ( is_user_logged_in() ) {
+
+			$user_id  = get_current_user_id();
+			$wcrtoken = get_user_meta( $user_id, 'wcrtoken', true );
+
+			if ( $wcrtoken == '' ) {
+				$wcrtoken = uniqid();
+				update_user_meta( $user_id, 'wcrtoken', $wcrtoken );
+			}
+
+			return $wcrtoken;
+		}
+
+		return null;
+	}
+}
 

@@ -197,3 +197,45 @@ function toiee_simple_the_content( $text ) {
 	// $text = prepend_attachment( $text );
 	return $text;
 }
+
+
+/**
+ * プレイヤーをだす
+ *
+ * @param $src
+ * @param string $type
+ */
+function the_episode_player( $src, $type = 'video' ) {
+
+	if ( 'video' === $type ) {
+		if ( preg_match( '|https://player.vimeo.com/external/([0-9]+)|', $src, $matches ) ) {
+			$vid = $matches[1];
+			?>
+			<div style="padding:56.25% 0 0 0;position:relative;"><iframe src="https://player.vimeo.com/video/'<?php echo esc_url( $vid ); ?>'?title=0&byline=0&portrait=0" style="position:absolute;top:0;left:0;width:100%;height:100%;" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe></div><script src="https://player.vimeo.com/api/player.js"></script>
+			<?php
+		} else {
+			echo do_shortcode( '[video src="' . $src . '" /]' );
+		}
+	} else {
+		echo do_shortcode( '[audio src="' . $src . '" /]' );
+	}
+}
+
+function the_episode_player_dummy( $type = 'video', $message = '閲覧するには、<a href="#" uk-toggle="target: #modal_login_form">ログイン</a>してください' ) {
+	if ( $type == 'video' ) {
+		$img = plugins_url( '/images/na-video.png', dirname( __FILE__ ) );
+	} else {
+		$img = plugins_url( '/images/na-audio.png', dirname( __FILE__ ) );
+	}
+
+	echo str_replace(
+		array( '%IMG%', '%MESSAGE%' ),
+		array( $img, $message ),
+		'
+<div class="uk-margin-medium-top uk-margin-small-bottom">
+<img src="%IMG%" /><br>
+<span class="uk-text-meta uk-text-small">%MESSAGE%</span>&nbsp;
+</div>					
+'
+	);
+}
