@@ -10,13 +10,15 @@ class Toiee_Tkb_Post {
 	 *
 	 * Toiee_Tkb_Post constructor.
 	 */
-	public function __construct() {
+	public function __construct( $file ) {
 
 		add_action( 'init', array( $this, 'cptui_register_my_cpts_post' ) );
 		$this->add_acf();
 
-		register_activation_hook( WOOCOMMERCE_FOR_TOIEELAB_PLUGIN_DIR, array( $this, 'activate' ) );
-		register_deactivation_hook( WOOCOMMERCE_FOR_TOIEELAB_PLUGIN_DIR, array( $this, 'deactivate' ) );
+		$plugin_dir = plugin_dir_path( $file );
+
+		register_activation_hook( $plugin_dir, array( $this, 'activate' ) );
+		register_deactivation_hook( $plugin_dir, array( $this, 'deactivate' ) );
 	}
 
 	/**

@@ -32,12 +32,6 @@ $MyUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 	'wc-restrict'
 );
 
-
-// Seriously Simple Pocast の会員別のURLを作るときに使う「暗号化シード」のデフォルト値
-// 通常は、設定で置き換えることになる
-define( 'WCR_SSP_SECKEY', 'wLEznoW2QdUjEE' );
-define( 'WOOCOMMERCE_FOR_TOIEELAB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-
 // include ACF(free)
 add_filter(
 	'acf/settings/path',
@@ -126,13 +120,13 @@ global $toiee_pocketera;
 $toiee_pocketera = new Toiee_Pocketera_Post();
 
 global $toiee_mimidemy;
-$toiee_mimidemy = new Toiee_Mimidemy_Post();
+$toiee_mimidemy = new Toiee_Mimidemy_Post( __FILE__ );
 
 global $toiee_pcast;
-$toiee_pcast = new Toiee_Pcast();
+$toiee_pcast = new Toiee_Pcast( __FILE__ );
 
 global $toiee_knowledge;
-$toiee_knowledge = new Toiee_Tkb_Post();
+$toiee_knowledge = new Toiee_Tkb_Post( __FILE__ );
 
 
 // JetPack を WooCommerce Productページでは実行しない

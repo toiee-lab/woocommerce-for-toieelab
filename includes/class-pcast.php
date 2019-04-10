@@ -38,7 +38,7 @@ class Toiee_Pcast {
 	 *
 	 * @param string $file プラグインのルートファイルのパス
 	 */
-	public function __construct() {
+	public function __construct( $file ) {
 
 		$this->file            = $file;
 		$this->feed_slug       = 'pcast';
@@ -50,8 +50,8 @@ class Toiee_Pcast {
 		add_action( 'init', array( $this, 'add_feed' ), 1 );
 		add_filter( 'query_vars', array( $this, 'custom_query_vars_filter' ) );
 
-		register_activation_hook( WOOCOMMERCE_FOR_TOIEELAB_PLUGIN_DIR, array( $this, 'activate' ) );
-		register_deactivation_hook( WOOCOMMERCE_FOR_TOIEELAB_PLUGIN_DIR, array( $this, 'deactivate' ) );
+		register_activation_hook( $file, array( $this, 'activate' ) );
+		register_deactivation_hook( $file, array( $this, 'deactivate' ) );
 
 	}
 

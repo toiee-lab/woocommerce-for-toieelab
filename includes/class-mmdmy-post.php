@@ -10,15 +10,16 @@ class Toiee_Mimidemy_Post {
 	 *
 	 * Toiee_Magazine_Post constructor.
 	 */
-	public function __construct() {
+	public function __construct( $file ) {
 
 		add_action( 'init', array( $this, 'cptui_register_my_cpts_post' ) );
 		add_action( 'init', array( $this, 'cptui_register_my_taxes' ) );
 		$this->add_acf();
 		add_action( 'pre_get_posts', array( $this, 'pre_get_post' ), 1 );
 
-		register_activation_hook( WOOCOMMERCE_FOR_TOIEELAB_PLUGIN_DIR, array( $this, 'activate' ) );
-		register_deactivation_hook( WOOCOMMERCE_FOR_TOIEELAB_PLUGIN_DIR, array( $this, 'deactivate' ) );
+		$plugin_dir = plugin_dir_path( $file );
+		register_activation_hook( $plugin_dir, array( $this, 'activate' ) );
+		register_deactivation_hook( $plugin_dir, array( $this, 'deactivate' ) );
 	}
 
 	/**
