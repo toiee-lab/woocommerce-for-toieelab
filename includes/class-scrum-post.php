@@ -90,7 +90,7 @@ class Toiee_Scrum_Post {
 			'has_archive'           => false,
 			'show_in_menu'          => true,
 			'show_in_nav_menus'     => true,
-			'exclude_from_search'   => true,
+			'exclude_from_search'   => false,
 			'capability_type'       => 'post',
 			'map_meta_cap'          => true,
 			'hierarchical'          => false,
