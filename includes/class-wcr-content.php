@@ -278,6 +278,10 @@ EOD;
 
 		$ret = false;
 
+		if ( ! is_array( $ids ) ) {
+			return false;
+		}
+
 		foreach ( $ids as $i ) {
 			$post_type = get_post_type( $i );
 
