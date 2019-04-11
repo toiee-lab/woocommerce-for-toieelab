@@ -38,6 +38,42 @@ class Toiee_Scrum_Post {
 
 		add_action( 'transition_post_status', array( $this, 'slack_notification' ), 10, 3 );
 		add_action( 'wp_head', array( $this, 'noindex' ) );
+
+		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter' ) );
+	}
+
+	public function pre_get_posts_filter( $query ) {
+
+		if ( is_admin() ) {
+			return;
+		}
+
+		if ( $query->is_main_query() && $query->is_tax( 'scrum' ) ) {
+			$arg = array( 'scrum_post', 'podcast' );
+			$query->set( 'post_type', $arg );
+
+			$scrum_slug = $query->get( 'scrum' );
+			$scrum      = get_term_by( 'slug', $scrum_slug, 'scrum' );
+			$news_id    = get_field( 'updates_news_podcast', $scrum );
+			$archive_id = get_field( 'updates_archive_podcast', $scrum );
+
+			$arg = array(
+				'relation' => 'OR',
+				array(
+					'taxonomy' => 'series',
+					'field'    => 'term_id',
+					'terms'    => (int) $news_id,
+				),
+				array(
+					'taxonomy' => 'series',
+					'field'    => 'term_id',
+					'terms'    => (int) $archive_id,
+				),
+			);
+			$query->set( 'tax_query', $arg );
+
+			$query->set( 'posts_per_page', 30 );
+		}
 	}
 
 	/**
