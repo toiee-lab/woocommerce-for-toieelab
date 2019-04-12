@@ -16,8 +16,12 @@ class Toiee_Pocketera_Post {
 		add_action( 'init', array( $this, 'cptui_register_my_taxes' ) );
 		$this->add_acf();
 
+		add_filter( 'query_vars', array( $this, 'custom_query_vars_filter' ) );
+
 		add_action( 'pre_get_posts', array( $this, 'pre_get_post' ), 1 );
 		add_action( 'save_post_pkt_feedback', array( $this, 'sum_feedback_num' ), 2, 10 );
+
+		add_action( 'acf/save_post', array( $this, 'feedback_save_post' ) );
 	}
 
 
@@ -661,6 +665,340 @@ class Toiee_Pocketera_Post {
 				)
 			);
 
+			acf_add_local_field_group(
+				array(
+					'key'                   => 'group_5cb014460eb0a',
+					'title'                 => 'アンケート項目',
+					'fields'                => array(
+						array(
+							'key'               => 'field_5cb019908a5d3',
+							'label'             => 'お名前',
+							'name'              => 'enq_name',
+							'type'              => 'text',
+							'instructions'      => 'ニックネーム、仮名でも構いません',
+							'required'          => 1,
+							'conditional_logic' => 0,
+							'wrapper'           => array(
+								'width' => '',
+								'class' => '',
+								'id'    => '',
+							),
+							'default_value'     => '',
+							'placeholder'       => '',
+							'prepend'           => '',
+							'append'            => '',
+							'maxlength'         => '',
+						),
+						array(
+							'key'               => 'field_5cb019ba8a5d4',
+							'label'             => 'メールアドレス',
+							'name'              => 'enq_email',
+							'type'              => 'email',
+							'instructions'      => '必須ではありません。こちらから追加でご質問させていただく際に利用いたします',
+							'required'          => 0,
+							'conditional_logic' => 0,
+							'wrapper'           => array(
+								'width' => '',
+								'class' => '',
+								'id'    => '',
+							),
+							'default_value'     => '',
+							'placeholder'       => '',
+							'prepend'           => '',
+							'append'            => '',
+						),
+						array(
+							'key'               => 'field_5cb018c38a5d2',
+							'label'             => 'あなたについて',
+							'name'              => 'enq_participant',
+							'type'              => 'group',
+							'instructions'      => 'あなた（参加者ご自身）について、お教えください。記入することで、学習効果の向上が期待できます。',
+							'required'          => 0,
+							'conditional_logic' => 0,
+							'wrapper'           => array(
+								'width' => '',
+								'class' => '',
+								'id'    => '',
+							),
+							'layout'            => 'block',
+							'sub_fields'        => array(
+								array(
+									'key'               => 'field_5cb017128a5cf',
+									'label'             => '参加理由',
+									'name'              => 'enq_aim',
+									'type'              => 'textarea',
+									'instructions'      => '今回、参加された理由（期待していたもの、目的）をお教えください',
+									'required'          => 1,
+									'conditional_logic' => 0,
+									'wrapper'           => array(
+										'width' => '',
+										'class' => '',
+										'id'    => '',
+									),
+									'default_value'     => '',
+									'placeholder'       => 'なぜ、参加してくださったのでしょうか？',
+									'maxlength'         => '',
+									'rows'              => '',
+									'new_lines'         => 'wpautop',
+								),
+								array(
+									'key'               => 'field_5cb017e68a5d0',
+									'label'             => 'よかった点、学んだこと',
+									'name'              => 'enq_good',
+									'type'              => 'textarea',
+									'instructions'      => 'よかった点を、学んだことを具体的（細かいことでも）をお教えください',
+									'required'          => 0,
+									'conditional_logic' => 0,
+									'wrapper'           => array(
+										'width' => '',
+										'class' => '',
+										'id'    => '',
+									),
+									'default_value'     => '',
+									'placeholder'       => 'よかった点を具体的（細かいことでも）をお教えください',
+									'maxlength'         => '',
+									'rows'              => '',
+									'new_lines'         => '',
+								),
+								array(
+									'key'               => 'field_5cb01a1b8a5d5',
+									'label'             => '予期せぬこと',
+									'name'              => 'enq_unexpected',
+									'type'              => 'textarea',
+									'instructions'      => '予期せず（予想外）に、うまくいったこと、よかったこと、その他、思いつくままにお書きください',
+									'required'          => 0,
+									'conditional_logic' => 0,
+									'wrapper'           => array(
+										'width' => '',
+										'class' => '',
+										'id'    => '',
+									),
+									'default_value'     => '',
+									'placeholder'       => '',
+									'maxlength'         => '',
+									'rows'              => '',
+									'new_lines'         => '',
+								),
+								array(
+									'key'               => 'field_5cb0184d8a5d1',
+									'label'             => '改善点、次やるなら',
+									'name'              => 'enq_improve',
+									'type'              => 'textarea',
+									'instructions'      => 'もう一度参加するなら、どのように取り組みますか？',
+									'required'          => 0,
+									'conditional_logic' => 0,
+									'wrapper'           => array(
+										'width' => '',
+										'class' => '',
+										'id'    => '',
+									),
+									'default_value'     => '',
+									'placeholder'       => '',
+									'maxlength'         => '',
+									'rows'              => '',
+									'new_lines'         => '',
+								),
+							),
+						),
+						array(
+							'key'               => 'field_5cb01ab68a5d6',
+							'label'             => '運営側について',
+							'name'              => 'enq_lft',
+							'type'              => 'group',
+							'instructions'      => '運営側に対するフィードバック（ご意見）など',
+							'required'          => 0,
+							'conditional_logic' => 0,
+							'wrapper'           => array(
+								'width' => '',
+								'class' => '',
+								'id'    => '',
+							),
+							'layout'            => 'block',
+							'sub_fields'        => array(
+								array(
+									'key'               => 'field_5cb01ae58a5d7',
+									'label'             => 'よかった点',
+									'name'              => 'enq_lft_good',
+									'type'              => 'textarea',
+									'instructions'      => '運営側、ファシリテーターについて良かった点をお教えください',
+									'required'          => 0,
+									'conditional_logic' => 0,
+									'wrapper'           => array(
+										'width' => '',
+										'class' => '',
+										'id'    => '',
+									),
+									'default_value'     => '',
+									'placeholder'       => '',
+									'maxlength'         => '',
+									'rows'              => '',
+									'new_lines'         => '',
+								),
+								array(
+									'key'               => 'field_5cb01b228a5d8',
+									'label'             => '改善点・次やるなら',
+									'name'              => 'enq_lft_improve',
+									'type'              => 'textarea',
+									'instructions'      => '運営側、ファシリテーターの改善するべきことや、アドバイスなどをお書きください',
+									'required'          => 0,
+									'conditional_logic' => 0,
+									'wrapper'           => array(
+										'width' => '',
+										'class' => '',
+										'id'    => '',
+									),
+									'default_value'     => '',
+									'placeholder'       => '',
+									'maxlength'         => '',
+									'rows'              => '',
+									'new_lines'         => '',
+								),
+							),
+						),
+						array(
+							'key'               => 'field_5cb01bb58a5d9',
+							'label'             => 'その他',
+							'name'              => 'enq_additional',
+							'type'              => 'textarea',
+							'instructions'      => 'メッセージ、書き残したことなどありましたら、お書きください',
+							'required'          => 0,
+							'conditional_logic' => 0,
+							'wrapper'           => array(
+								'width' => '',
+								'class' => '',
+								'id'    => '',
+							),
+							'default_value'     => '',
+							'placeholder'       => '',
+							'maxlength'         => '',
+							'rows'              => '',
+							'new_lines'         => '',
+						),
+					),
+					'location'              => array(
+						array(
+							array(
+								'param'    => 'post_type',
+								'operator' => '==',
+								'value'    => 'pkt_feedback',
+							),
+						),
+					),
+					'menu_order'            => 0,
+					'position'              => 'normal',
+					'style'                 => 'default',
+					'label_placement'       => 'top',
+					'instruction_placement' => 'label',
+					'hide_on_screen'        => '',
+					'active'                => true,
+					'description'           => '',
+				)
+			);
+
 		endif;
+	}
+
+	public function feedback_save_post( $post_id ) {
+		if ( get_post_type( $post_id ) !== 'pkt_feedback' ) {
+			return;
+		}
+
+		if ( is_admin() ) {
+			return;
+		}
+
+		$post = get_post( $post_id );
+
+		/* title */
+		$name   = get_field( 'enq_name', $post_id );
+		$pkt_id = get_post_meta( $post_id, 'pkt_report', true );
+		$pkt_ch = get_term_by( 'id', $pkt_id, 'pkt_channel' );
+		$title  = get_the_date() . ' ' . $pkt_ch . ' by ' . $name;
+
+		/* get acf field label */
+		$fields       = acf_get_fields( 'group_5cb014460eb0a' );
+		$fields_label = array();
+		foreach ( $fields as $f ) {
+			if ( 'group' === $f['type'] ) {
+				foreach ( $f['sub_fields'] as $sub ) {
+					$fields_label[ $sub['name'] ] = $sub['label'];
+				}
+			}
+
+			$fields_label[ $f['name'] ] = $f['label'];
+		}
+
+		/* get_content */
+		$content      = '';
+		$field_values = get_fields( $post );
+
+		$content =
+		'<table class="uk-table uk-table-middle uk-table-responsive uk-table-divider">
+    <thead>
+        <tr>
+            <th class="uk-width-small">項目</th>
+            <th class="uk-table-expand">内容</th>
+        </tr>
+    </thead>
+    <tbody>
+';
+		foreach ( $field_values as $key => $value ) {
+			if ( is_array( $value ) ) {
+				$prefix = $fields_label[ $key ];
+				foreach ( $value as $skey => $svalue ) {
+					$content .= '<tr><th>' . $prefix . '<br>' . $fields_label[ $skey ] . '</th><td>' . $svalue . '</td></tr>' . "\n";
+				}
+			} else {
+				if ( 'pkt_report' !== $key ) {
+					$content .= '<tr><th>' . $fields_label[ $key ] . '</th><td>' . $value . '</td></tr>' . "\n";
+				}
+			}
+		}
+		$content .=
+		'   </tbody>
+</table>	
+';
+
+		$my_post = array(
+			'ID'           => $post_id,
+			'post_title'   => $title,
+			'post_content' => $content,
+		);
+		wp_update_post( $my_post );
+
+		/* send mail */
+		$email       = get_field( 'enq_email', $post_id );
+		$admin_email = get_option( 'admin_email' );
+
+
+		if ( null !== $email ) {
+			$to      = $email;
+			$headers = 'From: toiee Lab <' . $admin_email . '>' . "\r\n";
+			$subject = 'アンケートをありがとうございました（ from toiee Lab）';
+			$body    = '';
+
+			foreach ( $field_values as $key => $value ) {
+				if ( is_array( $value ) ) {
+					$prefix = '【' . $fields_label[ $key ] . '】';
+					foreach ( $value as $skey => $svalue ) {
+						$body .= '# ' . $prefix . $fields_label[ $skey ] . "\n";
+						$body .= wp_strip_all_tags( $svalue ) . "\n\n";
+					}
+				} else {
+					if ( 'pkt_report' !== $key ) {
+						$body .= '# ' . $fields_label[ $key ] . "\n";
+						$body .= wp_strip_all_tags( $value ) . "\n\n";
+					}
+				}
+			}
+
+			wp_mail($to, $subject, $body, $headers );
+		}
+
+	}
+
+	public function custom_query_vars_filter( $vars ) {
+		$vars[] .= 'pktftoken';
+		return $vars;
 	}
 }
