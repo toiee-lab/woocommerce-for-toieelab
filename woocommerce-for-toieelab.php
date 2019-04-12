@@ -183,7 +183,7 @@ add_filter( 'pre_get_posts', 'exclude_search_podcasts' );
  */
 function toiee_noindex() {
 
-	$exclude_post_type = array( 'scrum_post', 'pkt_feedback', 'pkt_report' );
+	$exclude_post_type = array( 'scrum_post', 'pkt_feedback', 'pkt_report', 'product' );
 	$exclude_post_type = apply_filters( 'toiee_exclude_search_post_type', $exclude_post_type );
 
 	foreach ( $exclude_post_type as $ptype ) {
