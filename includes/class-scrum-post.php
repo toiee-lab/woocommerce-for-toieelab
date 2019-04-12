@@ -37,7 +37,6 @@ class Toiee_Scrum_Post {
 		$this->add_acf();
 
 		add_action( 'transition_post_status', array( $this, 'slack_notification' ), 10, 3 );
-		add_action( 'wp_head', array( $this, 'noindex' ) );
 
 		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter' ) );
 	}
@@ -90,15 +89,6 @@ class Toiee_Scrum_Post {
 	 */
 	public function deactivate() {
 		flush_rewrite_rules( true );
-	}
-
-	/**
-	 * Scrum投稿、カテゴリは検索結果を除外するためのもの
-	 */
-	public function noindex() {
-		if ( is_tax( 'scrum' ) || get_post_type() === 'scrum_post' ) {
-			echo '<meta id="scrum-plugin" name="robots" content="noindex" />' . "\n";
-		}
 	}
 
 	function cptui_register_my_cpts_scrum_post() {

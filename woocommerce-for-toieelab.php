@@ -138,3 +138,63 @@ function exclude_jetpack_related_from_products( $options ) {
 	return $options;
 }
 add_filter( 'jetpack_relatedposts_filter_options', 'exclude_jetpack_related_from_products' );
+
+
+/*
+ *  検索の制御を行う。ここでは、toiee_exclude_search
+ */
+function exclude_search_podcasts( $query ) {
+	if ( is_admin() || is_super_admin() || ! $query->is_main_query() ) {
+		return;
+	}
+
+	if ( $query->is_search() ) {
+		$query->set(
+			'tax_query',
+			array(
+				array(
+					'taxonomy' => 'series',
+					'field'    => 'term_id',
+					'terms'    => array( 129, 199, 217, 271, 272 ),
+					'operator' => 'NOT IN',
+				),
+			)
+		);
+
+		$args = array(
+			'public'              => true,
+			'_builtin'            => false,
+			'exclude_from_search' => false,
+		);
+		$post_types = get_post_types( $args, 'names', 'and' );
+
+		$exclude_post_type = array( 'scrum_post', 'pkt_feedback', 'pkt_report' );
+		$exclude_post_type = apply_filters( 'toiee_exclude_search_post_type', $exclude_post_type );
+
+		$post_types = array_diff( $post_types, $exclude_post_type );
+
+		$query->set( 'post_type', $post_types );
+	}
+}
+add_filter( 'pre_get_posts', 'exclude_search_podcasts' );
+
+/**
+ * 検索エンジンから除外する noindex
+ */
+function toiee_noindex() {
+
+	$exclude_post_type = array( 'scrum_post', 'pkt_feedback', 'pkt_report' );
+	$exclude_post_type = apply_filters( 'toiee_exclude_search_post_type', $exclude_post_type );
+
+	foreach ( $exclude_post_type as $ptype ) {
+		if ( get_post_type() === $ptype ) {
+			echo '<meta id="toiee_noindex" name="robots" content="noindex" />' . "\n";
+			break;
+		}
+	}
+
+	if ( is_tax( 'scrum' ) ) {
+		echo '<meta id="toiee_noindex2" name="robots" content="noindex" />' . "\n";
+	}
+}
+add_action( 'wp_head', 'toiee_noindex' );
