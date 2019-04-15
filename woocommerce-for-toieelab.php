@@ -32,24 +32,18 @@ $MyUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 	'wc-restrict'
 );
 
-// include ACF(free)
-add_filter(
-	'acf/settings/path',
-	function( $path ) {
-		$path = plugin_dir_path( __FILE__ ) . 'acf/';
-		return $path;
-	}
-);
-add_filter(
-	'acf/settings/dir',
-	function ( $dir ) {
-		$dir = plugin_dir_url( __FILE__ ) . 'acf/';
-		return $dir;
-	}
-);
-require_once plugin_dir_path( __FILE__ ) . '/acf/acf.php';
+/**
+ * ACFプラグインの存在をチェックする。
+ */
+function exist_acf_admin_notice_error() {
+	if ( ! function_exists( 'acf_add_local_field_group' ) ) {
+		$class   = 'notice notice-error';
+		$message = __( '【重要】WooCommerce for toiee Lab を利用するには、ACFプラグインが必須です。インストールし、有効にしてください。', 'woocommerce-for-toieelab' );
 
-require_once 'includes/custom-fields-by-acf.php';  // custom fields
+		printf( '<div class="%1$s"><p>%2$s</p></div>', esc_attr( $class ), esc_html( $message ) );
+	}
+}
+add_action( 'admin_notices', 'exist_acf_admin_notice_error' );
 
 // mailerlite
 require 'vendor/autoload.php';
