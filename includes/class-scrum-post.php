@@ -140,6 +140,44 @@ class Toiee_Scrum_Post {
 		);
 
 		register_post_type( 'scrum_post', $args );
+
+		/**
+		 * Post Type: スクラムPodcast.
+		 */
+
+		$labels = array(
+			'name'          => __( 'Podcast', 'kanso general child' ),
+			'singular_name' => __( 'Podcast', 'kanso general child' ),
+		);
+
+		$args = array(
+			'label'                 => __( 'Podcast', 'kanso general child' ),
+			'labels'                => $labels,
+			'description'           => 'スクラムのためのポッドキャストです。',
+			'public'                => true,
+			'publicly_queryable'    => true,
+			'show_ui'               => true,
+			'delete_with_user'      => false,
+			'show_in_rest'          => true,
+			'rest_base'             => '',
+			'rest_controller_class' => 'WP_REST_Posts_Controller',
+			'has_archive'           => false,
+			'show_in_menu'          => 'edit.php?post_type=scrum_post',
+			'show_in_nav_menus'     => true,
+			'exclude_from_search'   => false,
+			'capability_type'       => 'post',
+			'map_meta_cap'          => true,
+			'hierarchical'          => false,
+			'rewrite'               => array(
+				'slug'       => 'scrum_episode',
+				'with_front' => true,
+			),
+			'query_var'             => true,
+			'supports'              => array( 'title', 'editor', 'thumbnail' ),
+			'taxonomies'            => array( 'scrum_channel' ),
+		);
+
+		register_post_type( 'scrum_episode', $args );
 	}
 
 	function cptui_register_my_taxes_scrum() {
@@ -174,6 +212,37 @@ class Toiee_Scrum_Post {
 			'show_in_quick_edit'    => false,
 		);
 		register_taxonomy( 'scrum', array( 'scrum_post' ), $args );
+
+		/**
+		 * Taxonomy: ポッドキャスト・チャンネル.
+		 */
+
+		$labels = array(
+			'name'          => __( 'ポッドキャスト・チャンネル', 'kanso general child' ),
+			'singular_name' => __( 'ポッドキャスト・チャンネル', 'kanso general child' ),
+		);
+
+		$args = array(
+			'label'                 => __( 'ポッドキャスト・チャンネル', 'kanso general child' ),
+			'labels'                => $labels,
+			'public'                => true,
+			'publicly_queryable'    => true,
+			'hierarchical'          => true,
+			'show_ui'               => true,
+			'show_in_menu'          => true,
+			'show_in_nav_menus'     => true,
+			'query_var'             => true,
+			'rewrite'               => array(
+				'slug'       => 'scrum_channel',
+				'with_front' => true,
+			),
+			'show_admin_column'     => true,
+			'show_in_rest'          => true,
+			'rest_base'             => 'scrum_channel',
+			'rest_controller_class' => 'WP_REST_Terms_Controller',
+			'show_in_quick_edit'    => false,
+		);
+		register_taxonomy( 'scrum_channel', array( 'scrum_episode' ), $args );
 	}
 
 	function add_acf() {
