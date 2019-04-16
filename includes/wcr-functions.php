@@ -15,6 +15,10 @@ function w4t_podcast_grid_display( $channel_ids , $taxonomy ) {
 		</div>
 EOD;
 
+	if ( 0 === count( $channel_ids ) ) {
+		return;
+	}
+
 	$rows = count( $channel_ids ) / 2 + $channel_ids % 2;
 	$ret  = '';
 
@@ -50,7 +54,11 @@ function w4t_podcast_card( $ch_id, $taxonomy ) {
                 </div>
 EOD;
 
-	$channel       = get_term( $ch_id, $taxonomy );
+	$channel = get_term( $ch_id, $taxonomy );
+	if ( null === $channel ) {
+		return '';
+	}
+
 	$channel_url   = get_term_link( $channel );
 	$channel_image = get_field( 'image', $channel );
 
