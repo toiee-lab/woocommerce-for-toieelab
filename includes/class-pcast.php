@@ -58,6 +58,31 @@ class Toiee_Pcast {
 	public function add_acf() {
 		if ( function_exists( 'acf_add_local_field_group' ) ) :
 
+			$post_types          = $this->toiee_pcast_post_types();
+			$pcast_post_location = array();
+			foreach ( $post_types as $type ) {
+				$pcast_post_location[] = array(
+					array(
+						'param'    => 'post_type',
+						'operator' => '==',
+						'value'    => $type,
+					),
+				);
+			}
+
+			$taxes              = $this->toiee_pcast_taxonomy();
+			$pcast_tax_location = array();
+			foreach ( $taxes as $tax ) {
+				$pcast_tax_location[] = array(
+					array(
+						'param'    => 'taxonomy',
+						'operator' => '==',
+						'value'    => $tax,
+					),
+				);
+			}
+
+
 			acf_add_local_field_group(
 				array(
 					'key'                   => 'group_5cabc2921ca53',
@@ -214,22 +239,7 @@ class Toiee_Pcast {
 							'ui_off_text'       => '',
 						),
 					),
-					'location'              => array(
-						array(
-							array(
-								'param'    => 'post_type',
-								'operator' => '==',
-								'value'    => 'mmdmy_episode',
-							),
-						),
-						array(
-							array(
-								'param'    => 'post_type',
-								'operator' => '==',
-								'value'    => 'pkt_episode',
-							),
-						),
-					),
+					'location'              => $pcast_post_location,
 					'menu_order'            => 0,
 					'position'              => 'normal',
 					'style'                 => 'default',
@@ -618,7 +628,7 @@ class Toiee_Pcast {
 							'label'             => '[Podcast] エピソードタイプ',
 							'name'              => 'episode_type',
 							'type'              => 'select',
-							'instructions'      => 'itunes:type を指定します。通常は、 serial	を指定します。episodic',
+							'instructions'      => 'itunes:type を指定します。セミナーは、 serial を指定します。随時更新するものは、 episodic を指定します',
 							'required'          => 0,
 							'conditional_logic' => 0,
 							'wrapper'           => array(
@@ -641,22 +651,7 @@ class Toiee_Pcast {
 							'placeholder'       => '',
 						),
 					),
-					'location'              => array(
-						array(
-							array(
-								'param'    => 'taxonomy',
-								'operator' => '==',
-								'value'    => 'mmdmy',
-							),
-						),
-						array(
-							array(
-								'param'    => 'taxonomy',
-								'operator' => '==',
-								'value'    => 'pkt_channel',
-							),
-						),
-					),
+					'location'              => $pcast_tax_location,
 					'menu_order'            => 0,
 					'position'              => 'normal',
 					'style'                 => 'default',
@@ -669,6 +664,20 @@ class Toiee_Pcast {
 			);
 
 		endif;
+	}
+
+	public function toiee_pcast_post_types() {
+		$post_types = array( 'mmdmy_episode', 'pkt_episode', 'scrum_episode' );
+		$post_types = apply_filters( 'toiee_pcast_post_types', $post_types );
+
+		return $post_types;
+	}
+
+	public function toiee_pcast_taxonomy() {
+		$post_types = array( 'mmdmy', 'pkt_channel', 'scrum_channel' );
+		$post_types = apply_filters( 'toiee_pcast_post_types', $post_types );
+
+		return $post_types;
 	}
 
 	public function custom_query_vars_filter( $vars ) {

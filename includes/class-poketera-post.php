@@ -8,7 +8,7 @@ class Toiee_Pocketera_Post {
 	/**
 	 * コンストラクタ
 	 *
-	 * Toiee_Magazine_Post constructor.
+	 * Toiee_Pocketera_Post constructor.
 	 */
 	public function __construct() {
 

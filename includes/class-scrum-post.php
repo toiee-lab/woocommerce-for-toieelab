@@ -39,6 +39,15 @@ class Toiee_Scrum_Post {
 		add_action( 'transition_post_status', array( $this, 'slack_notification' ), 10, 3 );
 
 		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter' ) );
+
+		add_action(
+			'admin_menu',
+			function () {
+				global $submenu;
+				$permalink                                  = admin_url( 'edit-tags.php?taxonomy=scrum_channel&post_type=scrum_post' );
+				$submenu['edit.php?post_type=scrum_post'][] = array( 'Podcastチャンネル', 'manage_options', $permalink );
+			}
+		);
 	}
 
 	public function pre_get_posts_filter( $query ) {
@@ -48,7 +57,7 @@ class Toiee_Scrum_Post {
 		}
 
 		if ( $query->is_main_query() && $query->is_tax( 'scrum' ) ) {
-			$arg = array( 'scrum_post', 'podcast' );
+			$arg = array( 'scrum_post', 'scrum_episode' );
 			$query->set( 'post_type', $arg );
 
 			$scrum_slug = $query->get( 'scrum' );
@@ -59,12 +68,12 @@ class Toiee_Scrum_Post {
 			$arg = array(
 				'relation' => 'OR',
 				array(
-					'taxonomy' => 'series',
+					'taxonomy' => 'scrum_channel',
 					'field'    => 'term_id',
 					'terms'    => (int) $news_id,
 				),
 				array(
-					'taxonomy' => 'series',
+					'taxonomy' => 'scrum_channel',
 					'field'    => 'term_id',
 					'terms'    => (int) $archive_id,
 				),
@@ -313,7 +322,7 @@ class Toiee_Scrum_Post {
 						),
 						array(
 							'key'               => 'field_5c761e1e3d1d8',
-							'label'             => '更新情報(お知らせPodcast)',
+							'label'             => 'メインPodcast',
 							'name'              => 'updates_news_podcast',
 							'type'              => 'taxonomy',
 							'instructions'      => '更新情報一覧に表示する「お知らせ用」のPodcast（シリーズ）のIDを入力してください。',
@@ -324,7 +333,7 @@ class Toiee_Scrum_Post {
 								'class' => '',
 								'id'    => '',
 							),
-							'taxonomy'          => 'series',
+							'taxonomy'          => 'scrum_channel',
 							'field_type'        => 'select',
 							'allow_null'        => 1,
 							'add_term'          => 0,
@@ -335,7 +344,7 @@ class Toiee_Scrum_Post {
 						),
 						array(
 							'key'               => 'field_5c761ec13d1d9',
-							'label'             => '更新情報(アーカイブPodcast)',
+							'label'             => 'アーカイブPodcast',
 							'name'              => 'updates_archive_podcast',
 							'type'              => 'taxonomy',
 							'instructions'      => '更新情報一覧に表示する「お知らせ用」のPodcast（シリーズ）のIDを入力してください。',
@@ -346,7 +355,7 @@ class Toiee_Scrum_Post {
 								'class' => '',
 								'id'    => '',
 							),
-							'taxonomy'          => 'series',
+							'taxonomy'          => 'scrum_channel',
 							'field_type'        => 'select',
 							'allow_null'        => 1,
 							'add_term'          => 0,
@@ -387,7 +396,7 @@ class Toiee_Scrum_Post {
 								'class' => '',
 								'id'    => '',
 							),
-							'taxonomy'          => 'series',
+							'taxonomy'          => 'mmdmy',
 							'field_type'        => 'checkbox',
 							'add_term'          => 0,
 							'save_terms'        => 0,
@@ -409,7 +418,7 @@ class Toiee_Scrum_Post {
 								'class' => '',
 								'id'    => '',
 							),
-							'taxonomy'          => 'series',
+							'taxonomy'          => 'mmdmy',
 							'field_type'        => 'checkbox',
 							'add_term'          => 0,
 							'save_terms'        => 0,
@@ -431,7 +440,7 @@ class Toiee_Scrum_Post {
 								'class' => '',
 								'id'    => '',
 							),
-							'taxonomy'          => 'series',
+							'taxonomy'          => 'pkt_channel',
 							'field_type'        => 'checkbox',
 							'add_term'          => 0,
 							'save_terms'        => 0,

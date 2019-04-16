@@ -49,6 +49,7 @@ add_action( 'admin_notices', 'exist_acf_admin_notice_error' );
 require 'vendor/autoload.php';
 
 // include some feature
+require_once 'includes/custom-fields-by-acf.php';
 require_once 'includes/woocommerce_settings.php';
 require_once 'includes/class-wcr-content.php';
 require_once 'includes/class-wcr-ssp.php';
@@ -162,7 +163,7 @@ function exclude_search_podcasts( $query ) {
 		);
 		$post_types = get_post_types( $args, 'names', 'and' );
 
-		$exclude_post_type = array( 'scrum_post', 'pkt_feedback', 'pkt_report' );
+		$exclude_post_type = array( 'scrum_post', 'scrum_episode', 'pkt_feedback', 'pkt_report' );
 		$exclude_post_type = apply_filters( 'toiee_exclude_search_post_type', $exclude_post_type );
 
 		$post_types = array_diff( $post_types, $exclude_post_type );
