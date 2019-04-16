@@ -3,7 +3,7 @@
 /*
  * シリーズのIDを渡されたら、Grid表示の教材一覧を表示します。
  */
-function w4t_podcast_grid_display( $series_ids ) {
+function w4t_podcast_grid_display( $channel_ids , $taxonomy ) {
 	$grid = <<<EOD
 		<div class="uk-child-width-1-2@m uk-grid-match" uk-grid>
 			<div>
@@ -15,16 +15,16 @@ function w4t_podcast_grid_display( $series_ids ) {
 		</div>
 EOD;
 
-	$rows = count( $series_ids ) / 2 + $series_ids % 2;
+	$rows = count( $channel_ids ) / 2 + $channel_ids % 2;
 	$ret  = '';
 
 	for ( $i = 0; $i < $rows; $i++ ) {
-		$col1 = array_shift( $series_ids );
-		$col2 = array_shift( $series_ids );
+		$col1 = array_shift( $channel_ids );
+		$col2 = array_shift( $channel_ids );
 
 		$ret .= str_replace(
 			array( '%COL1%', '%COL2%' ),
-			array( w4t_podcast_card( $col1 ), w4t_podcast_card( $col2 ) ),
+			array( w4t_podcast_card( $col1, $taxonomy ), w4t_podcast_card( $col2, $taxonomy ) ),
 			$grid
 		);
 	}
@@ -32,8 +32,8 @@ EOD;
 	return $ret;
 }
 
-function w4t_podcast_card( $sid ) {
-	if ( $sid == null ) {
+function w4t_podcast_card( $ch_id, $taxonomy ) {
+	if ( $ch_id == null ) {
 		return '';
 	}
 
@@ -50,13 +50,13 @@ function w4t_podcast_card( $sid ) {
                 </div>
 EOD;
 
-	$series       = get_term( $sid, 'series' );
-	$series_url   = get_term_link( $series );
-	$series_image = get_option( 'ss_podcasting_data_image_' . $sid, 'no-image' );
+	$channel       = get_term( $ch_id, $taxonomy );
+	$channel_url   = get_term_link( $channel );
+	$channel_image = get_field( 'image', $channel );
 
 	return str_replace(
 		array( '%URL%', '%IMG%', '%TITLE%', '%DESCRIPTION%' ),
-		array( $series_url, $series_image, $series->name, $series->description ),
+		array( $channel_url, $channel_image, $channel->name, $channel->description ),
 		$card
 	);
 }

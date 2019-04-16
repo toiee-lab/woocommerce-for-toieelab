@@ -132,7 +132,7 @@ class Toiee_Tkb_Post {
 								'class' => '',
 								'id'    => '',
 							),
-							'taxonomy'          => 'mmdmy',
+							'taxonomy'          => 'mdy_channel',
 							'field_type'        => 'multi_select',
 							'allow_null'        => 0,
 							'add_term'          => 1,

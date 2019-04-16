@@ -667,14 +667,14 @@ class Toiee_Pcast {
 	}
 
 	public function toiee_pcast_post_types() {
-		$post_types = array( 'mmdmy_episode', 'pkt_episode', 'scrum_episode' );
+		$post_types = array( 'mdy_episode', 'pkt_episode', 'scrum_episode' );
 		$post_types = apply_filters( 'toiee_pcast_post_types', $post_types );
 
 		return $post_types;
 	}
 
 	public function toiee_pcast_taxonomy() {
-		$post_types = array( 'mmdmy', 'pkt_channel', 'scrum_channel' );
+		$post_types = array( 'mdy_channel', 'pkt_channel', 'scrum_channel' );
 		$post_types = apply_filters( 'toiee_pcast_post_types', $post_types );
 
 		return $post_types;

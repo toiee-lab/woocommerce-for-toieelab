@@ -34,7 +34,7 @@ class Toiee_Mimidemy_Post {
 			return null;
 		}
 
-		if ( is_tax( 'mmdmy' ) ) {
+		if ( is_tax( 'mdy_channel' ) ) {
 			$mdy = $query->queried_object;
 			if ( null === $mdy ) {
 				return null;
@@ -85,16 +85,16 @@ class Toiee_Mimidemy_Post {
 			'map_meta_cap'          => true,
 			'hierarchical'          => false,
 			'rewrite'               => array(
-				'slug'       => 'mmdmy_episode',
+				'slug'       => 'mdy_episode',
 				'with_front' => true,
 			),
 			'query_var'             => true,
 			'menu_icon'             => 'dashicons-welcome-learn-more',
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
-			'taxonomies'            => array( 'mmdmy' ),
+			'taxonomies'            => array( 'mdy_channel' ),
 		);
 
-		register_post_type( 'mmdmy_episode', $args );
+		register_post_type( 'mdy_episode', $args );
 
 		/**
 		 * Post Type: 受講資料.
@@ -117,7 +117,7 @@ class Toiee_Mimidemy_Post {
 			'rest_base'             => '',
 			'rest_controller_class' => 'WP_REST_Posts_Controller',
 			'has_archive'           => false,
-			'show_in_menu'          => 'edit.php?post_type=mmdmy_episode',
+			'show_in_menu'          => 'edit.php?post_type=mdy_episode',
 			'show_in_nav_menus'     => false,
 			'exclude_from_search'   => false,
 			'capability_type'       => 'post',
@@ -161,16 +161,16 @@ class Toiee_Mimidemy_Post {
 			'show_in_nav_menus'     => true,
 			'query_var'             => true,
 			'rewrite'               => array(
-				'slug'       => 'mmdmy',
+				'slug'       => 'mdy_channel',
 				'with_front' => true,
 			),
 			'show_admin_column'     => true,
 			'show_in_rest'          => true,
-			'rest_base'             => 'mmdmy',
+			'rest_base'             => 'mdy_channel',
 			'rest_controller_class' => 'WP_REST_Terms_Controller',
 			'show_in_quick_edit'    => false,
 		);
-		register_taxonomy( 'mmdmy', array( 'mmdmy_episode' ), $args );
+		register_taxonomy( 'mdy_channel', array( 'mdy_episode' ), $args );
 
 	}
 
@@ -198,7 +198,7 @@ class Toiee_Mimidemy_Post {
 								'class' => '',
 								'id'    => '',
 							),
-							'taxonomy'          => 'mmdmy',
+							'taxonomy'          => 'mdy_channel',
 							'field_type'        => 'select',
 							'allow_null'        => 0,
 							'add_term'          => 0,

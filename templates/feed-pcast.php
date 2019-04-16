@@ -59,7 +59,7 @@ if ( true === $channel['restrict'] ) {
 
 /* タイトル */
 switch ( $channel_obj->taxonomy ) {
-	case 'mmdmy':
+	case 'mdy_channel':
 		$channel['title'] = '耳デミー : ' . $channel['title'];
 		break;
 	case 'pocketera':
