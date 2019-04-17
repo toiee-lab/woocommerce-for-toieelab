@@ -247,3 +247,28 @@ function the_episode_player_dummy( $type = 'video', $message = '閲覧するに�
 '
 	);
 }
+
+function toiee_get_edit_button( $post = null, $echo = true ) {
+
+	if ( current_user_can( 'edit_posts' ) ) {
+		if ( null === $post ) {
+			$post_id = get_the_ID();
+		} elseif ( is_object( $post ) ) {
+			$post_id = $post->ID;
+		} elseif ( is_integer( $post ) ) {
+			$post_id = $post;
+		}
+
+		$edit_url = admin_url( 'post.php?post=' . $post_id . '&action=edit' );
+		$tag      = '<a href="' . $edit_url . '" class="uk-button uk-button-default uk-margin-small-right uk-align-right">編集する</a>';
+
+		if ( $echo ) {
+			echo $tag;
+		}
+
+		return $tag;
+	}
+
+	return null;
+}
+
