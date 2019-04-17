@@ -33,6 +33,15 @@ class Toiee_Pcast {
 	 */
 	private $dummy_video;
 
+	private $toiee_podcast_options;
+
+	/**
+	 * vimeoへアクセスできるオブジェクトを格納
+	 *
+	 * @var object $vimeo
+	 */
+	private $vimeo;
+
 	/**
 	 * Toiee_Pcast constructor.
 	 *
@@ -53,6 +62,59 @@ class Toiee_Pcast {
 		register_activation_hook( $file, array( $this, 'activate' ) );
 		register_deactivation_hook( $file, array( $this, 'deactivate' ) );
 
+		add_action( 'acf/save_post', array( $this, 'store_parameters' ), 20 );
+
+		if ( is_admin() ) {
+			add_action( 'admin_menu', array( $this, 'toiee_podcast_add_plugin_page' ) );
+		}
+
+	}
+
+	public function store_parameters( $post_id, $try_http = false ) {
+
+		$do_store = true;
+		$do_store = apply_filters( 'pcast_store_parameter', $do_store );
+
+		if ( true !== $do_store) {
+			return;
+		}
+
+		$post = get_post( $post_id );
+		if ( array_search( $post->post_type , $this->toiee_pcast_post_types() ) ) {
+			$fields = get_fields();
+
+			if ( ( '' === $fields['duration'] ) || ( '' === $fields['length'] ) ) {
+
+				/* attachment にあれば */
+				$att_id = attachment_url_to_postid( $fields['enclosure'] );
+				if ( 0 !== $att_id ) { // duration, length
+					$att_meta = get_post_meta( $att_id, '_wp_attachment_metadata', true );
+					$fields['duration'] = isset( $att_meta['length_formatted'] ) ? $att_meta['length_formatted'] : '';
+					$fields['length']   = isset( $att_meta['filesize'] ) ? $att_meta['filesize'] : '';
+				}
+			}
+
+			/* この処理は時間がかかる */
+			if ( $try_http ) {
+
+				$location = $fields['enclosure'];
+				$headers  = array();
+				for ( $i = 0; $i < 5; $i++ ) { // 5回までのリダイレクトを処理する
+					$headers = get_headers( $location, 1 );
+					if ( isset( $headers['Location'] ) ) {
+						$location = $headers['Location'];
+					} else {
+						break;
+					}
+				}
+
+				$fields['length'] = isset( $headers['Content-Length'] ) ? $headers['Content-Length'] : '';
+			}
+
+			foreach ( array( 'duration', 'length' ) as $f ) {
+				update_field( $f, $fields[ $f ], $post_id );
+			}
+		}
 	}
 
 	public function add_acf() {
@@ -674,10 +736,21 @@ class Toiee_Pcast {
 	}
 
 	public function toiee_pcast_taxonomy() {
-		$post_types = array( 'mdy_channel', 'pkt_channel', 'scrum_channel' );
-		$post_types = apply_filters( 'toiee_pcast_post_types', $post_types );
+		$tax = array( 'mdy_channel', 'pkt_channel', 'scrum_channel' );
+		$tax = apply_filters( 'toiee_pcast_taxonomy', $tax );
 
-		return $post_types;
+		return $tax;
+	}
+
+	public function toiee_pcast_relations() {
+		$relations = array(
+			'mdy_channel'   => 'mdy_episode',
+			'pkt_channel'   => 'pkt_episode',
+			'scrum_channel' => 'scrum_episode',
+		);
+		$relations = apply_filters( 'toiee_pcast_relations', $relations );
+
+		return $relations;
 	}
 
 	public function custom_query_vars_filter( $vars ) {
@@ -730,5 +803,591 @@ class Toiee_Pcast {
 	public function get_restrcit_message() {
 		$message = '【会員限定】';
 		return apply_filters( 'toiee_get_restrict_message', $message );
+	}
+
+
+	/* podcast設定 */
+
+	public function toiee_podcast_add_plugin_page() {
+		add_options_page(
+			'toiee podcast', // page_title.
+			'toiee podcast', // menu_title.
+			'manage_options', // capability.
+			'toiee-podcast', // menu_slug.
+			array( $this, 'toiee_podcast_create_admin_page' ) // function.
+		);
+	}
+
+	public function toiee_podcast_create_admin_page() {
+		?>
+		<!-- Create a header in the default WordPress 'wrap' container -->
+		<div class="wrap">
+
+			<div id="icon-themes" class="icon32"></div>
+			<h2>toiee Podcast設定</h2>
+			<?php settings_errors(); ?>
+			<?php
+			if ( isset( $_GET['tab'] ) ) {
+				$active_tab = $_GET['tab'];
+			} else {
+				$active_tab = 'general';
+			}
+			?>
+			<h2 class="nav-tab-wrapper">
+				<a href="?page=toiee-podcast&tab=general" class="nav-tab <?php echo 'general' === $active_tab ? 'nav-tab-active' : ''; ?>">概要</a>
+				<a href="?page=toiee-podcast&tab=store-param" class="nav-tab <?php echo 'store-param' === $active_tab ? 'nav-tab-active' : ''; ?>">エピソードの更新</a>
+				<a href="?page=toiee-podcast&tab=vimeo-import" class="nav-tab <?php echo 'vimeo-import' === $active_tab ? 'nav-tab-active' : ''; ?>">Vimeoインポート</a>
+				<a href="?page=toiee-podcast&tab=media-import" class="nav-tab <?php echo 'media-import' === $active_tab ? 'nav-tab-active' : ''; ?>">メディアインポート</a>
+				<a href="?page=toiee-podcast&tab=ssp-import" class="nav-tab <?php echo 'ssp-import' === $active_tab ? 'nav-tab-active' : ''; ?>">SSPインポート</a>
+				<a href="?page=toiee-podcast&tab=vimeo-api" class="nav-tab <?php echo 'vimeo-api' === $active_tab ? 'nav-tab-active' : ''; ?>">vimeo api</a>
+			</h2>
+			<?php
+			switch ( $active_tab ) {
+				case 'store-param':
+					$this->store_param();
+					break;
+				case 'vimeo-import':
+					$this->import_from_vimeo();
+					break;
+				case 'media-import':
+					break;
+				case 'ssp-import':
+					$this->import_from_series();
+					break;
+				case 'vimeo-api':
+					$this->update_vimeo_api();
+					break;
+				default:
+					$this->display_general();
+
+			}
+			?>
+		</div><!-- /.wrap -->
+		<?php
+	}
+
+	private function display_general() {
+		?>
+		<div style="max-width:600px">
+			<h2>toiee Podcastについて</h2>
+			<p>toiee Podcast は、ACFプラグインを活用して、任意のカスタム投稿タイプ、タクソノミーに、podcastのためのフィールドを追加し、Podcast機能を利用できるようにしています。</p>
+			<p>デフォルトでは、耳デミー(mdy_channel, mdy_episode)、ポケてら(pkt_channel, pkt_episode）、スクラム(scrum_channel, scrum_episode)です。</p>
+			<p>ここでは、vimeo、メディア、Seriously Simple Podcast からデータをインポートする機能も提供します。</p>
+
+			<h3>Seriously Simple Podcast について</h3>
+			<p>toiee Podcastの仕組みを作る前は、Seriously Simple Podcast を活用していました。過去のデータが SSPにありますが、移動させたものは「移動済み」とカテゴリ一覧で表示されます。</p>
+		</div>
+		<?php
+	}
+
+	private function store_param() {
+
+		if ( isset( $_POST['cmd'] ) && 'store-param' === $_POST['cmd'] ) {
+			check_admin_referer( 'toiee_podcast' );
+
+			$dat     = explode( ',', esc_attr( $_POST['target_channel'] ) );
+			$tax     = $dat[0];
+			$term_id = $dat[1];
+
+			// episode を取得する
+			$relations = $this->toiee_pcast_relations();
+			$post_type = $relations[ $tax ];
+
+			$posts   = get_posts(
+				array(
+					'post_type'      => $post_type,
+					'posts_per_page' => -1,
+					'order'          => 'ASC',
+					'post_status'    => 'publish',
+					'tax_query'      => array(
+						array(
+							'field'    => 'term_id',
+							'terms'    => $term_id,
+							'taxonomy' => $tax,
+						),
+					),
+				)
+			);
+
+			foreach ( $posts as $p ) {
+				$this->store_parameters( $p->ID, true );
+			}
+		}
+
+		$select = $this->get_pcast_taxes_select();
+		?>
+		<p>エピソードの duration と length を設定します。</p>
+		<form method="post" action="<?php admin_url( 'options-general.php?page=toiee-podcast&tab=store-param' ); ?>">
+			<table class="form-table">
+				<tbody>
+				<tr>
+					<th scope="row">
+						<label for="my-text-field">更新するチャンネル</label>
+					</th>
+					<td>
+						<select name="target_channel">
+							<?php foreach ( $select as $option ) : ?>
+								<option value="<?php echo esc_attr( $option['value'] ); ?>"><?php echo esc_attr( $option['disp'] ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<br>
+						<span class="description">チャンネルに所属するエピソードを更新します</span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="my-text-field">オプション</label>
+					</th>
+					<td>
+						<label><input type="checkbox" name="skip" value="" /> 設定済みをスキップ</label>
+						<br>
+						<span class="description">チェックすると、既に設定されているエピソードをスキップします。更新速度が早くなります。</span>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+			<?php wp_nonce_field( 'toiee_podcast' ); ?>
+			<input type="hidden" name="cmd" value="store-param" />
+			<?php submit_button( '実行' ); ?>
+		</form>
+		<?php
+	}
+
+	private function import_from_vimeo() {
+		if ( isset( $_POST['cmd'] ) && $_POST['cmd'] === 'vimeo-import' ) {
+			check_admin_referer( 'toiee_podcast' );
+
+			if ( isset( $_POST['mode'] ) && $_POST['mode'] === 'update-vimeo-list' ) {
+				$this->get_vimeo_list();
+			} else {
+
+				/* インポートプログラム */
+
+			}
+		}
+
+		$select_from = get_option( 'toiee_vimeo_list', false );
+
+		if ( false === $select_from ) {
+			$error = '<div class="notice notice-warning is-dismissible"><p><strong>vimeo にアクセスできませんでした。api key などを確認して、再度お試しください。</strong></p></div>';
+			$select_from = array();
+		} else {
+			$error = '';
+		}
+
+		$select_to   = $this->get_pcast_taxes_select();
+
+		?>
+		<p>vimeoのプロジェクトや、アルバムからインポートします。まずは、vimeoのプレイリストの更新から行ってください。<br>
+		<form method="post" action="<?php admin_url( 'options-general.php?page=toiee-podcast&tab=vimeo-import' ); ?>">
+			<?php wp_nonce_field( 'toiee_podcast' ); ?>
+			<input type="hidden" name="cmd" value="vimeo-import" />
+			<input type="hidden" name="mode" value="update-vimeo-list" />
+			<?php submit_button( 'vimeoに接続して、リストをアップデートする' ); ?>
+		</form>
+		</p>
+		<?php echo $error; ?>
+		<form method="post" action="<?php admin_url( 'options-general.php?page=toiee-podcast&tab=vimeo-import' ); ?>">
+			<table class="form-table">
+				<tbody>
+				<tr>
+					<th scope="row">
+						<label for="my-text-field">インポート元</label>
+					</th>
+					<td>
+						<select name="target_channel">
+							<?php foreach ( $select_from as $option ) : ?>
+								<option value="<?php echo esc_attr( $option['value'] ); ?>"><?php echo esc_attr( $option['name'] ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<br>
+						<span class="description">チャンネルに所属するエピソードを更新します</span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="my-text-field">インポート先</label>
+					</th>
+					<td>
+						<select name="target_channel">
+							<?php foreach ( $select_to as $option ) : ?>
+								<option value="<?php echo esc_attr( $option['value'] ); ?>"><?php echo esc_attr( $option['disp'] ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<br>
+						<span class="description"></span>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+			<?php wp_nonce_field( 'toiee_podcast' ); ?>
+			<input type="hidden" name="cmd" value="vimeo-import" />
+			<?php submit_button( '実行' ); ?>
+		</form>
+		<?php
+	}
+
+	private function import_from_series() {
+		if ( isset( $_POST['cmd'] ) && 'ssp-import' === $_POST['cmd'] ) {
+			check_admin_referer( 'toiee_podcast' );
+
+			$seres_id = $_POST['from_channel'];
+			$taxonomy = $_POST['to_channel'];
+			$relation = $this->toiee_pcast_relations();
+
+			if ( isset( $relation[$taxonomy] ) ) {
+				$post_type = $relation[$taxonomy];
+
+				$ret = $this->import_series_to_pcast( $seres_id, $taxonomy, $post_type );
+				if( is_numeric( $ret ) ) {
+					$url = get_term_link( $ret, $taxonomy);
+					?>
+					<div class="notice notice-success is-dismissible">
+						<p><strong>インポート完了しました。<a href="<?php echo esc_url($url); ?>">(インポート先へ移動する)</a></strong></p>
+					</div>
+					<?php
+				} else {
+					?>
+					<div class="notice notice-error is-dismissible">
+						<p><strong>指定されたパラメータに間違いがあります</strong></p>
+					</div>
+					<?php
+				}
+			}
+			else {
+				?>
+				<div class="notice notice-error is-dismissible">
+					<p><strong>指定されたパラメータに間違いがあります</strong></p>
+				</div>
+				<?php
+			}
+		}
+
+		$series_s    = get_terms( 'series' );
+		$select_from = array();
+		foreach ( $series_s as $series ) {
+			$moving = get_term_meta( $series->term_id, 'pcast_moving', true );
+			if ( '1' !== $moving ) {
+				$select_from[] = array( 'disp' => $series->name, 'value' => $series->term_id );
+			}
+		}
+		?>
+		<p>Seriously Simple Podcast のシリーズ（Podcastチャンネル）を指定して、pcastのチャンネルにデータをインポートします。</p>
+		<form method="post" action="<?php admin_url( 'options-general.php?page=toiee-podcast&tab=ssp-import' ); ?>">
+			<table class="form-table">
+				<tbody>
+				<tr>
+					<th scope="row">
+						<label for="my-text-field">取り込むSeries (SSP)</label>
+					</th>
+					<td>
+						<select name="from_channel">
+							<?php foreach ( $select_from as $option ) : ?>
+								<option value="<?php echo esc_attr( $option['value'] ); ?>"><?php echo esc_attr( $option['disp'] ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<br>
+						<span class="description">移行済みのものは表示しません</span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="my-text-field">取り込み先</label>
+					</th>
+					<td>
+						<select name="to_channel">
+							<option value="pkt_channel">ポケてら</option>
+							<option value="mdy_channel">耳デミー</option>
+							<option value="scrum_channel">スクラム</option>
+						</select>
+						<br>
+						<span class="description">移行済みのものは表示しません</span>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+			<?php wp_nonce_field( 'toiee_podcast' ); ?>
+			<input type="hidden" name="cmd" value="ssp-import" />
+			<?php submit_button( '実行' ); ?>
+		</form>
+		<?php
+	}
+
+	private function update_vimeo_api() {
+		/* ----------- Vimeo APIキーの保存 --------------------- */
+		if ( isset( $_POST['cmd'] ) && $_POST['cmd'] === 'vimeo-api' ) {
+			check_admin_referer( 'toiee_podcast' );
+
+			$values = array();
+			foreach ( array('cid', 'access_token', 'csr' ) as $key ) {
+				$values[ $key ] = isset( $_POST['vimeo_api'][ $key ] ) ? esc_attr( $_POST['vimeo_api'][ $key ] ) : '';
+			}
+			update_option( 'toiee_vimeo_api_keys', $values, false );
+			?>
+			<div class="notice notice-success is-dismissible">
+				<p><strong>saved Vimeo API settings.</strong></p>
+			</div>
+			<?php
+		}
+		$vimeo_api = get_option( 'toiee_vimeo_api_keys', '' );
+		?>
+		<p>vimeoのプロジェクト、アルバムを読み込むためには、以下のAPI全てを設定してください。</p>
+
+		<form method="post" action="<?php admin_url( 'options-general.php?page=toiee-podcast&tab=vimeo-api' ); ?>">
+			<table class="form-table">
+				<tbody>
+				<tr>
+					<th scope="row">
+						<label for="my-text-field">Client identifier</label>
+					</th>
+					<td>
+						<input type="text" name="vimeo_api[cid]" value="<?php echo isset($vimeo_api['cid']) ? $vimeo_api['cid']: ''; ?>">
+						<br>
+						<span class="description"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="my-text-field">Access token</label>
+					</th>
+					<td>
+						<input type="text" name="vimeo_api[access_token]" value="<?php echo isset($vimeo_api['access_token']) ? $vimeo_api['access_token']: ''; ?>">
+						<br>
+						<span class="description"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="my-text-field">Client secrets</label>
+					</th>
+					<td>
+						<input type="text" name="vimeo_api[csr]" value="<?php echo isset($vimeo_api['csr']) ? $vimeo_api['csr']: ''; ?>">
+						<br>
+						<span class="description"></span>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+			<?php wp_nonce_field( 'toiee_podcast' ); ?>
+			<input type="hidden" name="cmd" value="vimeo-api" />
+			<?php submit_button( '保存' ); ?>
+		</form>
+<?php
+
+	}
+
+	private function get_vimeo_object() {
+		if( null === $this->vimeo ) {
+
+			$api = get_option( 'toiee_vimeo_api_keys', '' );
+			if ( '' === $api ) {
+				$this->vimeo = false;
+				return false;
+			}
+
+			foreach ( array('cid', 'access_token', 'csr') as $k ) {
+				if( ! isset( $api[$k] ) || '' === $api[$k] ) {
+					$this->vimeo = false;
+					return false;
+				}
+			}
+
+			$lib = new \Vimeo\Vimeo( $api['cid'], $api['csr'] );
+			$lib->setToken( $api['access_token'] );
+
+			if ( null === $lib ) {
+				$this->vimeo = false;
+				return false;
+			}
+
+			$this->vimeo = $lib;
+		}
+
+		return $this->vimeo;
+	}
+
+	private function get_vimeo_list() {
+
+		$lib = $this->get_vimeo_object();
+		if( false === $lib ) {
+			return false;
+		}
+
+		$vimeo_list = array();
+		$response = $lib->request(
+			'/me/projects',
+			[
+				'direction' => 'desc',
+				'per_page'  => 20,
+				'sort'      => 'date',
+			],
+			'GET'
+		);
+		foreach ( $response['body']['data'] as $d ) {
+			$vimeo_list[] = array(
+				'name'  => $d['name'],
+				'value' => $d['uri'],
+			);
+		}
+
+		$response = $lib->request(
+			'/me/albums',
+			[
+				'direction' => 'desc',
+				'per_page'  => 20,
+				'sort'      => 'date',
+			],
+			'GET'
+		);
+		foreach ( $response['body']['data'] as $d ) {
+			$vimeo_list[] = array(
+				'name'  => $d['name'],
+				'value' => $d['uri'],
+			);
+		}
+
+		if( count( $vimeo_list ) ) {
+			update_option( 'toiee_vimeo_list', $vimeo_list, false );
+		}
+
+		return $vimeo_list;
+	}
+
+	private function get_pcast_taxes_select() {
+		$tax = $this->toiee_pcast_taxonomy();
+
+		$select = array();
+		foreach ( $tax as $tax_name ) {
+			$terms = get_terms(
+				$tax_name,
+				array(
+					'orderby'    => 'id',
+					'order'      => 'DESC',
+					'hide_empty' => 0,
+				)
+			);
+
+			$tax_obj = get_taxonomy( $tax_name );
+
+			foreach ( $terms as $t ) {
+				$select[] = array(
+					'disp'  => '【' . $tax_obj->label . '】' . $t->name,
+					'value' => $tax_name . ',' . $t->term_id,
+				);
+			}
+		}
+
+		return $select;
+	}
+
+	private function import_series_to_pcast( $series_id, $taxonomy, $post_type ) {
+
+		// series のデータを取得
+		$series = get_term_by( 'id', $series_id, 'series' );
+
+		if ( 1 == get_term_meta( $series_id, 'pcast_moving', true ) ) {
+			return 'series[' . esc_html( $series_id ) . '] is moved.';
+		}
+
+		/* pcast の term を作成 */
+		$ret = wp_insert_term(
+			$series->name,
+			$taxonomy,
+			array(
+				'description' => $series->description,
+				'slug'        => $series->slug,
+			)
+		);
+		$term_id = null;
+		if ( is_wp_error( $ret ) ) {
+			return 'can not create pcast term by series (' . $series->name . ', ' . $series_id . ')';
+		} else {
+			$term_id = $ret['term_id'];
+		}
+
+		$pcast   = get_term_by( 'id', $term_id, $taxonomy );
+
+		$type   = get_option( 'ss_podcasting_consume_order_' . $series_id, '' );
+		$type   = $type === '' ? 'episodic' : $type;
+		$fields = array(
+			'published'          => 1, // 公開が基本
+			'items_notification' => get_field( 'series_material', $series ),
+			'restrict'           => 1,
+			'restrict_product'   => get_field( 'series_products', $series ), // array
+			'language'           => 'ja',
+			'copyright'          => 'toiee Lab',
+			'subtitle'           => get_option( 'ss_podcasting_data_subtitle_' . $series_id, '' ),
+			'author'             => 'toiee Lab',
+			'owner_name'         => 'toiee Lab',
+			'owner_email'        => 'desk@toiee.jp',
+			'image'              => attachment_url_to_postid( get_option( 'ss_podcasting_data_image_' . $series_id, 'no-image' ) ),
+			'category'           => 'Education > Educational Technology',
+			'explicit'           => 0,
+			'block'              => 1,
+			'episode_type'       => $type,
+		);
+
+		foreach ( $fields as $selector => $value ) {
+			update_field( $selector, $value, $pcast );
+		}
+
+		/* 属しているpostをインポート */
+		$args     = array(
+			'posts_per_page' => -1,
+			'post_type'      => 'podcast',
+			'tax_query'      => array(
+				array(
+					'taxonomy' => 'series',
+					'field'    => 'id',
+					'terms'    => $series_id,
+				),
+			),
+		);
+		$podcasts = get_posts( $args );
+
+		$keys = array( 'post_content', 'post_name', 'post_title', 'post_status', 'post_author', 'post_date', 'post_date_gmt' );
+
+		foreach ( $podcasts as $podcast ) {
+
+			if( get_post_meta( $podcast->ID, 'pcast_moving_to', true ) ) {
+				//echo 'skip ' . $podcast->post_name . '<br>';
+			} else {
+				//echo $podcast->post_name . '<br>';
+
+				$args = array();
+				foreach ( $keys as $key ) {
+					$args[ $key ] = $podcast->$key;
+				}
+				$args['post_type'] = $post_type;
+				$pid               = wp_insert_post( $args );
+
+				/* term */
+				wp_set_object_terms( $pid, array( $term_id ), $taxonomy );
+
+				/* fields */
+				$fields = array();
+
+				$fields['restrict']  = get_post_meta( $podcast->ID, 'wcr_ssp_episode_restrict', true ) === 'enable' ? 'restrict' : 'open';
+				$fields['enclosure'] = get_post_meta( $podcast->ID, 'enclosure', true );
+				$fields['media']     = get_post_meta( $podcast->ID, 'episode_type', true );
+				$fields['duration']  = get_post_meta( $podcast->ID, 'duration', true );
+				$fields['length']    = get_post_meta( $podcast->ID, 'filesize_raw', true );
+
+				foreach ( $fields as $selector => $value ) {
+					update_field( $selector, $value, $pid );
+				}
+
+				update_post_meta( $podcast->ID, 'pcast_moving_to', get_permalink( $pid ) );
+
+				//echo 'import post ( id: ' . $podcast->ID . ' ' . $podcast->post_name . ')<br>';
+			}
+		}
+
+		update_term_meta( $series_id, 'pcast_moving', 1 );
+		update_term_meta( $series_id, 'pcast_moving_to', get_term_link( $pcast ) );
+		update_term_meta( $series_id, 'pcast_moving_to_web', get_term_link( $pcast ) );
+		update_term_meta( $series_id, 'pcast_moving_to_id', $term_id );
+
+		return $term_id;
 	}
 }
