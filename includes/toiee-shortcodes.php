@@ -163,35 +163,28 @@ add_shortcode(
 
 		$atts = shortcode_atts(
 			array(
-				'search' => '^ポケてら',
+				'tax' => 'mdy_channel',
 				'num'    => 4,
 			),
 			$atts,
 			'toiee_list_series'
 		);
 
-		$search = $atts['search'];
-		$num    = $atts['num'];
+		$tax = $atts['tax'];
+		$num = $atts['num'];
 
-		$terms = get_terms( 'series', array( 'hide_empty=0' ) );
+		$terms = get_terms( $tax, array( 'hide_empty=0' ) );
 
 		if ( is_wp_error( $terms ) ) {
 			return 'this is error : ' . print_r( $terms, true );
 		}
 
-		// マッチするものだけ残す
-		$terms = array_filter(
-			$terms,
-			function ( $term ) use ( $search ) {
-				return preg_match( "/{$search}/", $term->name );
-			}
-		);
 		$ids   = array();
 		foreach ( $terms as $term ) {
 			$ids[] = $term->term_id;
 		}
 
-		return w4t_podcast_grid_display( $ids );
+		return w4t_podcast_grid_display( $ids, $tax );
 	}
 );
 
