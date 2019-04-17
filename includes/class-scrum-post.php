@@ -672,36 +672,36 @@ class Toiee_Scrum_Post {
 			}
 
 			// エピソードの場合
-			if ( $post->post_type == 'podcast' ) {
+			if ( $post->post_type == 'scrum_episode' ) {
 
 				// エピソードのurl
 				$episode_url  = get_permalink( $post->ID );
 				$episode_desp = mb_substr( wp_strip_all_tags( $post->post_content ), 0, 150 );
 
 				// エピソードの series を取得する
-				$rets = wp_get_post_terms( $post->ID, 'series' );
+				$rets = wp_get_post_terms( $post->ID, 'scrum_channel' );
 				if ( is_wp_error( $rets ) ) {
 					return null;
 				}
 
-				foreach ( $rets as $series ) {
-					$series_url = get_term_link( $series );
+				foreach ( $rets as $scrum_ch ) {
+					$scrum_ch_url = get_term_link( $scrum_ch );
 
 					$replace = array(
 						'episode_url'   => $episode_url,
 						'episode_title' => $post->post_title,
 						'episode_desp'  => $episode_desp,
-						'series_url'    => $series_url,
-						'series_title'  => $series->name,
+						'series_url'    => $scrum_ch_url,
+						'series_title'  => $scrum_ch->name,
 					);
 
-					// お知らせ Podcastに $series を登録している scrum を見つける
-					$scrums = $this->get_scrums_by_series_id( $series->term_id, 'updates_news_podcast' );
+					// お知らせ Podcastに $scrum_ch を登録している scrum を見つける
+					$scrums = $this->get_scrums_by_series_id( $scrum_ch->term_id, 'updates_news_podcast' );
 					// 見つかった scrums に通知を送る
 					$this->send_slack_from_scrums( $scrums, 'scrum_slack_notification_news_podcast', $replace );
 
 					// アーカイブ podcast の通知
-					$scrums = $this->get_scrums_by_series_id( $series->term_id, 'updates_archive_podcast' );
+					$scrums = $this->get_scrums_by_series_id( $scrum_ch->term_id, 'updates_archive_podcast' );
 					$this->send_slack_from_scrums( $scrums, 'scrum_slack_notification_archive_podcast', $replace );
 				}
 			}
