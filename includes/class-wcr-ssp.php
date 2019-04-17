@@ -504,6 +504,10 @@ EOD;
 
 	public function edit_series_columns( $columns ) {
 		$columns['shortcode'] = __( 'Shortcode', 'wcr-ssp' );
+		$columns['moving'] = '移動';
+		unset( $columns['series_image'] );
+		unset( $columns['series_feed_url'] );
+
 		return $columns;
 	}
 
@@ -511,6 +515,13 @@ EOD;
 		switch ( $column_name ) {
 			case 'shortcode':
 				$column_data = '[wcr_ssp id="' . $term_id . '" /]';
+				break;
+			case 'moving':
+				if ( '1' === get_term_meta( $term_id, 'pcast_moving', true) ) {
+					$to = get_term_meta( $term_id, 'pcast_moving_to', true);
+					$column_data = '<a href="' . $to . '">移動済み</a>';
+				}
+
 				break;
 		}
 		return $column_data;
@@ -832,14 +843,14 @@ EOD;
 			<p>エピソードのlengthを、一度に更新します。</p>
 
 			<form method="post" action="<?php admin_url( 'edit.php?post_type=podcast&page=wc4toiee-ssp-update' ); ?>">
-		<?php wp_nonce_field( 'update_options' ); ?>
+				<?php wp_nonce_field( 'update_options' ); ?>
 				<select name="updated_series_term">
-		<?php foreach ( $terms as $t ) : ?>
-						<option value="<?php echo $t->term_id; ?>"><?php echo $t->name; ?></option>
-		<?php endforeach; ?>
+					<?php foreach ( $terms as $t ) : ?>
+					<option value="<?php echo $t->term_id; ?>"><?php echo $t->name; ?></option>
+					<?php endforeach; ?>
 				</select>
 				<input type="hidden" name="update_episodes" value="update_episodes">
-		<?php submit_button( '更新を実行する' ); ?>
+				<?php submit_button( '更新を実行する' ); ?>
 			</form>
 		<?php
 		if ( isset( $log ) ) {
