@@ -22,6 +22,7 @@ class Toiee_Pocketera_Post {
 		add_action( 'save_post_pkt_feedback', array( $this, 'sum_feedback_num' ), 2, 10 );
 
 		add_action( 'acf/save_post', array( $this, 'feedback_save_post' ) );
+		add_action( 'created_term', array( $this, 'create_related_post' ), 3, 10 );
 	}
 
 
@@ -53,10 +54,39 @@ class Toiee_Pocketera_Post {
 	}
 
 	/**
+	 * ターム作成時に関連する投稿タイプを作成する（授業資料、レジュメ、ノート）
+	 *
+	 * @param integer $term_id タームID.
+	 * @param integer $tt_id term_taxonomu_id.
+	 * @param string  $taxonomy タクソノミー名.
+	 */
+	function create_related_post( $term_id, $tt_id, $taxonomy ) {
+
+		if ( 'pkt_channel' === $taxonomy ) {
+			$term_obj = get_term_by( 'id', $term_id, $taxonomy );
+
+			foreach ( array( 'pkt_resume', 'pkt_lftnote', 'pkt_material' ) as $post_type ) {
+				$post_id = wp_insert_post(
+					array(
+						'post_type'   => $post_type,
+						'post_title'  => $term_obj->name,
+						'post_name'   => $term_obj->slug,
+						'post_status' => 'publish',
+					)
+				);
+
+				if ( $post_id ) {
+					update_field( 'pocketera', $term_id, $post_id );
+				}
+			}
+		}
+	}
+
+	/**
 	 * フィードバック数を表示するために、 pkt_report にフィードバック数を計算して格納する
 	 *
-	 * @param $post_id
-	 * @param $post
+	 * @param integer $post_id 投稿ID.
+	 * @param object  $post 投稿オブジェクト.
 	 */
 	public function sum_feedback_num( $post_id, $post ) {
 
@@ -388,7 +418,7 @@ class Toiee_Pocketera_Post {
 			acf_add_local_field_group(
 				array(
 					'key'                   => 'group_5ca16c8faf7fd',
-					'title'                 => 'LFTノート評価',
+					'title'                 => 'LFTノート情報',
 					'fields'                => array(
 						array(
 							'key'               => 'field_5ca16ca9f592b',
@@ -457,7 +487,7 @@ class Toiee_Pocketera_Post {
 			acf_add_local_field_group(
 				array(
 					'key'                   => 'group_5ca16e1e49aae',
-					'title'                 => 'レジュメ更新履歴',
+					'title'                 => 'レジュメ情報',
 					'fields'                => array(
 						array(
 							'key'               => 'field_5ca30c0fc7556',
