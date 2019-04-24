@@ -962,7 +962,74 @@ class Toiee_Pcast {
 			} else {
 
 				/* インポートプログラム */
+				$lib = $this->get_vimeo_object();
 
+				/* データの取得し、名前で並び替える */
+				$ret    = $lib->request( $_POST['source_channel'] . '/videos', [ 'per_page' => 100 ], 'GET' );
+				$videos = $ret['body']['data'];
+				usort(
+					$videos,
+					function ( $a, $b ) {
+						return strnatcmp( $a['name'], $b['name'] );
+					}
+				);
+
+				/* 登録作業 */
+				$cnt   = 0;
+				$total = count( $videos );
+				$time  = time() - 60 * ( $total + 2 );
+
+				/* 登録先情報 */
+				$tt   = $this->get_pcast_tax( $_POST['target_channel'] );
+				$term = get_term_by( 'id', $tt['term_id'], $tt['tax'] );
+
+				$relation  = $this->toiee_pcast_relations();
+				$post_type = $relation[ $tt['tax'] ];
+
+				/* 登録開始 */
+				foreach ( $videos as $i => $v ) {
+					$cnt++;
+					$time += 60;
+					$att   = array();
+
+					$post_title      = $v['name'];
+					$att['media']    = 'video';
+					$att['restrict'] = 'restrict';
+					$att['duration'] = sprintf( '%02d:%02d:%02d', floor( $v['duration'] / 3600 ), floor( ( $v['duration'] / 60 ) % 60 ), $v['duration'] % 60 );
+					foreach ( $v['files'] as $d ) {
+						if ( 'hd' === $d['quality'] ) {
+							$link             = preg_replace( '/&oauth2_token_id=([0-9]+)/', '', $d['link'] ) . '&download=1';
+							$att['enclosure'] = $link;
+							$att['length']    = $d['size'];
+							break;
+						}
+					}
+
+					$arg = array(
+						'ID'           => null,
+						'post_content' => '',
+						'post_name'    => $term->slug . '-' . $cnt,
+						'post_title'   => $post_title,
+						'post_status'  => 'publish',
+						'post_type'    => $post_type,
+						'post_date'    => date( 'Y-m-d H:i:s', $time ),
+						'tax_input'    => array( $tt['tax'] => $term->term_id ),
+					);
+					$post_id = wp_insert_post( $arg );
+
+					if ( $post_id ) {
+						foreach ( $att as $k=>$v ) {
+							update_field( $k, $v, $post_id );
+						}
+					}
+				}
+
+				$url = admin_url( 'edit.php?' . $tt['tax'] . '=' . $term->slug . '&post_type=' . $post_type );
+				?>
+				<div class="notice notice-success is-dismissible">
+					<p><strong>登録作業が完了しました。</strong> <a href="<?php echo $url; ?>">結果はこちら</a></p>
+				</div>
+				<?php
 			}
 		}
 
@@ -995,7 +1062,7 @@ class Toiee_Pcast {
 						<label for="my-text-field">インポート元</label>
 					</th>
 					<td>
-						<select name="target_channel">
+						<select name="source_channel">
 							<?php foreach ( $select_from as $option ) : ?>
 								<option value="<?php echo esc_attr( $option['value'] ); ?>"><?php echo esc_attr( $option['name'] ); ?></option>
 							<?php endforeach; ?>
@@ -1278,6 +1345,12 @@ class Toiee_Pcast {
 		}
 
 		return $select;
+	}
+
+	private function get_pcast_tax( $value ) {
+		$arr = explode( ',', $value );
+
+		return array( 'tax' => $arr[0], 'term_id' => $arr[1] );
 	}
 
 	private function import_series_to_pcast( $series_id, $taxonomy, $post_type ) {

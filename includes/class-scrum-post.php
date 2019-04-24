@@ -741,7 +741,7 @@ class Toiee_Scrum_Post {
 					$body
 				);
 
-				   $this->send_slack( $body, $webhook_url );
+				$this->send_slack( $body, $webhook_url );
 			}
 		}
 	}
