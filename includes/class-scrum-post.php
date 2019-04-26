@@ -82,6 +82,10 @@ class Toiee_Scrum_Post {
 
 			$query->set( 'posts_per_page', 30 );
 		}
+
+		if ( $query->is_main_query() && $query->is_tax( 'scrum_channel' ) ) {
+			$query->set( 'posts_per_page', 20 );
+		}
 	}
 
 	/**
