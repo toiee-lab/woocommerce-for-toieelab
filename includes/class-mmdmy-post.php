@@ -20,6 +20,37 @@ class Toiee_Mimidemy_Post {
 		$plugin_dir = plugin_dir_path( $file );
 		register_activation_hook( $plugin_dir, array( $this, 'activate' ) );
 		register_deactivation_hook( $plugin_dir, array( $this, 'deactivate' ) );
+
+		add_action( 'created_term', array( $this, 'create_related_post' ), 3, 10 );
+	}
+
+	/**
+	 * ターム作成時に関連する投稿タイプを作成する（授業資料、レジュメ、ノート）
+	 *
+	 * @param integer $term_id タームID.
+	 * @param integer $tt_id term_taxonomu_id.
+	 * @param string  $taxonomy タクソノミー名.
+	 */
+	function create_related_post( $term_id, $tt_id, $taxonomy ) {
+
+		if ( 'mdy_channel' === $taxonomy ) {
+			$term_obj = get_term_by( 'id', $term_id, $taxonomy );
+
+			foreach ( array( 'mdy_material' ) as $post_type ) {
+				$post_id = wp_insert_post(
+					array(
+						'post_type'   => $post_type,
+						'post_title'  => $term_obj->name,
+						'post_name'   => $term_obj->slug,
+						'post_status' => 'publish',
+					)
+				);
+
+				if ( $post_id ) {
+					update_field( 'mimidemy', $term_id, $post_id );
+				}
+			}
+		}
 	}
 
 	/**

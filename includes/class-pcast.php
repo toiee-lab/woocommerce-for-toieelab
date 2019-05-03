@@ -36,9 +36,9 @@ class Toiee_Pcast {
 	private $toiee_podcast_options;
 
 	/**
-	 * vimeoへアクセスできるオブジェクトを格納
+	 * Vimeoへアクセスできるオブジェクトを格納.
 	 *
-	 * @var object $vimeo
+	 * @var $vimeo object Vimeoオブジェクト.
 	 */
 	private $vimeo;
 
@@ -1337,12 +1337,15 @@ class Toiee_Pcast {
 			$tax_obj = get_taxonomy( $tax_name );
 
 			foreach ( $terms as $t ) {
-				$select[] = array(
+				$select[ $t->term_id ] = array(
 					'disp'  => '【' . $tax_obj->label . '】' . $t->name,
 					'value' => $tax_name . ',' . $t->term_id,
 				);
 			}
 		}
+
+		ksort( $select );
+		$select = array_reverse( $select );
 
 		return $select;
 	}
