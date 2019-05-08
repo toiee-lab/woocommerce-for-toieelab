@@ -145,6 +145,11 @@ while ( have_posts() ) :
 	/* ユーザー認証 */
 	$title_prefix = '';
 	$restrict     = get_field( 'restrict' );
+	if ( $restrict === true ) {
+		$restrict = 'restrict';
+	} else if ( $restrict === false ) {
+		$restrict = 'open';
+	}
 
 	if ( false === $has_access ) {
 		switch ( $restrict ) {
