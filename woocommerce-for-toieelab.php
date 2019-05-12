@@ -50,32 +50,19 @@ require 'vendor/autoload.php';
 
 // include some feature
 require_once 'includes/woocommerce_settings.php';
-require_once 'includes/class-wcr-content.php';
-require_once 'includes/class-wcr-ssp.php';
 require_once 'includes/wcr-functions.php';
-require_once 'includes/class-wcr-mylib.php';
-require_once 'includes/class-wcr-ctag.php';
-require_once 'includes/class-simple-event.php';
-require_once 'includes/class-mailerlite-group.php';
 require_once 'includes/toiee-shortcodes.php';
-require_once 'includes/class-wcr-login.php';
-require_once 'includes/class-installment.php';
-require_once 'includes/class-scrum-post.php';
-require_once 'includes/class-magazine-post.php';
-require_once 'includes/class-poketera-post.php';
-require_once 'includes/class-mmdmy-post.php';
-require_once 'includes/class-subscription-bank.php';
-require_once 'includes/class-pcast.php';
-require_once 'includes/class-tkb-post.php';
 
 
 
 // generate instances
+require_once 'includes/class-wcr-content.php';
 global $wcr_content;
 $wcr_content             = new Woocommerce_SimpleRestrictContent();
 $wcr_content->plugin_url = plugins_url( '', __FILE__ );
 
 // Seriously Simple Podcast がインストールされていれば、有効にする
+require_once 'includes/class-wcr-ssp.php';
 require_once ABSPATH . 'wp-admin/includes/plugin.php';
 if ( is_plugin_active( 'seriously-simple-podcasting/seriously-simple-podcasting.php' ) ) {
 	global $wcr_ssp;
@@ -83,43 +70,55 @@ if ( is_plugin_active( 'seriously-simple-podcasting/seriously-simple-podcasting.
 	$wcr_ssp->plugin_url = plugins_url( '', __FILE__ );
 }
 
+require_once 'includes/class-installment.php';
 global $wc_installment;
 $wc_installment = new ToieeLab_Installment();
 
+require_once 'includes/class-subscription-bank.php';
 global $wc_subscription_bank;
 $wc_subscription_bank = new ToieeLab_Subscription_Bank();
 
+require_once 'includes/class-wcr-ctag.php';
 global $wcr_customtab;
 $wcr_customtab = new Woocommerce_CustomTabs();
 
+require_once 'includes/class-wcr-mylib.php';
 global $wcr_mylibrary;
 $wcr_mylibrary = new toiee_woocommerce_mylibrary();
 
-
+require_once 'includes/class-simple-event.php';
 global $toiee_simple_event;
 $toiee_simple_event = new Toiee_SimpleEvent();
 
+require_once 'includes/class-mailerlite-group.php';
 global $toiee_ml_group;
 $toiee_ml_group = new Toiee_Mailerlite_Group();
 
+require_once 'includes/class-wcr-login.php';
 global $wcr_login;
 $wdr_login = new Toiee_WCLogin();
 
+require_once 'includes/class-scrum-post.php';
 global $toiee_scrum;
 $toiee_scrum = new Toiee_Scrum_Post( __FILE__ );
 
+require_once 'includes/class-magazine-post.php';
 global $toiee_magazine;
 $toiee_magazine = new Toiee_Magazine_Post();
 
+require_once 'includes/class-poketera-post.php';
 global $toiee_pocketera;
 $toiee_pocketera = new Toiee_Pocketera_Post();
 
+require_once 'includes/class-mmdmy-post.php';
 global $toiee_mimidemy;
 $toiee_mimidemy = new Toiee_Mimidemy_Post( __FILE__ );
 
+require_once 'includes/class-pcast.php';
 global $toiee_pcast;
 $toiee_pcast = new Toiee_Pcast( __FILE__ );
 
+require_once 'includes/class-tkb-post.php';
 global $toiee_knowledge;
 $toiee_knowledge = new Toiee_Tkb_Post( __FILE__ );
 
