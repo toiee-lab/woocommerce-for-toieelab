@@ -49,7 +49,6 @@ add_action( 'admin_notices', 'exist_acf_admin_notice_error' );
 require 'vendor/autoload.php';
 
 // include some feature
-require_once 'includes/custom-fields-by-acf.php';
 require_once 'includes/woocommerce_settings.php';
 require_once 'includes/class-wcr-content.php';
 require_once 'includes/class-wcr-ssp.php';
@@ -90,11 +89,12 @@ $wc_installment = new ToieeLab_Installment();
 global $wc_subscription_bank;
 $wc_subscription_bank = new ToieeLab_Subscription_Bank();
 
+global $wcr_customtab;
+$wcr_customtab = new Woocommerce_CustomTabs();
+
 global $wcr_mylibrary;
 $wcr_mylibrary = new toiee_woocommerce_mylibrary();
 
-global $wcr_customtab;
-$wcr_customtab = new Woocommerce_CustomTabs();
 
 global $toiee_simple_event;
 $toiee_simple_event = new Toiee_SimpleEvent();

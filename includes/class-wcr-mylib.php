@@ -39,6 +39,82 @@ class toiee_woocommerce_mylibrary {
 
 		// display purchased info
 		add_action( 'woocommerce_product_meta_start', array( $this, 'display_purchased_info' ), 5 );
+
+		$this->add_acf();
+	}
+
+	public function add_acf() {
+		if ( function_exists( 'acf_add_local_field_group' ) ) :
+
+			// WooCommerceの商品画面に貼り付けるもの
+			acf_add_local_field_group(
+				array(
+					'key'                   => 'group_5be20140832f0',
+					'title'                 => 'マイライブラリ設定',
+					'fields'                => array(
+						array(
+							'key'               => 'field_5be201568379a',
+							'label'             => 'コンテンツURL',
+							'name'              => 'wcmylib_url',
+							'type'              => 'url',
+							'instructions'      => 'マイライブラリに表示する場合は、指定してください。商品ページにも表示（購入している場合）します。',
+							'required'          => 0,
+							'conditional_logic' => 0,
+							'wrapper'           => array(
+								'width' => '',
+								'class' => '',
+								'id'    => '',
+							),
+							'default_value'     => '',
+							'placeholder'       => 'https://',
+						),
+						array(
+							'key'               => 'field_5be202018379b',
+							'label'             => 'アクセス可能商品',
+							'name'              => 'wcmylib_products',
+							'type'              => 'post_object',
+							'instructions'      => '以下の商品を持つユーザーを購入済みとして扱い、ライブラリURLを表示します。',
+							'required'          => 0,
+							'conditional_logic' => 0,
+							'wrapper'           => array(
+								'width' => '',
+								'class' => '',
+								'id'    => '',
+							),
+							'post_type'         => array(
+								0 => 'wcrestrict',
+								1 => 'product',
+								2 => 'product_variation',
+								3 => 'wc_membership_plan',
+							),
+							'taxonomy'          => '',
+							'allow_null'        => 1,
+							'multiple'          => 1,
+							'return_format'     => 'id',
+							'ui'                => 1,
+						),
+					),
+					'location'              => array(
+						array(
+							array(
+								'param'    => 'post_type',
+								'operator' => '==',
+								'value'    => 'product',
+							),
+						),
+					),
+					'menu_order'            => 10,
+					'position'              => 'normal',
+					'style'                 => 'default',
+					'label_placement'       => 'top',
+					'instruction_placement' => 'label',
+					'hide_on_screen'        => '',
+					'active'                => 1,
+					'description'           => 'マイライブラリ設定を行います',
+				)
+			);
+
+		endif;
 	}
 
 	public function mylibrary_content() {
