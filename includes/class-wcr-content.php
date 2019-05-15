@@ -644,10 +644,6 @@ here is contents
 			<ol>
 				<li>コンテンツ制限</li>
 				<li>商品まとめ機能</li>
-				<li>商品カスタムタブ機能</li>
-				<li>Mailerliteグループ連携</li>
-				<li>WooCommerce Subscriptions 分割支払い化</li>
-				<li>WooCommerce Subscriptions 銀行支払い期限延長</li>
 			</ol>
 		</div>
 		<?php
@@ -686,6 +682,78 @@ here is contents
 
 	public function setting_preference() {
 
+		$funcs = [
+			'mylib' => [
+				'title' => 'マイライブラリ機能',
+				'desc'  => 'WooCommerceのユーザーダッシュボードに「マイライブラリ」を表示し、コンテンツに素早くアクセスできるようにします',
+			],
+			'ctab'       => [
+				'title' => 'カスタムタブ',
+				'desc'  => 'WooCommerceの商品ページに独自のタブを追加できます（カテゴリなどを指定することで）',
+			],
+			'mailerlite' => [
+				'title' => 'Mailerlite連携',
+				'desc'  => '商品購入とMailerliteグループを紐付けます。定期購読、バリエーション、返品にも対応しています',
+			],
+			'sub_inst' => [
+				'title' => 'WooCommerce Subscriptions 分割支払い',
+				'desc'  => 'WooCommerce Subscriptionsを分割支払いに使えるように機能を拡張します',
+			],
+			'sub_bank' => [
+				'title' => 'WooCommerce Subscriptions 銀行支払い期限延長',
+				'desc'  => 'WooCommerce Subscriptions + WooCommerce for Japan で有効になる銀行振込による定期購読では、銀行支払い期間が短いため有効期限が切れやすくなります。これを1週間に延長します。',
+			],
+			'pcast' => [
+				'title' => 'Podcast機能',
+				'desc'  => 'Podcast機能を有効にします。マガジン、スクラム、耳デミー、ポケてらなどを利用する場合は、必ず ON にしてください。',
+			],
+			'mag'   => [
+				'title' => 'マガジン機能',
+				'desc'  => 'Magazine投稿タイプを有効にします。',
+			],
+			'mdy' => [
+				'title' => '耳デミー機能',
+				'desc'  => '耳デミー（ビデオ、オーディオ、Podcast配信、授業資料）を有効にします',
+			],
+			'pkt' => [
+				'title' => 'ポケてら機能',
+				'desc'  => 'ポケてら（ビデオ、オーディオ、Podcast配信、授業資料、LFT資料、ノート、フィードバック）を有効にします',
+			],
+			'tkb' => [
+				'title' => '関連ナレッジ機能',
+				'desc'  => '関連ナレッジを投稿できるようにします。耳デミー、ポケてらに関連します',
+			],
+			'scrum' => [
+				'title' => 'スクラム機能',
+				'desc'  => '専用ブログ、お知らせ、Podcast配信、教材の関連付けができるスクラム機能です',
+			],
+			'event' => [
+				'title' => 'シンプルイベント機能',
+				'desc'  => 'シンプルなイベント機能です。イベントの申し込みなどは、外部サイトを想定しています。',
+			],
+			'rlogin' => [
+				'title' => 'rlogin機能',
+				'desc'  => '別のWordPressを認証、ログインさせるための機能',
+			],
+			'ssp'       => [
+				'title' => 'Seriously Simple Podcast拡張',
+				'desc'  => 'Seriously Simple Podcastを拡張し、購入者限定などを実現します',
+			],
+
+		];
+
+		$depend_pcast   = [ 'mdy', 'pkt', 'scrum', 'mag' ];
+		$depend_rewrite = [ 'mylib', 'mag', 'mdy', 'pkt', 'scrum', 'event', 'rlogin', 'ssp' ];
+
+		?>
+		<p>以下、必要な機能をOn/Offしてください。<br><br></p>
+		<?php
+		foreach ( $funcs as $key => $v ) {
+			?>
+			<h3><?php echo esc_html( $v['title'] ); ?></h3>
+			<p><?php echo esc_html( $v['desc'] ); ?></p>
+			<?php
+		}
 	}
 
 	/*
