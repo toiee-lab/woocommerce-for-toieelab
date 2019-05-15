@@ -114,7 +114,7 @@ require_once 'includes/class-mmdmy-post.php';
 global $toiee_mimidemy;
 $toiee_mimidemy = new Toiee_Mimidemy_Post( __FILE__ );
 
-require_once 'includes/class-pcast.php';
+require_once 'includes/class-toiee-pcast.php';
 global $toiee_pcast;
 $toiee_pcast = new Toiee_Pcast( __FILE__ );
 

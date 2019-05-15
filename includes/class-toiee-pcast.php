@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * Class Toiee_Pcast.
+ * Podcast機能を付属させるための機能を持ったクラス.
+ */
 class Toiee_Pcast {
 	/**
 	 * プラグインのルートファイル名を保存
@@ -26,14 +30,6 @@ class Toiee_Pcast {
 	 * @var string $dummy_audio
 	 */
 	private $dummy_audio;
-	/**
-	 * 閲覧制限時のビデオを指定
-	 *
-	 * @var string $dummy_video
-	 */
-	private $dummy_video;
-
-	private $toiee_podcast_options;
 
 	/**
 	 * Vimeoへアクセスできるオブジェクトを格納.
@@ -75,12 +71,12 @@ class Toiee_Pcast {
 		$do_store = true;
 		$do_store = apply_filters( 'pcast_store_parameter', $do_store );
 
-		if ( true !== $do_store) {
+		if ( true !== $do_store ) {
 			return;
 		}
 
 		$post = get_post( $post_id );
-		if ( array_search( $post->post_type , $this->toiee_pcast_post_types() ) ) {
+		if ( array_search( $post->post_type, $this->toiee_pcast_post_types() ) ) {
 			$fields = get_fields();
 
 			if ( ( '' === $fields['duration'] ) || ( '' === $fields['length'] ) ) {
@@ -88,7 +84,7 @@ class Toiee_Pcast {
 				/* attachment にあれば */
 				$att_id = attachment_url_to_postid( $fields['enclosure'] );
 				if ( 0 !== $att_id ) { // duration, length
-					$att_meta = get_post_meta( $att_id, '_wp_attachment_metadata', true );
+					$att_meta           = get_post_meta( $att_id, '_wp_attachment_metadata', true );
 					$fields['duration'] = isset( $att_meta['length_formatted'] ) ? $att_meta['length_formatted'] : '';
 					$fields['length']   = isset( $att_meta['filesize'] ) ? $att_meta['filesize'] : '';
 				}
@@ -143,7 +139,6 @@ class Toiee_Pcast {
 					),
 				);
 			}
-
 
 			acf_add_local_field_group(
 				array(
@@ -894,7 +889,7 @@ class Toiee_Pcast {
 			$relations = $this->toiee_pcast_relations();
 			$post_type = $relations[ $tax ];
 
-			$posts   = get_posts(
+			$posts = get_posts(
 				array(
 					'post_type'      => $post_type,
 					'posts_per_page' => -1,
@@ -1006,7 +1001,7 @@ class Toiee_Pcast {
 						}
 					}
 
-					$arg = array(
+					$arg     = array(
 						'ID'           => null,
 						'post_content' => '',
 						'post_name'    => $term->slug . '-' . $cnt,
@@ -1019,16 +1014,16 @@ class Toiee_Pcast {
 					$post_id = wp_insert_post( $arg );
 
 					if ( $post_id ) {
-						foreach ( $att as $k=>$v ) {
+						foreach ( $att as $k => $v ) {
 							update_field( $k, $v, $post_id );
 						}
 					}
 				}
 
-				$url = admin_url( 'edit.php?' . $tt['tax'] . '=' . $term->slug . '&post_type=' . $post_type );
+				$edit_url = admin_url( 'edit.php?' . $tt['tax'] . '=' . $term->slug . '&post_type=' . $post_type );
 				?>
 				<div class="notice notice-success is-dismissible">
-					<p><strong>登録作業が完了しました。</strong> <a href="<?php echo $edit_url; ?>">結果はこちら</a></p>
+					<p><strong>登録作業が完了しました。</strong> <a href="<?php echo esc_url( $edit_url ); ?>">結果はこちら</a></p>
 				</div>
 				<?php
 			}
@@ -1037,13 +1032,13 @@ class Toiee_Pcast {
 		$select_from = get_option( 'toiee_vimeo_list', false );
 
 		if ( false === $select_from ) {
-			$error = '<div class="notice notice-warning is-dismissible"><p><strong>vimeo にアクセスできませんでした。api key などを確認して、再度お試しください。</strong></p></div>';
+			$error       = '<div class="notice notice-warning is-dismissible"><p><strong>vimeo にアクセスできませんでした。api key などを確認して、再度お試しください。</strong></p></div>';
 			$select_from = array();
 		} else {
 			$error = '';
 		}
 
-		$select_to   = $this->get_pcast_taxes_select();
+		$select_to = $this->get_pcast_taxes_select();
 
 		?>
 		<p>vimeoのプロジェクトや、アルバムからインポートします。まずは、vimeoのプレイリストの更新から行ってください。<br>
@@ -1103,15 +1098,15 @@ class Toiee_Pcast {
 			$taxonomy = $_POST['to_channel'];
 			$relation = $this->toiee_pcast_relations();
 
-			if ( isset( $relation[$taxonomy] ) ) {
-				$post_type = $relation[$taxonomy];
+			if ( isset( $relation[ $taxonomy ] ) ) {
+				$post_type = $relation[ $taxonomy ];
 
 				$ret = $this->import_series_to_pcast( $seres_id, $taxonomy, $post_type );
-				if( is_numeric( $ret ) ) {
-					$url = get_term_link( $ret, $taxonomy);
+				if ( is_numeric( $ret ) ) {
+					$url = get_term_link( $ret, $taxonomy );
 					?>
 					<div class="notice notice-success is-dismissible">
-						<p><strong>インポート完了しました。<a href="<?php echo esc_url($url); ?>">(インポート先へ移動する)</a></strong></p>
+						<p><strong>インポート完了しました。<a href="<?php echo esc_url( $url ); ?>">(インポート先へ移動する)</a></strong></p>
 					</div>
 					<?php
 				} else {
@@ -1121,8 +1116,7 @@ class Toiee_Pcast {
 					</div>
 					<?php
 				}
-			}
-			else {
+			} else {
 				?>
 				<div class="notice notice-error is-dismissible">
 					<p><strong>指定されたパラメータに間違いがあります</strong></p>
@@ -1136,7 +1130,10 @@ class Toiee_Pcast {
 		foreach ( $series_s as $series ) {
 			$moving = get_term_meta( $series->term_id, 'pcast_moving', true );
 			if ( '1' !== $moving ) {
-				$select_from[] = array( 'disp' => $series->name, 'value' => $series->term_id );
+				$select_from[] = array(
+					'disp'  => $series->name,
+					'value' => $series->term_id,
+				);
 			}
 		}
 		?>
@@ -1215,14 +1212,17 @@ class Toiee_Pcast {
 					);
 				}
 
-				usort( $pcast, function ( $a, $b ){
-					$ret = strcmp( $a['post_title'], $b['post_title'] );
-					if ( 0 === $ret ) {
-						return $a['id'] - $b['id'];
-					} else {
-						return $ret;
+				usort(
+					$pcast,
+					function ( $a, $b ) {
+						$ret = strcmp( $a['post_title'], $b['post_title'] );
+						if ( 0 === $ret ) {
+							return $a['id'] - $b['id'];
+						} else {
+							return $ret;
+						}
 					}
-				} );
+				);
 
 				/* pcast に投稿する */
 				$cnt   = 0;
@@ -1232,12 +1232,12 @@ class Toiee_Pcast {
 				foreach ( $pcast as $p ) {
 					$cnt++;
 					$time += 60;
-					$att = array();
+					$att   = array();
 
-					$media   = get_post( $id );
+					$media = get_post( $id );
 
 					/* post を投稿 */
-					$args = array(
+					$args    = array(
 						'ID'           => null,
 						'post_content' => $p['post_content'],
 						'post_name'    => $term->slug . '-' . $cnt,
@@ -1249,9 +1249,9 @@ class Toiee_Pcast {
 					);
 					$post_id = wp_insert_post( $args );
 
-					if( $post_id ) {
-						foreach( array('restrict', 'enclosure', 'media', 'duration', 'length') as $k ) {
-							update_field( $k, $p[$k], $post_id );
+					if ( $post_id ) {
+						foreach ( array( 'restrict', 'enclosure', 'media', 'duration', 'length' ) as $k ) {
+							update_field( $k, $p[ $k ], $post_id );
 						}
 					}
 				}
@@ -1265,24 +1265,27 @@ class Toiee_Pcast {
 			<?php
 		}
 
-		$args = array(
+		$args     = array(
 			'posts_per_page' => 50,
 			'post_type'      => 'attachment',
-			'post_status'    => ['publish', 'inherit'],
+			'post_status'    => [ 'publish', 'inherit' ],
 			'orderby'        => 'modified',
 		);
 		$attaches = get_posts( $args );
 
-		//上位50個から、audio と video のみを残す
-		$attaches = array_filter( $attaches, function( $v ) {
-			if( preg_match( '/^(audio)|(video).*/', $v->post_mime_type ) ) {
-				return true;
-			} else {
-				return false;
+		// 上位50個から、audio と video のみを残す
+		$attaches = array_filter(
+			$attaches,
+			function( $v ) {
+				if ( preg_match( '/^(audio)|(video).*/', $v->post_mime_type ) ) {
+					return true;
+				} else {
+					return false;
+				}
 			}
-		});
+		);
 
-		$select_to   = $this->get_pcast_taxes_select();
+		$select_to = $this->get_pcast_taxes_select();
 
 		?>
 		<p>メディアライブラリの音声、ビデオを特定のPcastにインポートします。<br>
@@ -1299,7 +1302,7 @@ class Toiee_Pcast {
 					<td>
 						<select multiple name="media[]" size="15" style="width:600px;">
 							<?php foreach ( $attaches as $att ) : ?>
-								<option value="<?php echo esc_attr( $att->ID );?>"><?php echo esc_html( $att->post_title . ' (' . $att->post_mime_type . ')' );?></option>
+								<option value="<?php echo esc_attr( $att->ID ); ?>"><?php echo esc_html( $att->post_title . ' (' . $att->post_mime_type . ')' ); ?></option>
 							<?php endforeach; ?>
 						</select>
 
@@ -1336,7 +1339,7 @@ class Toiee_Pcast {
 			check_admin_referer( 'toiee_podcast' );
 
 			$values = array();
-			foreach ( array('cid', 'access_token', 'csr' ) as $key ) {
+			foreach ( array( 'cid', 'access_token', 'csr' ) as $key ) {
 				$values[ $key ] = isset( $_POST['vimeo_api'][ $key ] ) ? esc_attr( $_POST['vimeo_api'][ $key ] ) : '';
 			}
 			update_option( 'toiee_vimeo_api_keys', $values, false );
@@ -1358,7 +1361,7 @@ class Toiee_Pcast {
 						<label for="my-text-field">Client identifier</label>
 					</th>
 					<td>
-						<input type="text" name="vimeo_api[cid]" value="<?php echo isset($vimeo_api['cid']) ? $vimeo_api['cid']: ''; ?>">
+						<input type="text" name="vimeo_api[cid]" value="<?php echo isset( $vimeo_api['cid'] ) ? $vimeo_api['cid'] : ''; ?>">
 						<br>
 						<span class="description"></span>
 					</td>
@@ -1368,7 +1371,7 @@ class Toiee_Pcast {
 						<label for="my-text-field">Access token</label>
 					</th>
 					<td>
-						<input type="text" name="vimeo_api[access_token]" value="<?php echo isset($vimeo_api['access_token']) ? $vimeo_api['access_token']: ''; ?>">
+						<input type="text" name="vimeo_api[access_token]" value="<?php echo isset( $vimeo_api['access_token'] ) ? $vimeo_api['access_token'] : ''; ?>">
 						<br>
 						<span class="description"></span>
 					</td>
@@ -1378,7 +1381,7 @@ class Toiee_Pcast {
 						<label for="my-text-field">Client secrets</label>
 					</th>
 					<td>
-						<input type="text" name="vimeo_api[csr]" value="<?php echo isset($vimeo_api['csr']) ? $vimeo_api['csr']: ''; ?>">
+						<input type="text" name="vimeo_api[csr]" value="<?php echo isset( $vimeo_api['csr'] ) ? $vimeo_api['csr'] : ''; ?>">
 						<br>
 						<span class="description"></span>
 					</td>
@@ -1389,12 +1392,12 @@ class Toiee_Pcast {
 			<input type="hidden" name="cmd" value="vimeo-api" />
 			<?php submit_button( '保存' ); ?>
 		</form>
-<?php
+		<?php
 
 	}
 
 	private function get_vimeo_object() {
-		if( null === $this->vimeo ) {
+		if ( null === $this->vimeo ) {
 
 			$api = get_option( 'toiee_vimeo_api_keys', '' );
 			if ( '' === $api ) {
@@ -1402,8 +1405,8 @@ class Toiee_Pcast {
 				return false;
 			}
 
-			foreach ( array('cid', 'access_token', 'csr') as $k ) {
-				if( ! isset( $api[$k] ) || '' === $api[$k] ) {
+			foreach ( array( 'cid', 'access_token', 'csr' ) as $k ) {
+				if ( ! isset( $api[ $k ] ) || '' === $api[ $k ] ) {
 					$this->vimeo = false;
 					return false;
 				}
@@ -1426,12 +1429,12 @@ class Toiee_Pcast {
 	private function get_vimeo_list() {
 
 		$lib = $this->get_vimeo_object();
-		if( false === $lib ) {
+		if ( false === $lib ) {
 			return false;
 		}
 
 		$vimeo_list = array();
-		$response = $lib->request(
+		$response   = $lib->request(
 			'/me/projects',
 			[
 				'direction' => 'desc',
@@ -1463,7 +1466,7 @@ class Toiee_Pcast {
 			);
 		}
 
-		if( count( $vimeo_list ) ) {
+		if ( count( $vimeo_list ) ) {
 			update_option( 'toiee_vimeo_list', $vimeo_list, false );
 		}
 
@@ -1503,7 +1506,10 @@ class Toiee_Pcast {
 	private function get_pcast_tax( $value ) {
 		$arr = explode( ',', $value );
 
-		return array( 'tax' => $arr[0], 'term_id' => $arr[1] );
+		return array(
+			'tax'     => $arr[0],
+			'term_id' => $arr[1],
+		);
 	}
 
 	private function import_series_to_pcast( $series_id, $taxonomy, $post_type ) {
@@ -1516,7 +1522,7 @@ class Toiee_Pcast {
 		}
 
 		/* pcast の term を作成 */
-		$ret = wp_insert_term(
+		$ret     = wp_insert_term(
 			$series->name,
 			$taxonomy,
 			array(
@@ -1531,7 +1537,7 @@ class Toiee_Pcast {
 			$term_id = $ret['term_id'];
 		}
 
-		$pcast   = get_term_by( 'id', $term_id, $taxonomy );
+		$pcast = get_term_by( 'id', $term_id, $taxonomy );
 
 		$type   = get_option( 'ss_podcasting_consume_order_' . $series_id, '' );
 		$type   = $type === '' ? 'episodic' : $type;
@@ -1575,11 +1581,10 @@ class Toiee_Pcast {
 
 		foreach ( $podcasts as $podcast ) {
 
-			if( get_post_meta( $podcast->ID, 'pcast_moving_to', true ) ) {
-				//echo 'skip ' . $podcast->post_name . '<br>';
+			if ( get_post_meta( $podcast->ID, 'pcast_moving_to', true ) ) {
+				// echo 'skip ' . $podcast->post_name . '<br>';
 			} else {
-				//echo $podcast->post_name . '<br>';
-
+				// echo $podcast->post_name . '<br>';
 				$args = array();
 				foreach ( $keys as $key ) {
 					$args[ $key ] = $podcast->$key;
@@ -1605,7 +1610,7 @@ class Toiee_Pcast {
 
 				update_post_meta( $podcast->ID, 'pcast_moving_to', get_permalink( $pid ) );
 
-				//echo 'import post ( id: ' . $podcast->ID . ' ' . $podcast->post_name . ')<br>';
+				// echo 'import post ( id: ' . $podcast->ID . ' ' . $podcast->post_name . ')<br>';
 			}
 		}
 
