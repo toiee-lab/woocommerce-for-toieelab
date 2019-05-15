@@ -850,6 +850,7 @@ class Toiee_Pcast {
 					$this->import_from_vimeo();
 					break;
 				case 'media-import':
+					$this->import_from_media();
 					break;
 				case 'ssp-import':
 					$this->import_from_series();
@@ -1027,7 +1028,7 @@ class Toiee_Pcast {
 				$url = admin_url( 'edit.php?' . $tt['tax'] . '=' . $term->slug . '&post_type=' . $post_type );
 				?>
 				<div class="notice notice-success is-dismissible">
-					<p><strong>登録作業が完了しました。</strong> <a href="<?php echo $url; ?>">結果はこちら</a></p>
+					<p><strong>登録作業が完了しました。</strong> <a href="<?php echo $edit_url; ?>">結果はこちら</a></p>
 				</div>
 				<?php
 			}
@@ -1175,6 +1176,155 @@ class Toiee_Pcast {
 			</table>
 			<?php wp_nonce_field( 'toiee_podcast' ); ?>
 			<input type="hidden" name="cmd" value="ssp-import" />
+			<?php submit_button( '実行' ); ?>
+		</form>
+		<?php
+	}
+
+	private function import_from_media() {
+		if ( isset( $_POST['cmd'] ) && $_POST['cmd'] === 'media-import' ) {
+			check_admin_referer( 'toiee_podcast' );
+
+			if ( count( $_POST['media'] ) ) {
+
+				/* 登録先のtaxonomy, term, post_type を取得 */
+				$tt        = $this->get_pcast_tax( $_POST['target_channel'] );
+				$term      = get_term_by( 'id', $tt['term_id'], $tt['tax'] );
+				$relation  = $this->toiee_pcast_relations();
+				$post_type = $relation[ $tt['tax'] ];
+
+				/* 投稿データを用意し、並び替えをする */
+				$pcast = array();
+				foreach ( $_POST['media'] as $id ) {
+					$attach = get_post( $id );
+					$url    = wp_get_attachment_url( $id );
+					$meta   = wp_get_attachment_metadata( $id );
+					$media  = preg_match( '/^audio/', $meta['mime_type'] ) ? 'audio' : 'video';
+
+					$pcast[ $id ] = array(
+						'id'           => $id,
+						'post_content' => $attach->post_content,
+						'post_title'   => $attach->post_title,
+						'post_status'  => 'publish',
+						'mime_type'    => $meta['mime_type'],
+						'restrict'     => 'restrict',
+						'enclosure'    => $url,
+						'media'        => $media,
+						'duration'     => $meta['length_formatted'],
+						'length'       => $meta['filesize'],
+					);
+				}
+
+				usort( $pcast, function ( $a, $b ){
+					$ret = strcmp( $a['post_title'], $b['post_title'] );
+					if ( 0 === $ret ) {
+						return $a['id'] - $b['id'];
+					} else {
+						return $ret;
+					}
+				} );
+
+				/* pcast に投稿する */
+				$cnt   = 0;
+				$total = count( $pcast );
+				$time  = time() - 60 * ( $total + 2 );
+
+				foreach ( $pcast as $p ) {
+					$cnt++;
+					$time += 60;
+					$att = array();
+
+					$media   = get_post( $id );
+
+					/* post を投稿 */
+					$args = array(
+						'ID'           => null,
+						'post_content' => $p['post_content'],
+						'post_name'    => $term->slug . '-' . $cnt,
+						'post_title'   => $p['post_title'],
+						'post_status'  => 'publish',
+						'post_date'    => date( 'Y-m-d H:i:s', $time ),
+						'post_type'    => $post_type,
+						'tax_input'    => array( $tt['tax'] => $term->term_id ),
+					);
+					$post_id = wp_insert_post( $args );
+
+					if( $post_id ) {
+						foreach( array('restrict', 'enclosure', 'media', 'duration', 'length') as $k ) {
+							update_field( $k, $p[$k], $post_id );
+						}
+					}
+				}
+
+				$edit_url = admin_url( 'edit.php?' . $tt['tax'] . '=' . $term->slug . '&post_type=' . $post_type );
+			}
+			?>
+			<div class="notice notice-success is-dismissible">
+				<p><strong><?php echo esc_html( $cnt ); ?>件の登録作業が完了しました。</strong> <a href="<?php echo $edit_url; ?>">結果はこちら</a></p>
+			</div>
+			<?php
+		}
+
+		$args = array(
+			'posts_per_page' => 50,
+			'post_type'      => 'attachment',
+			'post_status'    => ['publish', 'inherit'],
+			'orderby'        => 'modified',
+		);
+		$attaches = get_posts( $args );
+
+		//上位50個から、audio と video のみを残す
+		$attaches = array_filter( $attaches, function( $v ) {
+			if( preg_match( '/^(audio)|(video).*/', $v->post_mime_type ) ) {
+				return true;
+			} else {
+				return false;
+			}
+		});
+
+		$select_to   = $this->get_pcast_taxes_select();
+
+		?>
+		<p>メディアライブラリの音声、ビデオを特定のPcastにインポートします。<br>
+		投稿日時は、インポートした時点（今）を起点に設定されます。また、順番は「名前順」となります。<br>
+		したがって、番号などを付与した名前にしておいてください。</p>
+
+		<form method="post" action="<?php admin_url( 'options-general.php?page=toiee-podcast&tab=import-media' ); ?>">
+			<table class="form-table">
+				<tbody>
+				<tr>
+					<th scope="row">
+						<label for="my-text-field">メディアの一覧（動画とオーディオのみ）</label>
+					</th>
+					<td>
+						<select multiple name="media[]" size="15" style="width:600px;">
+							<?php foreach ( $attaches as $att ) : ?>
+								<option value="<?php echo esc_attr( $att->ID );?>"><?php echo esc_html( $att->post_title . ' (' . $att->post_mime_type . ')' );?></option>
+							<?php endforeach; ?>
+						</select>
+
+						<br>
+						<span class="description">複数を選択できます</span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="my-text-field">インポート先</label>
+					</th>
+					<td>
+						<select name="target_channel">
+							<?php foreach ( $select_to as $option ) : ?>
+								<option value="<?php echo esc_attr( $option['value'] ); ?>"><?php echo esc_attr( $option['disp'] ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<br>
+						<span class="description"></span>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+			<?php wp_nonce_field( 'toiee_podcast' ); ?>
+			<input type="hidden" name="cmd" value="media-import" />
 			<?php submit_button( '実行' ); ?>
 		</form>
 		<?php
