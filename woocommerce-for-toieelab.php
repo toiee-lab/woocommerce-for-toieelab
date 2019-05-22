@@ -5,7 +5,7 @@
  * Plugin URI: http://toiee.jp
  * Description: WooCommerceの商品と商品をまとめるデータと連動して、コンテンツの閲覧制限、Seriously Simple Podcastの閲覧制限・機能拡張、ユーザー固有のフィードURL生成、マイライブラリ機能、ショートコードなどを実装
  * Author: toiee Lab
- * Version: 1.0
+ * Version: 3.0
  * Author URI: http://toiee.jp
  */
 
@@ -98,9 +98,21 @@ require_once 'includes/class-wcr-login.php';
 global $wcr_login;
 $wdr_login = new Toiee_WCLogin();
 
+require_once 'includes/class-toiee-pcast.php';
+global $toiee_pcast;
+$toiee_pcast = new Toiee_Pcast( __FILE__ );
+
+require_once 'includes/class-tlm-post.php';
+global $toiee_tlm;
+$toiee_tlm = new Toiee_Tlm_Post( __FILE__ );
+
 require_once 'includes/class-scrum-post.php';
 global $toiee_scrum;
 $toiee_scrum = new Toiee_Scrum_Post( __FILE__ );
+
+require_once 'includes/class-tkb-post.php';
+global $toiee_knowledge;
+$toiee_knowledge = new Toiee_Tkb_Post( __FILE__ );
 
 require_once 'includes/class-magazine-post.php';
 global $toiee_magazine;
@@ -113,15 +125,6 @@ $toiee_pocketera = new Toiee_Pocketera_Post();
 require_once 'includes/class-mmdmy-post.php';
 global $toiee_mimidemy;
 $toiee_mimidemy = new Toiee_Mimidemy_Post( __FILE__ );
-
-require_once 'includes/class-toiee-pcast.php';
-global $toiee_pcast;
-$toiee_pcast = new Toiee_Pcast( __FILE__ );
-
-require_once 'includes/class-tkb-post.php';
-global $toiee_knowledge;
-$toiee_knowledge = new Toiee_Tkb_Post( __FILE__ );
-
 
 // JetPack を WooCommerce Productページでは実行しない
 function exclude_jetpack_related_from_products( $options ) {

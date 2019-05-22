@@ -15,7 +15,7 @@ function w4t_podcast_grid_display( $channel_ids , $taxonomy ) {
 		</div>
 EOD;
 
-	if ( 0 === count( $channel_ids ) ) {
+	if ( ( ! is_array( $channel_ids ) ) || 0 === count( $channel_ids ) ) {
 		return;
 	}
 

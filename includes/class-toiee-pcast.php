@@ -724,14 +724,14 @@ class Toiee_Pcast {
 	}
 
 	public function toiee_pcast_post_types() {
-		$post_types = array( 'mdy_episode', 'pkt_episode', 'scrum_episode' );
+		$post_types = array( 'mdy_episode', 'pkt_episode', 'scrum_episode', 'tlm_in', 'tlm_out',  'tlm_archive' );
 		$post_types = apply_filters( 'toiee_pcast_post_types', $post_types );
 
 		return $post_types;
 	}
 
 	public function toiee_pcast_taxonomy() {
-		$tax = array( 'mdy_channel', 'pkt_channel', 'scrum_channel' );
+		$tax = array( 'mdy_channel', 'pkt_channel', 'scrum_channel', 'tlm' );
 		$tax = apply_filters( 'toiee_pcast_taxonomy', $tax );
 
 		return $tax;
@@ -742,6 +742,7 @@ class Toiee_Pcast {
 			'mdy_channel'   => 'mdy_episode',
 			'pkt_channel'   => 'pkt_episode',
 			'scrum_channel' => 'scrum_episode',
+			'tlm'           => array( 'tlm_in', 'tlm_out', 'tlm_archive' ),
 		);
 		$relations = apply_filters( 'toiee_pcast_relations', $relations );
 
@@ -833,6 +834,7 @@ class Toiee_Pcast {
 				<a href="?page=toiee-podcast&tab=store-param" class="nav-tab <?php echo 'store-param' === $active_tab ? 'nav-tab-active' : ''; ?>">エピソードの更新</a>
 				<a href="?page=toiee-podcast&tab=vimeo-import" class="nav-tab <?php echo 'vimeo-import' === $active_tab ? 'nav-tab-active' : ''; ?>">Vimeoインポート</a>
 				<a href="?page=toiee-podcast&tab=media-import" class="nav-tab <?php echo 'media-import' === $active_tab ? 'nav-tab-active' : ''; ?>">メディアインポート</a>
+				<a href="?page=toiee-podcast&tab=pktmdy-import" class="nav-tab <?php echo 'pktmdy-import' === $active_tab ? 'nav-tab-active' : ''; ?>">ポケ・耳インポート</a>
 				<a href="?page=toiee-podcast&tab=ssp-import" class="nav-tab <?php echo 'ssp-import' === $active_tab ? 'nav-tab-active' : ''; ?>">SSPインポート</a>
 				<a href="?page=toiee-podcast&tab=vimeo-api" class="nav-tab <?php echo 'vimeo-api' === $active_tab ? 'nav-tab-active' : ''; ?>">vimeo api</a>
 			</h2>
@@ -846,6 +848,9 @@ class Toiee_Pcast {
 					break;
 				case 'media-import':
 					$this->import_from_media();
+					break;
+				case 'pktmdy-import':
+					$this->import_pktmdy();
 					break;
 				case 'ssp-import':
 					$this->import_from_series();
@@ -976,11 +981,9 @@ class Toiee_Pcast {
 				$time  = time() - 60 * ( $total + 2 );
 
 				/* 登録先情報 */
-				$tt   = $this->get_pcast_tax( $_POST['target_channel'] );
-				$term = get_term_by( 'id', $tt['term_id'], $tt['tax'] );
-
-				$relation  = $this->toiee_pcast_relations();
-				$post_type = $relation[ $tt['tax'] ];
+				$tt        = $this->get_pcast_tax( $_POST['target_channel'] );
+				$term      = get_term_by( 'id', $tt['term_id'], $tt['tax'] );
+				$post_type = $tt['post_type'];
 
 				/* 登録開始 */
 				foreach ( $videos as $i => $v ) {
@@ -1187,8 +1190,7 @@ class Toiee_Pcast {
 				/* 登録先のtaxonomy, term, post_type を取得 */
 				$tt        = $this->get_pcast_tax( $_POST['target_channel'] );
 				$term      = get_term_by( 'id', $tt['term_id'], $tt['tax'] );
-				$relation  = $this->toiee_pcast_relations();
-				$post_type = $relation[ $tt['tax'] ];
+				$post_type = $tt['post_type'];
 
 				/* 投稿データを用意し、並び替えをする */
 				$pcast = array();
@@ -1215,12 +1217,7 @@ class Toiee_Pcast {
 				usort(
 					$pcast,
 					function ( $a, $b ) {
-						$ret = strcmp( $a['post_title'], $b['post_title'] );
-						if ( 0 === $ret ) {
-							return $a['id'] - $b['id'];
-						} else {
-							return $ret;
-						}
+						return strnatcmp( $a['post_title'], $b['post_title'] );
 					}
 				);
 
@@ -1328,6 +1325,113 @@ class Toiee_Pcast {
 			</table>
 			<?php wp_nonce_field( 'toiee_podcast' ); ?>
 			<input type="hidden" name="cmd" value="media-import" />
+			<?php submit_button( '実行' ); ?>
+		</form>
+		<?php
+	}
+
+	private function import_pktmdy() {
+		if ( isset( $_POST['cmd'] ) && $_POST['cmd'] === 'pktmdy-import' ) {
+			check_admin_referer( 'toiee_podcast' );
+
+			$from_term = $this->get_pcast_tax( $_POST['from_channel'] );
+			$to_term = $this->get_pcast_tax( $_POST['to_channel'] );
+
+			$args     = array(
+				'posts_per_page' => -1,
+				'post_type'      => $from_term['post_type'],
+				'tax_query'      => array(
+					array(
+						'taxonomy' => $from_term['tax'],
+						'field'    => 'id',
+						'terms'    => $from_term['term_id'],
+					),
+				),
+			);
+			$from_posts = get_posts( $args );
+
+			$cnt  = 0;
+			$keys = array( 'post_content', 'post_name', 'post_title', 'post_status', 'post_author', 'post_date', 'post_date_gmt' );
+			foreach ( $from_posts as $p ) {
+				$cnt++;
+
+				$args = array();
+				foreach ( $keys as $key ) {
+					$args[ $key ] = $p->$key;
+				}
+				$args['post_type'] = $to_term['post_type'];
+				$args['tax_input'] = array( $to_term['tax'] => $to_term['term_id']);
+
+				$pid = wp_insert_post( $args );
+
+				$fields = get_fields( $p->ID );
+				foreach ( $fields as $name => $value ) {
+					update_field( $name, $value, $pid );
+				}
+			}
+
+			$term     = get_term_by( 'id', $to_term['term_id'], $to_term['tax'] );
+			$edit_url = admin_url( 'edit.php?' . $to_term['tax'] . '=' . $term->slug . '&post_type=' . $to_term['post_type'] );
+			?>
+			<div class="notice notice-success is-dismissible">
+				<p><strong><?php echo esc_html( $cnt ); ?>件の登録作業が完了しました。</strong> <a href="<?php echo $edit_url; ?>">結果はこちら</a></p>
+			</div>
+			<?php
+		}
+
+		$select = $this->get_pcast_taxes_select();
+
+		$select_to   = array();
+		$select_from = array();
+
+		foreach ( $select as $s ) {
+			if ( preg_match( '/^mdy|pkt/', $s['value']) ) {
+				$select_from[] = $s;
+			}
+			if ( preg_match( '/^tlm/', $s['value'] ) ) {
+				$select_to[] = $s;
+			}
+		}
+
+
+		?><p>ポケてら、耳デミーをtoiee教材へインポートします<br>
+			インポートは「データをそのまま変更を加えず」コピーして作成します。</p>
+		<form method="post" action="<?php admin_url( 'options-general.php?page=toiee-podcast&tab=import-pktmdy' ); ?>">
+			<table class="form-table">
+				<tbody>
+				<tr>
+					<th scope="row">
+						<label for="my-text-field">ポケてら、耳デミー</label>
+					</th>
+					<td>
+						<select name="from_channel">
+							<?php foreach ( $select_from as $option ) : ?>
+								<option value="<?php echo esc_attr( $option['value'] ); ?>"><?php echo esc_attr( $option['disp'] ); ?></option>
+							<?php endforeach; ?>
+						</select>
+
+						<br>
+						<span class="description"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="my-text-field">インポート先</label>
+					</th>
+					<td>
+						<select name="to_channel">
+							<?php foreach ( $select_to as $option ) : ?>
+								<option value="<?php echo esc_attr( $option['value'] ); ?>"><?php echo esc_attr( $option['disp'] ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<br>
+						<span class="description">toiee教材の「インプット」「ワークショップ」「アーカイブ」のいずれかを選んでください</span>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+			<?php wp_nonce_field( 'toiee_podcast' ); ?>
+			<input type="hidden" name="cmd" value="pktmdy-import" />
 			<?php submit_button( '実行' ); ?>
 		</form>
 		<?php
@@ -1474,7 +1578,8 @@ class Toiee_Pcast {
 	}
 
 	private function get_pcast_taxes_select() {
-		$tax = $this->toiee_pcast_taxonomy();
+		$tax      = $this->toiee_pcast_taxonomy();
+		$relation = $this->toiee_pcast_relations();
 
 		$select = array();
 		foreach ( $tax as $tax_name ) {
@@ -1487,13 +1592,25 @@ class Toiee_Pcast {
 				)
 			);
 
-			$tax_obj = get_taxonomy( $tax_name );
+			$tax_obj   = get_taxonomy( $tax_name );
+			$post_type = $relation[ $tax_name ];
 
 			foreach ( $terms as $t ) {
-				$select[ $t->term_id ] = array(
-					'disp'  => '【' . $tax_obj->label . '】' . $t->name,
-					'value' => $tax_name . ',' . $t->term_id,
-				);
+
+				if ( is_array( $post_type ) ) {
+					foreach ( $post_type as $ptype ) {
+						$obj = get_post_type_object( $ptype );
+						$select[ $t->term_id . '-' . $ptype ] = array(
+							'disp'  => '【' . $tax_obj->label . '-' . $obj->label . '】' . $t->name,
+							'value' => $tax_name . ',' . $t->term_id . ',' . $ptype,
+						);
+					}
+				} else {
+					$select[ $t->term_id ] = array(
+						'disp'  => '【' . $tax_obj->label . '】' . $t->name,
+						'value' => $tax_name . ',' . $t->term_id . ',' . $post_type,
+					);
+				}
 			}
 		}
 
@@ -1507,8 +1624,9 @@ class Toiee_Pcast {
 		$arr = explode( ',', $value );
 
 		return array(
-			'tax'     => $arr[0],
-			'term_id' => $arr[1],
+			'tax'       => $arr[0],
+			'term_id'   => $arr[1],
+			'post_type' => $arr[2],
 		);
 	}
 
