@@ -62,9 +62,11 @@ switch ( $channel_obj->taxonomy ) {
 	case 'mdy_channel':
 		$channel['title'] = '耳デミー : ' . $channel['title'];
 		break;
-	case 'pocketera':
+	case 'pkt_channel':
 		$channel['title'] = 'ポケてら : ' . $channel['title'];
 		break;
+	case 'scrum_channel':
+		$channel['title'] = 'スクラム : ' . $channel['title'];
 	default:
 }
 
@@ -100,6 +102,8 @@ $dummy_audio = $toiee_pcast->get_dummy_audio();
 		<itunes:author><?php echo esc_html( $channel['author'] ); ?></itunes:author>
 		<itunes:summary><?php echo esc_html( $channel['description'] ); ?></itunes:summary>
 		<description><?php echo esc_html( $channel['description'] . "\n" . $add_user_message ); ?></description>
+
+		<itunes:type><?php echo esc_html( $channel['episode_type'] ); ?></itunes:type>
 
 		<itunes:owner>
 			<itunes:name><?php echo esc_html( $channel['owner_name'] ); ?></itunes:name>
