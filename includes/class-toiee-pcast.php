@@ -724,7 +724,7 @@ class Toiee_Pcast {
 	}
 
 	public function toiee_pcast_post_types() {
-		$post_types = array( 'mdy_episode', 'pkt_episode', 'scrum_episode', 'tlm_in', 'tlm_out',  'tlm_archive' );
+		$post_types = array( 'mdy_episode', 'pkt_episode', 'scrum_episode', 'tlm_in', 'tlm_ws',  'tlm_archive' );
 		$post_types = apply_filters( 'toiee_pcast_post_types', $post_types );
 
 		return $post_types;
@@ -742,7 +742,7 @@ class Toiee_Pcast {
 			'mdy_channel'   => 'mdy_episode',
 			'pkt_channel'   => 'pkt_episode',
 			'scrum_channel' => 'scrum_episode',
-			'tlm'           => array( 'tlm_in', 'tlm_out', 'tlm_archive' ),
+			'tlm'           => array( 'tlm_in', 'tlm_ws', 'tlm_archive' ),
 		);
 		$relations = apply_filters( 'toiee_pcast_relations', $relations );
 
