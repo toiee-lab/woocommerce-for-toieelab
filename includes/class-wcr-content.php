@@ -4,11 +4,29 @@
  * WooCommerce の 認証を行うクラス
  */
 class Woocommerce_SimpleRestrictContent {
-
+	/**
+	 * コンテンツ制限のオプションを格納.
+	 *
+	 * @var mixed|void options
+	 */
 	private $options;
+	/**
+	 * プラグインのURLを格納.
+	 *
+	 * @var string plugin_url.
+	 */
 	public $plugin_url;
 
+	/**
+	 * 機能の有効、無効などを持つ.
+	 *
+	 * @var array functions information
+	 */
+	private $func_options;
+
 	function __construct() {
+
+		$this->setup_func_options();
 
 		add_action( 'init', array( $this, 'create_post_type' ) );
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes_wcr' ) );
@@ -26,9 +44,7 @@ class Woocommerce_SimpleRestrictContent {
 
 	public function add_acf() {
 		if ( function_exists( 'acf_add_local_field_group' ) ) :
-
-
-			// wcrestrict post type に付属するもの
+			/* wcrestrict post type に付属するもの */
 			acf_add_local_field_group(
 				array(
 					'key'                   => 'group_5be17d7a9a9d7',
@@ -682,77 +698,197 @@ here is contents
 
 	public function setting_preference() {
 
-		$funcs = [
+		if ( isset( $_POST['cmd'] ) && 'preference' === $_POST['cmd'] ) {
+			check_admin_referer( 'toiee_wc4t' );
+
+			/* sanitize */
+			$func_options = array();
+			foreach( $this->func_options['options'] as $key => $v ) {
+				if ( isset( $_POST['options'][$key] ) ) {
+					if ( 'true' === $_POST['options'][$key] ) {
+						$func_options[ $key ] = true;
+					} else if ( 'false' === $_POST['options'][$key] ) {
+						$func_options[ $key ] = false;
+					} else {
+						$func_options[ $key ] = $v['init'];
+					}
+				} else {
+					$func_options[ $key ] = $v['init'];
+				}
+			}
+
+			/* 依存関係でpcastをonにする */
+			foreach ( $this->func_options['depend_pcast'] as $name ) {
+				if ( true === isset( $func_options[ $name ] ) ) {
+					$func_options['pcast'] = true;
+					break;
+				}
+			}
+
+			/* カスタム投稿タイプのためのリライト */
+			foreach ( $this->func_options['rewrite'] as $name ) {
+				if ( true === isset( $func_options[ $name ] ) ) {
+					flush_rewrite_rules( false );
+					break;
+				}
+			}
+
+			update_option( 'wc4t_func_options', $func_options );
+			?>
+			<div class="notice notice-success is-dismissible">
+				<p><strong>更新しました。</strong></p>
+			</div>
+			<?php
+		}
+
+		?>
+		<p>以下、必要な機能をOn/Offしてください。<br><br></p>
+		<form method="post" action="<?php admin_url( 'options-general.php?page=wc4t-admin&tab=preference' ); ?>">
+		<?php
+		foreach ( $this->func_options['options'] as $key => $v ) {
+			if ( 'pcast' === $key ) {
+				?>
+				<hr style="margin-top:2em;">
+				<p style="color:red">以下は、toiee Lab (toiee.jp) 専用の機能です。テンプレートと連動しないと正常に使えません。</p>
+				<?php
+			}
+			?>
+			<h3 style="margin-top: 2em;"><?php echo esc_html( $v['title'] ); ?></h3>
+			<p><?php echo esc_html( $v['desc'] ); ?></p>
+			<?php
+			if ( $this->get_func_option( $key ) ) {
+				$enable  = 'checked="checked"';
+				$disable = '';
+			} else {
+				$enable  = '';
+				$disable = 'checked="checked"';
+			}
+			?>
+			<p>
+				<input type="radio" name="options[<?php echo esc_attr( $key ); ?>]" value="true" <?php echo $enable; ?>>有効
+				<input type="radio" name="options[<?php echo esc_attr( $key ); ?>]" value="false" <?php echo $disable; ?>>無効
+			</p>
+			<?php
+		}
+		?>
+			<?php wp_nonce_field( 'toiee_wc4t' ); ?>
+			<input type="hidden" name="cmd" value="preference" />
+			<?php submit_button( '実行' ); ?>
+		</form>
+		<?php
+	}
+
+	/**
+	 * func_options をセットアップする.
+	 */
+	private function setup_func_options() {
+		$this->func_options = array();
+
+		/* オプション */
+		$this->func_options['options'] = [
 			'mylib' => [
 				'title' => 'マイライブラリ機能',
 				'desc'  => 'WooCommerceのユーザーダッシュボードに「マイライブラリ」を表示し、コンテンツに素早くアクセスできるようにします',
-			],
-			'ctab'       => [
-				'title' => 'カスタムタブ',
-				'desc'  => 'WooCommerceの商品ページに独自のタブを追加できます（カテゴリなどを指定することで）',
+				'init'  => false,
 			],
 			'mailerlite' => [
 				'title' => 'Mailerlite連携',
 				'desc'  => '商品購入とMailerliteグループを紐付けます。定期購読、バリエーション、返品にも対応しています',
+				'init'  => false,
 			],
 			'sub_inst' => [
 				'title' => 'WooCommerce Subscriptions 分割支払い',
 				'desc'  => 'WooCommerce Subscriptionsを分割支払いに使えるように機能を拡張します',
+				'init'  => false,
 			],
 			'sub_bank' => [
 				'title' => 'WooCommerce Subscriptions 銀行支払い期限延長',
 				'desc'  => 'WooCommerce Subscriptions + WooCommerce for Japan で有効になる銀行振込による定期購読では、銀行支払い期間が短いため有効期限が切れやすくなります。これを1週間に延長します。',
+				'init'  => false,
+			],
+			'ctab'       => [
+				'title' => 'カスタムタブ',
+				'desc'  => 'WooCommerceの商品ページに独自のタブを追加できます（カテゴリなどを指定することで）',
+				'init'  => false,
 			],
 			'pcast' => [
 				'title' => 'Podcast機能',
 				'desc'  => 'Podcast機能を有効にします。マガジン、スクラム、耳デミー、ポケてらなどを利用する場合は、必ず ON にしてください。',
+				'init'  => false,
 			],
 			'mag'   => [
 				'title' => 'マガジン機能',
 				'desc'  => 'Magazine投稿タイプを有効にします。',
+				'init'  => false,
 			],
 			'mdy' => [
 				'title' => '耳デミー機能',
 				'desc'  => '耳デミー（ビデオ、オーディオ、Podcast配信、授業資料）を有効にします',
+				'init'  => false,
 			],
 			'pkt' => [
 				'title' => 'ポケてら機能',
 				'desc'  => 'ポケてら（ビデオ、オーディオ、Podcast配信、授業資料、LFT資料、ノート、フィードバック）を有効にします',
+				'init'  => false,
 			],
 			'tkb' => [
 				'title' => '関連ナレッジ機能',
 				'desc'  => '関連ナレッジを投稿できるようにします。耳デミー、ポケてらに関連します',
+				'init'  => false,
 			],
 			'scrum' => [
 				'title' => 'スクラム機能',
 				'desc'  => '専用ブログ、お知らせ、Podcast配信、教材の関連付けができるスクラム機能です',
+				'init'  => false,
+			],
+			'tlm' => [
+				'title' => 'スクラム教材機能',
+				'desc'  => 'ポケてら、耳デミーに変わる新しい教材機能です。',
+				'init'  => false,
 			],
 			'event' => [
 				'title' => 'シンプルイベント機能',
 				'desc'  => 'シンプルなイベント機能です。イベントの申し込みなどは、外部サイトを想定しています。',
+				'init'  => false,
 			],
 			'rlogin' => [
 				'title' => 'rlogin機能',
 				'desc'  => '別のWordPressを認証、ログインさせるための機能',
+				'init'  => false,
 			],
 			'ssp'       => [
 				'title' => 'Seriously Simple Podcast拡張',
 				'desc'  => 'Seriously Simple Podcastを拡張し、購入者限定などを実現します',
+				'init'  => false,
 			],
 
 		];
 
-		$depend_pcast   = [ 'mdy', 'pkt', 'scrum', 'mag' ];
-		$depend_rewrite = [ 'mylib', 'mag', 'mdy', 'pkt', 'scrum', 'event', 'rlogin', 'ssp' ];
+		$this->func_options['depend_pcast'] = [ 'mdy', 'pkt', 'scrum', 'tlm' ];
+		$this->func_options['rewrite']      = [ 'mylib', 'mag', 'mdy', 'pkt', 'scrum', 'event', 'rlogin', 'ssp', 'tlm' ];
+	}
 
-		?>
-		<p>以下、必要な機能をOn/Offしてください。<br><br></p>
-		<?php
-		foreach ( $funcs as $key => $v ) {
-			?>
-			<h3><?php echo esc_html( $v['title'] ); ?></h3>
-			<p><?php echo esc_html( $v['desc'] ); ?></p>
-			<?php
+	/**
+	 * オプションを取得する.
+	 *
+	 * @param $option_name string オプション名
+	 * @return boolean
+	 */
+	public function get_func_option( $option_name ) {
+		if( isset( $this->func_options['options'][ $option_name ] ) ) {
+			$func_options = get_option( 'wc4t_func_options', array() );
+
+			if( isset( $func_options[ $option_name ] ) ) {
+				return $func_options[ $option_name ];
+			} else {
+				if( isset($this->func_options['options'][ $option_name ][ 'init' ]) ) {
+					return $this->func_options['options'][ $option_name ][ 'init' ];
+				} else {
+					return false;
+				}
+			}
+		} else {
+			return false;
 		}
 	}
 

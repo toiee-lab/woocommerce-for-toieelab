@@ -1,5 +1,30 @@
 <?php
 
+add_shortcode(
+	'toiee_pcast_grid',
+	function ( $atts, $content = null ) {
+		$atts = shortcode_atts(
+			array(
+				'ids' => '',
+				'tax' => 'tlm',
+			),
+			$atts,
+			'toiee_pcast_grid'
+		);
+
+		if ( ! isset( $atts['ids'] ) ) {
+			return;
+		}
+
+		$ids = explode( ',', $atts['ids'] );
+		if ( 0 === count( $ids ) ) {
+			return;
+		}
+
+		return w4t_podcast_grid_display( $ids, $atts['tax'] );
+	}
+);
+
  // ! 商品プレビューを出すためのショートコード（二回め！）
 add_shortcode(
 	'toiee_preview_list',
@@ -149,8 +174,6 @@ add_shortcode(
 
 	}
 );
-
-
 
 
  // ! Podcastの一覧を出力する
