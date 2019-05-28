@@ -15,6 +15,100 @@ class Woocommerce_CustomTabs {
 		add_filter( 'woocommerce_product_tabs', array( $this, 'remove_tabs' ), 98 );
 
 		$this->tabs = null;
+		$this->add_acf();
+	}
+
+	public function add_acf() {
+		// カスタムタブ用
+		if ( function_exists( 'acf_add_local_field_group' ) ) :
+
+			acf_add_local_field_group(
+				array(
+					'key'                   => 'group_5be6a5cdbc2c3',
+					'title'                 => 'カスタムタブ',
+					'fields'                => array(
+						array(
+							'key'               => 'field_5be6a70e986d3',
+							'label'             => 'タブ名',
+							'name'              => 'ctab-label',
+							'type'              => 'text',
+							'instructions'      => 'タブの表示テキストを入力してください',
+							'required'          => 1,
+							'conditional_logic' => 0,
+							'wrapper'           => array(
+								'width' => '',
+								'class' => '',
+								'id'    => '',
+							),
+							'default_value'     => '',
+							'placeholder'       => '使い方',
+							'prepend'           => '',
+							'append'            => '',
+							'maxlength'         => '',
+						),
+						array(
+							'key'               => 'field_5be6a5d9e2b49',
+							'label'             => 'カテゴリ',
+							'name'              => 'ctab-category',
+							'type'              => 'taxonomy',
+							'instructions'      => 'どの商品のカテゴリに、このタブを表示するかを選びます',
+							'required'          => 0,
+							'conditional_logic' => 0,
+							'wrapper'           => array(
+								'width' => '',
+								'class' => '',
+								'id'    => '',
+							),
+							'taxonomy'          => 'product_cat',
+							'field_type'        => 'multi_select',
+							'allow_null'        => 1,
+							'add_term'          => 0,
+							'save_terms'        => 0,
+							'load_terms'        => 0,
+							'return_format'     => 'id',
+							'multiple'          => 0,
+						),
+						array(
+							'key'               => 'field_5be6a66be2b4a',
+							'label'             => 'すべてに表示',
+							'name'              => 'ctab-category-all',
+							'type'              => 'true_false',
+							'instructions'      => 'チェックを入れると「すべての商品」に表示されます',
+							'required'          => 0,
+							'conditional_logic' => 0,
+							'wrapper'           => array(
+								'width' => '',
+								'class' => '',
+								'id'    => '',
+							),
+							'message'           => '',
+							'default_value'     => 0,
+							'ui'                => 0,
+							'ui_on_text'        => '',
+							'ui_off_text'       => '',
+						),
+					),
+					'location'              => array(
+						array(
+							array(
+								'param'    => 'post_type',
+								'operator' => '==',
+								'value'    => 'wcr-customtab',
+							),
+						),
+					),
+					'menu_order'            => 0,
+					'position'              => 'normal',
+					'style'                 => 'default',
+					'label_placement'       => 'top',
+					'instruction_placement' => 'label',
+					'hide_on_screen'        => '',
+					'active'                => 1,
+					'description'           => '',
+				)
+			);
+
+		endif;
 	}
 
 

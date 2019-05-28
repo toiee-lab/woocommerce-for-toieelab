@@ -13,27 +13,95 @@ class Toiee_Scrum_Post {
 	public $tabs;
 
 	/**
-	 * Toiee_Scrum_Post constructor.
+	 * プラグインのルートファイルを格納する
+	 *
+	 * @var string
 	 */
-	public function __construct() {
-		add_action( 'init', array( $this, 'cptui_register_my_cpts_scrum_post' ) );
+	public $file;
 
+	/**
+	 * Toiee_Scrum_Post constructor.
+	 *
+	 * @param $file string
+	 */
+	public function __construct( $file ) {
+
+		$this->file = $file;
+
+		add_action( 'init', array( $this, 'cptui_register_my_cpts_scrum_post' ) );
 		add_action( 'init', array( $this, 'cptui_register_my_taxes_scrum' ) );
+
+		register_activation_hook( $file, array( $this, 'activate' ) );
+		register_deactivation_hook( $file, array( $this, 'deactivate' ) );
 
 		$this->add_acf();
 
 		add_action( 'transition_post_status', array( $this, 'slack_notification' ), 10, 3 );
 
-		add_action( 'wp_head', array( $this, 'noindex' ) );
+		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter' ) );
+
+		add_action(
+			'admin_menu',
+			function () {
+				global $submenu;
+				$permalink                                  = admin_url( 'edit-tags.php?taxonomy=scrum_channel&post_type=scrum_post' );
+				$submenu['edit.php?post_type=scrum_post'][] = array( 'Podcastチャンネル', 'manage_options', $permalink );
+			}
+		);
+	}
+
+	public function pre_get_posts_filter( $query ) {
+
+		if ( is_admin() ) {
+			return;
+		}
+
+		if ( $query->is_main_query() && $query->is_tax( 'scrum' ) ) {
+			$arg = array( 'scrum_post', 'scrum_episode' );
+			$query->set( 'post_type', $arg );
+
+			$scrum_slug = $query->get( 'scrum' );
+			$scrum      = get_term_by( 'slug', $scrum_slug, 'scrum' );
+			$news_id    = get_field( 'updates_news_podcast', $scrum );
+			$archive_id = get_field( 'updates_archive_podcast', $scrum );
+
+			$arg = array(
+				'relation' => 'OR',
+				array(
+					'taxonomy' => 'scrum_channel',
+					'field'    => 'term_id',
+					'terms'    => (int) $news_id,
+				),
+				array(
+					'taxonomy' => 'scrum_channel',
+					'field'    => 'term_id',
+					'terms'    => (int) $archive_id,
+				),
+			);
+			$query->set( 'tax_query', $arg );
+
+			$query->set( 'posts_per_page', 30 );
+		}
+
+		if ( $query->is_main_query() && $query->is_tax( 'scrum_channel' ) ) {
+			$query->set( 'posts_per_page', 20 );
+		}
 	}
 
 	/**
-	 * Scrum投稿、カテゴリは検索結果を除外するためのもの
+	 * カスタム投稿タイプ、タクソノミーを rewrite rule に登録する
 	 */
-	public function noindex() {
-		if ( is_tax( 'scrum' ) || get_post_type() === 'scrum_post' ) {
-			echo '<meta id="scrum-plugin" name="robots" content="noindex" />' . "\n";
-		}
+	public function activate() {
+		$this->cptui_register_my_cpts_scrum_post();
+		$this->cptui_register_my_taxes_scrum();
+		flush_rewrite_rules( true );
+	}
+
+	/**
+	 * リライトルールをキャンセルする
+	 */
+	public function deactivate() {
+		flush_rewrite_rules( true );
 	}
 
 	function cptui_register_my_cpts_scrum_post() {
@@ -61,7 +129,7 @@ class Toiee_Scrum_Post {
 			'has_archive'           => false,
 			'show_in_menu'          => true,
 			'show_in_nav_menus'     => true,
-			'exclude_from_search'   => true,
+			'exclude_from_search'   => false,
 			'capability_type'       => 'post',
 			'map_meta_cap'          => true,
 			'hierarchical'          => false,
@@ -76,6 +144,44 @@ class Toiee_Scrum_Post {
 		);
 
 		register_post_type( 'scrum_post', $args );
+
+		/**
+		 * Post Type: スクラムPodcast.
+		 */
+
+		$labels = array(
+			'name'          => __( 'Podcast', 'kanso general child' ),
+			'singular_name' => __( 'Podcast', 'kanso general child' ),
+		);
+
+		$args = array(
+			'label'                 => __( 'Podcast', 'kanso general child' ),
+			'labels'                => $labels,
+			'description'           => 'スクラムのためのポッドキャストです。',
+			'public'                => true,
+			'publicly_queryable'    => true,
+			'show_ui'               => true,
+			'delete_with_user'      => false,
+			'show_in_rest'          => true,
+			'rest_base'             => '',
+			'rest_controller_class' => 'WP_REST_Posts_Controller',
+			'has_archive'           => false,
+			'show_in_menu'          => 'edit.php?post_type=scrum_post',
+			'show_in_nav_menus'     => true,
+			'exclude_from_search'   => false,
+			'capability_type'       => 'post',
+			'map_meta_cap'          => true,
+			'hierarchical'          => false,
+			'rewrite'               => array(
+				'slug'       => 'scrum_episode',
+				'with_front' => true,
+			),
+			'query_var'             => true,
+			'supports'              => array( 'title', 'editor', 'thumbnail' ),
+			'taxonomies'            => array( 'scrum_channel' ),
+		);
+
+		register_post_type( 'scrum_episode', $args );
 	}
 
 	function cptui_register_my_taxes_scrum() {
@@ -110,6 +216,37 @@ class Toiee_Scrum_Post {
 			'show_in_quick_edit'    => false,
 		);
 		register_taxonomy( 'scrum', array( 'scrum_post' ), $args );
+
+		/**
+		 * Taxonomy: ポッドキャスト・チャンネル.
+		 */
+
+		$labels = array(
+			'name'          => __( 'ポッドキャスト・チャンネル', 'kanso general child' ),
+			'singular_name' => __( 'ポッドキャスト・チャンネル', 'kanso general child' ),
+		);
+
+		$args = array(
+			'label'                 => __( 'ポッドキャスト・チャンネル', 'kanso general child' ),
+			'labels'                => $labels,
+			'public'                => true,
+			'publicly_queryable'    => true,
+			'hierarchical'          => true,
+			'show_ui'               => true,
+			'show_in_menu'          => true,
+			'show_in_nav_menus'     => true,
+			'query_var'             => true,
+			'rewrite'               => array(
+				'slug'       => 'scrum_channel',
+				'with_front' => true,
+			),
+			'show_admin_column'     => true,
+			'show_in_rest'          => true,
+			'rest_base'             => 'scrum_channel',
+			'rest_controller_class' => 'WP_REST_Terms_Controller',
+			'show_in_quick_edit'    => false,
+		);
+		register_taxonomy( 'scrum_channel', array( 'scrum_episode' ), $args );
 	}
 
 	function add_acf() {
@@ -258,7 +395,7 @@ class Toiee_Scrum_Post {
 						),
 						array(
 							'key'               => 'field_5c761e1e3d1d8',
-							'label'             => '更新情報(お知らせPodcast)',
+							'label'             => 'メインPodcast',
 							'name'              => 'updates_news_podcast',
 							'type'              => 'taxonomy',
 							'instructions'      => '更新情報一覧に表示する「お知らせ用」のPodcast（シリーズ）のIDを入力してください。',
@@ -269,7 +406,7 @@ class Toiee_Scrum_Post {
 								'class' => '',
 								'id'    => '',
 							),
-							'taxonomy'          => 'series',
+							'taxonomy'          => 'scrum_channel',
 							'field_type'        => 'select',
 							'allow_null'        => 1,
 							'add_term'          => 0,
@@ -280,7 +417,7 @@ class Toiee_Scrum_Post {
 						),
 						array(
 							'key'               => 'field_5c761ec13d1d9',
-							'label'             => '更新情報(アーカイブPodcast)',
+							'label'             => 'アーカイブPodcast',
 							'name'              => 'updates_archive_podcast',
 							'type'              => 'taxonomy',
 							'instructions'      => '更新情報一覧に表示する「お知らせ用」のPodcast（シリーズ）のIDを入力してください。',
@@ -291,7 +428,7 @@ class Toiee_Scrum_Post {
 								'class' => '',
 								'id'    => '',
 							),
-							'taxonomy'          => 'series',
+							'taxonomy'          => 'scrum_channel',
 							'field_type'        => 'select',
 							'allow_null'        => 1,
 							'add_term'          => 0,
@@ -320,11 +457,11 @@ class Toiee_Scrum_Post {
 							'delay'             => 0,
 						),
 						array(
-							'key'               => 'field_5c76205b98d78',
-							'label'             => '教材一覧（特集）',
-							'name'              => 'materials_featured',
+							'key'               => 'field_5c7620a499d79',
+							'label'             => '教材一覧（スクラム教材）',
+							'name'              => 'materials_tlm',
 							'type'              => 'taxonomy',
-							'instructions'      => '特集（トップに固定）する Podcast の教材を選んでください。',
+							'instructions'      => '一つも選択しなければ、表示されません。',
 							'required'          => 0,
 							'conditional_logic' => 0,
 							'wrapper'           => array(
@@ -332,7 +469,7 @@ class Toiee_Scrum_Post {
 								'class' => '',
 								'id'    => '',
 							),
-							'taxonomy'          => 'series',
+							'taxonomy'          => 'tlm',
 							'field_type'        => 'checkbox',
 							'add_term'          => 0,
 							'save_terms'        => 0,
@@ -346,7 +483,7 @@ class Toiee_Scrum_Post {
 							'label'             => '教材一覧（耳デミー）',
 							'name'              => 'materials_mimidemy',
 							'type'              => 'taxonomy',
-							'instructions'      => '特集（トップに固定）する Podcast の教材を選んでください。',
+							'instructions'      => '一つも選択しなければ、表示されません。',
 							'required'          => 0,
 							'conditional_logic' => 0,
 							'wrapper'           => array(
@@ -354,7 +491,7 @@ class Toiee_Scrum_Post {
 								'class' => '',
 								'id'    => '',
 							),
-							'taxonomy'          => 'series',
+							'taxonomy'          => 'mdy_channel',
 							'field_type'        => 'checkbox',
 							'add_term'          => 0,
 							'save_terms'        => 0,
@@ -368,7 +505,7 @@ class Toiee_Scrum_Post {
 							'label'             => '教材一覧（ポケてら）',
 							'name'              => 'materials_pocketera',
 							'type'              => 'taxonomy',
-							'instructions'      => '特集（トップに固定）する Podcast の教材を選んでください。',
+							'instructions'      => '一つも選択しなければ、表示されません。',
 							'required'          => 0,
 							'conditional_logic' => 0,
 							'wrapper'           => array(
@@ -376,7 +513,7 @@ class Toiee_Scrum_Post {
 								'class' => '',
 								'id'    => '',
 							),
-							'taxonomy'          => 'series',
+							'taxonomy'          => 'pkt_channel',
 							'field_type'        => 'checkbox',
 							'add_term'          => 0,
 							'save_terms'        => 0,
@@ -561,36 +698,36 @@ class Toiee_Scrum_Post {
 			}
 
 			// エピソードの場合
-			if ( $post->post_type == 'podcast' ) {
+			if ( $post->post_type == 'scrum_episode' ) {
 
 				// エピソードのurl
 				$episode_url  = get_permalink( $post->ID );
 				$episode_desp = mb_substr( wp_strip_all_tags( $post->post_content ), 0, 150 );
 
 				// エピソードの series を取得する
-				$rets = wp_get_post_terms( $post->ID, 'series' );
+				$rets = wp_get_post_terms( $post->ID, 'scrum_channel' );
 				if ( is_wp_error( $rets ) ) {
 					return null;
 				}
 
-				foreach ( $rets as $series ) {
-					$series_url = get_term_link( $series );
+				foreach ( $rets as $scrum_ch ) {
+					$scrum_ch_url = get_term_link( $scrum_ch );
 
 					$replace = array(
 						'episode_url'   => $episode_url,
 						'episode_title' => $post->post_title,
 						'episode_desp'  => $episode_desp,
-						'series_url'    => $series_url,
-						'series_title'  => $series->name,
+						'series_url'    => $scrum_ch_url,
+						'series_title'  => $scrum_ch->name,
 					);
 
-					// お知らせ Podcastに $series を登録している scrum を見つける
-					$scrums = $this->get_scrums_by_series_id( $series->term_id, 'updates_news_podcast' );
+					// お知らせ Podcastに $scrum_ch を登録している scrum を見つける
+					$scrums = $this->get_scrums_by_series_id( $scrum_ch->term_id, 'updates_news_podcast' );
 					// 見つかった scrums に通知を送る
 					$this->send_slack_from_scrums( $scrums, 'scrum_slack_notification_news_podcast', $replace );
 
 					// アーカイブ podcast の通知
-					$scrums = $this->get_scrums_by_series_id( $series->term_id, 'updates_archive_podcast' );
+					$scrums = $this->get_scrums_by_series_id( $scrum_ch->term_id, 'updates_archive_podcast' );
 					$this->send_slack_from_scrums( $scrums, 'scrum_slack_notification_archive_podcast', $replace );
 				}
 			}
@@ -630,7 +767,7 @@ class Toiee_Scrum_Post {
 					$body
 				);
 
-				   $this->send_slack( $body, $webhook_url );
+				$this->send_slack( $body, $webhook_url );
 			}
 		}
 	}

@@ -4,26 +4,104 @@
  * WooCommerce の 認証を行うクラス
  */
 class Woocommerce_SimpleRestrictContent {
-
+	/**
+	 * コンテンツ制限のオプションを格納.
+	 *
+	 * @var mixed|void options
+	 */
 	private $options;
+	/**
+	 * プラグインのURLを格納.
+	 *
+	 * @var string plugin_url.
+	 */
 	public $plugin_url;
 
-	function __construct() {
-		// カスタム投稿タイプの設定
+	/**
+	 * 機能の有効、無効などを持つ.
+	 *
+	 * @var array functions information
+	 */
+	private $func_options;
+
+	/**
+	 * Woocommerce_SimpleRestrictContent constructor.
+	 */
+	public function __construct() {
+
+		$this->setup_func_options();
+
 		add_action( 'init', array( $this, 'create_post_type' ) );
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes_wcr' ) );
-		// add_action( 'save_post', array($this, 'save_post_wcr') );
-		// shortcode の追加
+
 		add_shortcode( 'wcr-content', array( $this, 'wcr_content_shortdode' ) );
 		add_shortcode( 'wcr-content-free', array( $this, 'wcr_content_free_shortdode' ) );
 
-		// 管理画面設定
 		if ( is_admin() ) {
 			add_action( 'admin_menu', array( $this, 'add_plugin_page' ) );
-			add_action( 'admin_init', array( $this, 'page_init' ) );
 		}
 
 		$this->options = get_option( 'wc_src_options' );
+		$this->add_acf();
+	}
+
+	/**
+	 * 利用するACFフィールドを設定.
+	 */
+	public function add_acf() {
+		if ( function_exists( 'acf_add_local_field_group' ) ) :
+			/* wcrestrict post type に付属するもの */
+			acf_add_local_field_group(
+				array(
+					'key'                   => 'group_5be17d7a9a9d7',
+					'title'                 => '商品登録',
+					'fields'                => array(
+						array(
+							'key'               => 'field_5be17da0c750c',
+							'label'             => '商品、購読、会員',
+							'name'              => 'wcr_product_ids',
+							'type'              => 'post_object',
+							'instructions'      => 'ここで登録した商品、購読、会員をまとめて「閲覧許可」を与えることができます',
+							'required'          => 0,
+							'conditional_logic' => 0,
+							'wrapper'           => array(
+								'width' => '',
+								'class' => '',
+								'id'    => '',
+							),
+							'post_type'         => array(
+								0 => 'product',
+								1 => 'product_variation',
+								2 => 'wc_membership_plan',
+							),
+							'taxonomy'          => '',
+							'allow_null'        => 1,
+							'multiple'          => 1,
+							'return_format'     => 'id',
+							'ui'                => 1,
+						),
+					),
+					'location'              => array(
+						array(
+							array(
+								'param'    => 'post_type',
+								'operator' => '==',
+								'value'    => 'wcrestrict',
+							),
+						),
+					),
+					'menu_order'            => 0,
+					'position'              => 'acf_after_title',
+					'style'                 => 'default',
+					'label_placement'       => 'top',
+					'instruction_placement' => 'label',
+					'hide_on_screen'        => '',
+					'active'                => 1,
+					'description'           => 'WC Restrict に商品登録するためのもの',
+				)
+			);
+
+		endif;
 	}
 
 	// -----------------------------------------------------------------------------
@@ -31,7 +109,10 @@ class Woocommerce_SimpleRestrictContent {
 	// ! Create post type for WC Restriction
 	//
 	// -----------------------------------------------------------------------------
-	function create_post_type() {
+	/**
+	 * 投稿タイプの作成.
+	 */
+	public function create_post_type() {
 		register_post_type(
 			'wcrestrict',
 			array(
@@ -53,8 +134,10 @@ class Woocommerce_SimpleRestrictContent {
 		);
 	}
 
-	// 登録情報を表示するための meta box の表示
-	function add_meta_boxes_wcr() {
+	/**
+	 * 閲覧制限のためのボックスを作成.
+	 */
+	public function add_meta_boxes_wcr() {
 		add_meta_box(
 			'wc_restrict',
 			'ショートコード例',
@@ -63,7 +146,13 @@ class Woocommerce_SimpleRestrictContent {
 			'advanced'
 		);
 	}
-	function display_wcr_meta_box( $post ) {
+
+	/**
+	 * 内容の表示
+	 *
+	 * @param $post object
+	 */
+	public function display_wcr_meta_box( $post ) {
 		$id = get_the_ID();
 
 		$wc_param = array(
@@ -94,9 +183,6 @@ here is contents
 
 [/wcr-content]
 </pre>
-
-
-
 EOD;
 
 	}
@@ -127,7 +213,7 @@ EOD;
 
 			$html = get_popup_login_form();
 
-			// 表示するもの
+			/* 表示するもの */
 			$html .= <<<EOD
     <div class="uk-inline uk-padding-small uk-width-1-1">
     
@@ -277,6 +363,10 @@ EOD;
 		$user_email = $user->user_email;
 
 		$ret = false;
+
+		if ( ! is_array( $ids ) ) {
+			return false;
+		}
 
 		foreach ( $ids as $i ) {
 			$post_type = get_post_type( $i );
@@ -529,10 +619,10 @@ here is contents
 	public function add_plugin_page() {
 		// This page will be under "Settings"
 		add_options_page(
-			'WC Simple Restrict設定',
-			'WC Simple Restrict',
+			'WooCommerce for toiee Lab',
+			'WC for toiee Lab',
 			'manage_options',
-			'wc-src-admin',
+			'wc4t-admin',
 			array( $this, 'create_admin_page' )
 		);
 	}
@@ -545,94 +635,308 @@ here is contents
 		?>
 		<div class="wrap">
 
-			<h2>WooCommerce Simple Restrict Content設定</h2>           
-			<p>コンテンツ閲覧制限メッセージを設定します</p>
-			   
-			<form method="post" action="<?php admin_url( 'options.php' ); ?>">
+			<h2>WooCommerce for toiee Lab</h2>
+			<?php settings_errors(); ?>
 			<?php
-				// This prints out all hidden setting fields
-				settings_fields( 'wc_src_group' );
-				do_settings_sections( 'wc-src-setting-admin' );
-				submit_button();
+			if ( isset( $_GET['tab'] ) ) {
+				$active_tab = $_GET['tab'];
+			} else {
+				$active_tab = 'general';
+			}
 			?>
-			</form>
+			<h2 class="nav-tab-wrapper">
+				<a href="?page=wc4t-admin&tab=general" class="nav-tab <?php echo 'general' === $active_tab ? 'nav-tab-active' : ''; ?>">概要</a>
+				<a href="?page=wc4t-admin&tab=restrict" class="nav-tab <?php echo 'restrict' === $active_tab ? 'nav-tab-active' : ''; ?>">コンテンツ制限</a>
+				<a href="?page=wc4t-admin&tab=preference" class="nav-tab <?php echo 'preference' === $active_tab ? 'nav-tab-active' : ''; ?>">機能設定</a>
+			</h2>
+			<?php
+			switch ( $active_tab ) {
+				case 'restrict':
+					$this->setting_restrict();
+					break;
+				case 'preference':
+					$this->setting_preference();
+					break;
+				default:
+					$this->setting_general();
+			}
+			?>
 		</div>
 		<?php
 	}
-	/**
-	 * Register and add settings
-	 */
-	public function page_init() {
-		register_setting(
-			'wc_src_group', // Option group
-			'wc_src_options', // Option name
-			array( $this, 'sanitize' ) // Sanitize
-		);
-		add_settings_section(
-			'setting_section_id', // ID
-			'閲覧制限メッセージ', // Title
-			array( $this, 'print_section_info' ), // Callback
-			'wc-src-setting-admin' // Page
-		);
-		add_settings_field(
-			'message', // ID
-			'メッセージ', // Title
-			array( $this, 'message_callback' ), // Callback
-			'wc-src-setting-admin', // Page
-			'setting_section_id' // Section
-		);
-	}
-	/**
-	 * Sanitize each setting field as needed
-	 *
-	 * @param array $input Contains all settings fields as array keys
-	 */
-	public function sanitize( $input ) {
-		return $input;
-		// サニタイズしない
-		// $new_input = array();
-		//
-		// if( isset( $input['message'] ) )
-		// $new_input['message'] = wp_kses_post( $input['message'] );
-		//
-		// return $new_input;
-	}
-	/**
-	 * Print the Section text
-	 */
-	public function print_section_info() {
-		print '以下に設定を指定し、変更を保存をクリックしてください。';
-	}
-	/**
-	 * Get the settings option array and print one of its values
-	 */
-	public function message_callback() {
-		   $text = isset( $this->options['message'] ) ? $this->options['message'] : '';
+
+	public function setting_general() {
 		?>
+		<div style="max-width:600px">
+			<p>WooCommerce for toiee Lab は、 toiee.jp 専用に開発されています。toiee.jp で、必要とする様々な機能を含んでいます。<br>
+			初期設定では、以下の機能を有効にしています。それ以外は、必要に応じて有効化してください。</p>
 
-<textarea name="wc_src_options[message]" style="width:100%;height: 20em;">
-		<?php echo $text; ?>
-</textarea>
-<p>説明<p>
-<ul>
-	<li>{{product_url}} は、商品ページのurlに置き換わります(idで先頭に指定されているものを利用)</li>
-	<li>{{product_name}} は、商品の名前に置き換わります(idで先頭に指定されている商品の名前)</li>
-	<li>{{login_url}} は、アカウントページへのリンクを表示します</li>
-	<li>{{modal_id}} は、 modal-(product.ID) に置き換わります</li>
-	<li>{{display_none}} は、ログイン済みなら style="display:none;" が挿入されます</li>
-	<li>{{login_form}} は、このページにリダイレクトされるログインフォームを表示します( woocommerce_login_form() を利用 )</li>
-	<li>{{message}} は、ショートコードで指定したメッセージに置き換えます</li>
-</ul>
-
-<p><b>ショートコード例:</b><br></p>
-<pre style="border: 1px solid #999;padding:0.5em;">[wc-restrict id="111,222" message="無料でご利用いただけます"]
-ここにコンテンツ
-[/wc-restrict]
-</pre>        
-
-
+			<ol>
+				<li>コンテンツ制限</li>
+				<li>商品まとめ機能</li>
+			</ol>
+		</div>
 		<?php
 	}
-}
 
+	public function setting_restrict() {
+		$text = isset( $this->options['message'] ) ? $this->options['message'] : '';
+
+		if ( isset( $_POST['cmd'] ) && 'restrict' === $_POST['cmd'] ) {
+			check_admin_referer( 'toiee_wc4t' );
+
+			$dat = stripslashes_deep( $_POST['wc_src_options'] );
+			update_option( 'wc_src_options', $dat );
+			$text = $dat['message'];
+			?>
+			<div class="notice notice-success is-dismissible">
+				<p><strong>更新しました。</strong></p>
+			</div>
+			<?php
+		}
+
+		?>
+		<p>コンテンツ制限機能の設定を行います。</p>
+		<h3>メッセージボックス</h3>
+		<div style="max-width:600px">
+		<form method="post" action="<?php admin_url( 'options-general.php?page=wc4t-admin&tab=restrict' ); ?>">
+			<textarea name="wc_src_options[message]" style="width:100%;height: 20em;"><?php echo esc_html( $text ); ?></textarea>
+			<p><a href="https://github.com/toiee-lab/woocommerce-for-toieelab/wiki/%E5%88%9D%E6%9C%9F%E8%A8%AD%E5%AE%9A" target="_blank">ヘルプは、こちら</a></a></p>
+			<?php wp_nonce_field( 'toiee_wc4t' ); ?>
+			<input type="hidden" name="cmd" value="restrict" />
+			<?php submit_button( '実行' ); ?>
+		</form>
+		</div>
+		<?php
+	}
+
+	public function setting_preference() {
+
+		if ( isset( $_POST['cmd'] ) && 'preference' === $_POST['cmd'] ) {
+			check_admin_referer( 'toiee_wc4t' );
+
+			/* sanitize */
+			$func_options = array();
+			foreach ( $this->func_options['options'] as $key => $v ) {
+				if ( isset( $_POST['options'][ $key ] ) ) {
+					if ( 'true' === $_POST['options'][ $key ] ) {
+						$func_options[ $key ] = true;
+					} elseif ( 'false' === $_POST['options'][ $key ] ) {
+						$func_options[ $key ] = false;
+					} else {
+						$func_options[ $key ] = $v['init'];
+					}
+				} else {
+					$func_options[ $key ] = $v['init'];
+				}
+			}
+
+			/* 依存関係でpcastをonにする */
+			foreach ( $this->func_options['depend_pcast'] as $name ) {
+				if ( true === isset( $func_options[ $name ] ) ) {
+					$func_options['pcast'] = true;
+					break;
+				}
+			}
+
+			update_option( 'wc4t_func_options', $func_options );
+
+			/* カスタム投稿タイプのためのリライト */
+			$rewrite_message = '';
+			foreach ( $this->func_options['rewrite'] as $name ) {
+				if ( true === isset( $func_options[ $name ] ) ) {
+					$url             = admin_url( 'options-general.php?page=wc4t-admin&tab=preference&flush_rewrite_rules=true' );
+					$rewrite_message = 'パーマリンクの再設定が必要です。<a href="' . $url . '">必ず、このリンクをクリック</a>してください。';
+				}
+			}
+
+			?>
+			<div class="notice notice-success is-dismissible">
+				<p><strong>更新しました。<?php echo $rewrite_message; ?></strong></p>
+			</div>
+			<?php
+		}
+
+		if ( isset( $_GET['flush_rewrite_rules'] ) ) {
+			flush_rewrite_rules( false );
+			?>
+			<div class="notice notice-success is-dismissible">
+				<p><strong>パーマリンクの設定を更新しました。</strong></p>
+			</div>
+			<?php
+		}
+
+		?>
+		<p>以下、必要な機能をOn/Offしてください。<br><br></p>
+		<form method="post" action="<?php admin_url( 'options-general.php?page=wc4t-admin&tab=preference' ); ?>">
+		<?php
+		foreach ( $this->func_options['options'] as $key => $v ) {
+			if ( 'pcast' === $key ) {
+				?>
+				<hr style="margin-top:2em;">
+				<p style="color:red">以下は、toiee Lab (toiee.jp) 専用の機能です。テンプレートと連動しないと正常に使えません。</p>
+				<?php
+			}
+			?>
+			<h3 style="margin-top: 2em;"><?php echo esc_html( $v['title'] ); ?></h3>
+			<p><?php echo esc_html( $v['desc'] ); ?></p>
+			<?php
+			if ( $this->get_func_option( $key ) ) {
+				$enable  = 'checked="checked"';
+				$disable = '';
+			} else {
+				$enable  = '';
+				$disable = 'checked="checked"';
+			}
+			?>
+			<p>
+				<input type="radio" name="options[<?php echo esc_attr( $key ); ?>]" value="true" <?php echo $enable; ?>>有効
+				<input type="radio" name="options[<?php echo esc_attr( $key ); ?>]" value="false" <?php echo $disable; ?>>無効
+			</p>
+			<?php
+		}
+		?>
+			<?php wp_nonce_field( 'toiee_wc4t' ); ?>
+			<input type="hidden" name="cmd" value="preference" />
+			<?php submit_button( '実行' ); ?>
+		</form>
+		<?php
+	}
+
+	/**
+	 * func_options をセットアップする.
+	 */
+	private function setup_func_options() {
+		$this->func_options = array();
+
+		/* オプション */
+		$this->func_options['options'] = [
+			'mylib'      => [
+				'title' => 'マイライブラリ機能',
+				'desc'  => 'WooCommerceのユーザーダッシュボードに「マイライブラリ」を表示し、コンテンツに素早くアクセスできるようにします',
+				'init'  => false,
+			],
+			'mailerlite' => [
+				'title' => 'Mailerlite連携',
+				'desc'  => '商品購入とMailerliteグループを紐付けます。定期購読、バリエーション、返品にも対応しています',
+				'init'  => false,
+			],
+			'sub_inst'   => [
+				'title' => 'WooCommerce Subscriptions 分割支払い',
+				'desc'  => 'WooCommerce Subscriptionsを分割支払いに使えるように機能を拡張します',
+				'init'  => false,
+			],
+			'sub_bank'   => [
+				'title' => 'WooCommerce Subscriptions 銀行支払い期限延長',
+				'desc'  => 'WooCommerce Subscriptions + WooCommerce for Japan で有効になる銀行振込による定期購読では、銀行支払い期間が短いため有効期限が切れやすくなります。これを1週間に延長します。',
+				'init'  => false,
+			],
+			'ctab'       => [
+				'title' => 'カスタムタブ',
+				'desc'  => 'WooCommerceの商品ページに独自のタブを追加できます（カテゴリなどを指定することで）',
+				'init'  => false,
+			],
+			'pcast'      => [
+				'title' => 'Podcast機能',
+				'desc'  => 'Podcast機能を有効にします。マガジン、スクラム、耳デミー、ポケてらなどを利用する場合は、必ず ON にしてください。',
+				'init'  => false,
+			],
+			'mag'        => [
+				'title' => 'マガジン機能',
+				'desc'  => 'Magazine投稿タイプを有効にします。',
+				'init'  => false,
+			],
+			'mdy'        => [
+				'title' => '耳デミー機能',
+				'desc'  => '耳デミー（ビデオ、オーディオ、Podcast配信、授業資料）を有効にします',
+				'init'  => false,
+			],
+			'pkt'        => [
+				'title' => 'ポケてら機能',
+				'desc'  => 'ポケてら（ビデオ、オーディオ、Podcast配信、授業資料、LFT資料、ノート、フィードバック）を有効にします',
+				'init'  => false,
+			],
+			'tkb'        => [
+				'title' => '関連ナレッジ機能',
+				'desc'  => '関連ナレッジを投稿できるようにします。耳デミー、ポケてらに関連します',
+				'init'  => false,
+			],
+			'scrum'      => [
+				'title' => 'スクラム機能',
+				'desc'  => '専用ブログ、お知らせ、Podcast配信、教材の関連付けができるスクラム機能です',
+				'init'  => false,
+			],
+			'tlm'        => [
+				'title' => 'スクラム教材機能',
+				'desc'  => 'ポケてら、耳デミーに変わる新しい教材機能です。',
+				'init'  => false,
+			],
+			'event'      => [
+				'title' => 'シンプルイベント機能',
+				'desc'  => 'シンプルなイベント機能です。イベントの申し込みなどは、外部サイトを想定しています。',
+				'init'  => false,
+			],
+			'rlogin'     => [
+				'title' => 'rlogin機能',
+				'desc'  => '別のWordPressを認証、ログインさせるための機能',
+				'init'  => false,
+			],
+			'ssp'        => [
+				'title' => 'Seriously Simple Podcast拡張',
+				'desc'  => 'Seriously Simple Podcastを拡張し、購入者限定などを実現します',
+				'init'  => false,
+			],
+
+		];
+
+		$this->func_options['depend_pcast'] = [ 'mdy', 'pkt', 'scrum', 'tlm' ];
+		$this->func_options['rewrite']      = [ 'mylib', 'mag', 'mdy', 'pkt', 'scrum', 'event', 'rlogin', 'ssp', 'tlm' ];
+	}
+
+	/**
+	 * オプションを取得する.
+	 *
+	 * @param $option_name string オプション名
+	 * @return boolean
+	 */
+	public function get_func_option( $option_name ) {
+		if ( isset( $this->func_options['options'][ $option_name ] ) ) {
+			$func_options = get_option( 'wc4t_func_options', array() );
+
+			if ( isset( $func_options[ $option_name ] ) ) {
+				return $func_options[ $option_name ];
+			} else {
+				if ( isset( $this->func_options['options'][ $option_name ]['init'] ) ) {
+					return $this->func_options['options'][ $option_name ]['init'];
+				} else {
+					return false;
+				}
+			}
+		} else {
+			return false;
+		}
+	}
+
+	/*
+	* Podcast feed のアクセス許可を出すために、ユーザーを識別する固有のIDを取得する。
+	* もし、ユーザーが持っていなければ生成する
+	*/
+	public function get_user_wcrtoken() {
+
+		if ( is_user_logged_in() ) {
+
+			$user_id  = get_current_user_id();
+			$wcrtoken = get_user_meta( $user_id, 'wcrtoken', true );
+
+			if ( $wcrtoken == '' ) {
+				$wcrtoken = uniqid();
+				update_user_meta( $user_id, 'wcrtoken', $wcrtoken );
+			}
+
+			return $wcrtoken;
+		}
+
+		return null;
+	}
+}
 

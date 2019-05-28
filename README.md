@@ -1,5 +1,8 @@
 # WooCommerce Extension for toiee Lab
 
+**ver3.0で、大幅な仕様変更を行いました。アップデートの際は「必ず」、初期設定を実行してください**
+
+
 WordPress の No.1 ショッピングカート WooCommerce の購入情報を参照して「コンテンツの表示、非表示」を制御するプラグインです。 
 
 以下のプロダクトタイプを識別することができます。
@@ -29,6 +32,12 @@ ver0.4 からは、マイライブラリ機能や、Advanced Custom Fieldsを統
 
 [詳しくは、Wiki をご覧ください](https://github.com/toiee-lab/woocommerce-for-toieelab/wiki)
 
+
+## 初期設定
+
+- ACF をインストールする
+- 管理画面 > 設定 > WC for toiee > 機能の選択 **必ず、行ってください**
+- もし、ページが表示されないなど、パーマリンクの問題があれば「パーマリンクの再設定」を行ってください
 
 ## 履歴
 

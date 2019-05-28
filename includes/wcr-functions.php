@@ -3,7 +3,7 @@
 /*
  * シリーズのIDを渡されたら、Grid表示の教材一覧を表示します。
  */
-function w4t_podcast_grid_display( $series_ids ) {
+function w4t_podcast_grid_display( $channel_ids, $taxonomy ) {
 	$grid = <<<EOD
 		<div class="uk-child-width-1-2@m uk-grid-match" uk-grid>
 			<div>
@@ -15,16 +15,20 @@ function w4t_podcast_grid_display( $series_ids ) {
 		</div>
 EOD;
 
-	$rows = count( $series_ids ) / 2 + $series_ids % 2;
+	if ( ( ! is_array( $channel_ids ) ) || 0 === count( $channel_ids ) ) {
+		return;
+	}
+
+	$rows = count( $channel_ids ) / 2 + $channel_ids % 2;
 	$ret  = '';
 
 	for ( $i = 0; $i < $rows; $i++ ) {
-		$col1 = array_shift( $series_ids );
-		$col2 = array_shift( $series_ids );
+		$col1 = array_shift( $channel_ids );
+		$col2 = array_shift( $channel_ids );
 
 		$ret .= str_replace(
 			array( '%COL1%', '%COL2%' ),
-			array( w4t_podcast_card( $col1 ), w4t_podcast_card( $col2 ) ),
+			array( w4t_podcast_card( $col1, $taxonomy ), w4t_podcast_card( $col2, $taxonomy ) ),
 			$grid
 		);
 	}
@@ -32,8 +36,8 @@ EOD;
 	return $ret;
 }
 
-function w4t_podcast_card( $sid ) {
-	if ( $sid == null ) {
+function w4t_podcast_card( $ch_id, $taxonomy ) {
+	if ( $ch_id == null ) {
 		return '';
 	}
 
@@ -50,13 +54,17 @@ function w4t_podcast_card( $sid ) {
                 </div>
 EOD;
 
-	$series       = get_term( $sid, 'series' );
-	$series_url   = get_term_link( $series );
-	$series_image = get_option( 'ss_podcasting_data_image_' . $sid, 'no-image' );
+	$channel = get_term( $ch_id, $taxonomy );
+	if ( null === $channel ) {
+		return '';
+	}
+
+	$channel_url   = get_term_link( $channel );
+	$channel_image = get_field( 'image', $channel );
 
 	return str_replace(
 		array( '%URL%', '%IMG%', '%TITLE%', '%DESCRIPTION%' ),
-		array( $series_url, $series_image, $series->name, $series->description ),
+		array( $channel_url, $channel_image, $channel->name, $channel->description ),
 		$card
 	);
 }
@@ -197,3 +205,70 @@ function toiee_simple_the_content( $text ) {
 	// $text = prepend_attachment( $text );
 	return $text;
 }
+
+
+/**
+ * プレイヤーをだす
+ *
+ * @param $src
+ * @param string $type
+ */
+function the_episode_player( $src, $type = 'video' ) {
+
+	if ( 'video' === $type ) {
+		if ( preg_match( '|https://player.vimeo.com/external/([0-9]+)|', $src, $matches ) ) {
+			$vid = $matches[1];
+			?>
+			<div style="padding:56.25% 0 0 0;position:relative;"><iframe src="https://player.vimeo.com/video/<?php echo esc_html( $vid ); ?>?title=0&byline=0&portrait=0" style="position:absolute;top:0;left:0;width:100%;height:100%;" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe></div><script src="https://player.vimeo.com/api/player.js"></script>
+			<?php
+		} else {
+			echo do_shortcode( '[video src="' . $src . '" /]' );
+		}
+	} else {
+		echo do_shortcode( '[audio src="' . $src . '" /]' );
+	}
+}
+
+function the_episode_player_dummy( $type = 'video', $message = '閲覧するには、<a href="#" uk-toggle="target: #modal_login_form">ログイン</a>してください' ) {
+	if ( $type == 'video' ) {
+		$img = plugins_url( '/images/na-video.png', dirname( __FILE__ ) );
+	} else {
+		$img = plugins_url( '/images/na-audio.png', dirname( __FILE__ ) );
+	}
+
+	echo str_replace(
+		array( '%IMG%', '%MESSAGE%' ),
+		array( $img, $message ),
+		'
+<div class="uk-margin-medium-top uk-margin-small-bottom">
+<img src="%IMG%" /><br>
+<span class="uk-text-meta uk-text-small">%MESSAGE%</span>&nbsp;
+</div>					
+'
+	);
+}
+
+function toiee_get_edit_button( $post = null, $echo = true ) {
+
+	if ( current_user_can( 'edit_posts' ) ) {
+		if ( null === $post ) {
+			$post_id = get_the_ID();
+		} elseif ( is_object( $post ) ) {
+			$post_id = $post->ID;
+		} elseif ( is_integer( $post ) ) {
+			$post_id = $post;
+		}
+
+		$edit_url = admin_url( 'post.php?post=' . $post_id . '&action=edit' );
+		$tag      = '<a href="' . $edit_url . '" class="uk-button uk-button-default uk-margin-small-right uk-align-right">編集する</a>';
+
+		if ( $echo ) {
+			echo $tag;
+		}
+
+		return $tag;
+	}
+
+	return null;
+}
+

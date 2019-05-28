@@ -5,7 +5,7 @@
  * Plugin URI: http://toiee.jp
  * Description: WooCommerceの商品と商品をまとめるデータと連動して、コンテンツの閲覧制限、Seriously Simple Podcastの閲覧制限・機能拡張、ユーザー固有のフィードURL生成、マイライブラリ機能、ショートコードなどを実装
  * Author: toiee Lab
- * Version: 1.0
+ * Version: 3.0
  * Author URI: http://toiee.jp
  */
 
@@ -32,92 +32,144 @@ $MyUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
 	'wc-restrict'
 );
 
+/**
+ * ACFプラグインの存在をチェックする。
+ */
+function exist_acf_admin_notice_error() {
+	if ( ! function_exists( 'acf_add_local_field_group' ) ) {
+		$class   = 'notice notice-error';
+		$message = __( '【重要】WooCommerce for toiee Lab を利用するには、ACFプラグインが必須です。インストールし、有効にしてください。', 'woocommerce-for-toieelab' );
 
-// Seriously Simple Pocast の会員別のURLを作るときに使う「暗号化シード」のデフォルト値
-// 通常は、設定で置き換えることになる
-define( 'WCR_SSP_SECKEY', 'wLEznoW2QdUjEE' );
-
-
-// include ACF(free)
-add_filter(
-	'acf/settings/path',
-	function( $path ) {
-		$path = plugin_dir_path( __FILE__ ) . 'acf/';
-		return $path;
+		printf( '<div class="%1$s"><p>%2$s</p></div>', esc_attr( $class ), esc_html( $message ) );
 	}
-);
-add_filter(
-	'acf/settings/dir',
-	function ( $dir ) {
-		$dir = plugin_dir_url( __FILE__ ) . 'acf/';
-		return $dir;
-	}
-);
-require_once plugin_dir_path( __FILE__ ) . '/acf/acf.php';
+}
+add_action( 'admin_notices', 'exist_acf_admin_notice_error' );
 
-require_once 'includes/custom-fields-by-acf.php';  // custom fields
-
-// mailerlite
+/* 主にMailerlite系のcomposerライブラリの読み込み */
 require 'vendor/autoload.php';
 
-// include some feature
+/* include some feature */
 require_once 'includes/woocommerce_settings.php';
-require_once 'includes/class-wcr-content.php';
-require_once 'includes/class-wcr-ssp.php';
 require_once 'includes/wcr-functions.php';
-require_once 'includes/class-wcr-mylib.php';
-require_once 'includes/class-wcr-ctag.php';
-require_once 'includes/class-simple-event.php';
-require_once 'includes/class-mailerlite-group.php';
 require_once 'includes/toiee-shortcodes.php';
-require_once 'includes/class-wcr-login.php';
-require_once 'includes/class-installment.php';
-require_once 'includes/class-scrum-post.php';
-require_once 'includes/class-magazine-post.php';
-require_once 'includes/class-subscription-bank.php';
 
-
-// generate instances
+/* メインの機能を */
+require_once 'includes/class-wcr-content.php';
 global $wcr_content;
 $wcr_content             = new Woocommerce_SimpleRestrictContent();
 $wcr_content->plugin_url = plugins_url( '', __FILE__ );
 
-// Seriously Simple Podcast がインストールされていれば、有効にする
-require_once ABSPATH . 'wp-admin/includes/plugin.php';
-if ( is_plugin_active( 'seriously-simple-podcasting/seriously-simple-podcasting.php' ) ) {
-	global $wcr_ssp;
-	$wcr_ssp             = new WCR_SSP();
-	$wcr_ssp->plugin_url = plugins_url( '', __FILE__ );
+/* Seriously Simple Podcast 拡張 */
+if ( $wcr_content->get_func_option( 'ssp' ) ) {
+	require_once 'includes/class-wcr-ssp.php';
+	require_once ABSPATH . 'wp-admin/includes/plugin.php';
+	if ( is_plugin_active( 'seriously-simple-podcasting/seriously-simple-podcasting.php' ) ) {
+		global $wcr_ssp;
+		$wcr_ssp             = new WCR_SSP();
+		$wcr_ssp->plugin_url = plugins_url( '', __FILE__ );
+	}
 }
 
-global $wc_installment;
-$wc_installment = new ToieeLab_Installment();
+/* WooCommerce Subscriptions を分割支払い化する */
+if ( $wcr_content->get_func_option( 'sub_inst' ) ) {
+	require_once 'includes/class-installment.php';
+	global $wc_installment;
+	$wc_installment = new ToieeLab_Installment();
+}
 
-global $wc_subscription_bank;
-$wc_subscription_bank = new ToieeLab_Subscription_Bank();
+/* WooCommerce Subscriptions の銀行支払いで有効期限を延長 */
+if ( $wcr_content->get_func_option( 'sub_bank' ) ) {
+	require_once 'includes/class-subscription-bank.php';
+	global $wc_subscription_bank;
+	$wc_subscription_bank = new ToieeLab_Subscription_Bank();
+}
 
-global $wcr_mylibrary;
-$wcr_mylibrary = new toiee_woocommerce_mylibrary();
+/* WooCommerce にカスタムタブ機能を追加する */
+if ( $wcr_content->get_func_option( 'ctab' ) ) {
+	require_once 'includes/class-wcr-ctag.php';
+	global $wcr_customtab;
+	$wcr_customtab = new Woocommerce_CustomTabs();
+}
 
-global $wcr_customtab;
-$wcr_customtab = new Woocommerce_CustomTabs();
+/* WooCommerce にマイライブラリ機能を追加する */
+if ( $wcr_content->get_func_option( 'mylib' ) ) {
+	require_once 'includes/class-wcr-mylib.php';
+	global $wcr_mylibrary;
+	$wcr_mylibrary = new toiee_woocommerce_mylibrary();
+}
 
-global $toiee_simple_event;
-$toiee_simple_event = new Toiee_SimpleEvent();
+/* シンプルイベント機能を追加する */
+if ( $wcr_content->get_func_option( 'event' ) ) {
+	require_once 'includes/class-simple-event.php';
+	global $toiee_simple_event;
+	$toiee_simple_event = new Toiee_SimpleEvent();
+}
 
-global $toiee_ml_group;
-$toiee_ml_group = new Toiee_Mailerlite_Group();
+/* Mailerlite連携機能を追加する */
+if ( $wcr_content->get_func_option( 'mailerlite' ) ) {
+	require_once 'includes/class-mailerlite-group.php';
+	global $toiee_ml_group;
+	$toiee_ml_group = new Toiee_Mailerlite_Group();
+}
 
-global $wcr_login;
-$wdr_login = new Toiee_WCLogin();
+/* リモートログイン機能を追加する */
+if ( $wcr_content->get_func_option( 'rlogin' ) ) {
+	require_once 'includes/class-wcr-login.php';
+	global $wcr_login;
+	$wdr_login = new Toiee_WCLogin();
+}
 
-global $toiee_scrum;
-$toiee_scrum = new Toiee_Scrum_Post();
+/* Podcast化機能を追加する */
+if ( $wcr_content->get_func_option( 'pcast' ) ) {
+	require_once 'includes/class-toiee-pcast.php';
+	global $toiee_pcast;
+	$toiee_pcast = new Toiee_Pcast( __FILE__ );
+}
 
-global $toiee_magazine;
-$toiee_magazine = new Toiee_Magazine_Post();
+/* スクラム教材機能を追加する */
+if ( $wcr_content->get_func_option( 'tlm' ) ) {
+	require_once 'includes/class-tlm-post.php';
+	global $toiee_tlm;
+	$toiee_tlm = new Toiee_Tlm_Post( __FILE__ );
+}
 
-// JetPack を WooCommerce Productページでは実行しない
+/* スクラム機能を追加する */
+if ( $wcr_content->get_func_option( 'scrum' ) ) {
+	require_once 'includes/class-scrum-post.php';
+	global $toiee_scrum;
+	$toiee_scrum = new Toiee_Scrum_Post( __FILE__ );
+}
+
+/* 関連ナレッジ機能を追加する */
+if ( $wcr_content->get_func_option( 'tkb' ) ) {
+	require_once 'includes/class-tkb-post.php';
+	global $toiee_knowledge;
+	$toiee_knowledge = new Toiee_Tkb_Post( __FILE__ );
+}
+
+/* マガジン機能を追加する */
+if ( $wcr_content->get_func_option( 'mag' ) ) {
+	require_once 'includes/class-magazine-post.php';
+	global $toiee_magazine;
+	$toiee_magazine = new Toiee_Magazine_Post();
+}
+
+/* ポケてら機能を追加する */
+if ( $wcr_content->get_func_option( 'pkt' ) ) {
+	require_once 'includes/class-poketera-post.php';
+	global $toiee_pocketera;
+	$toiee_pocketera = new Toiee_Pocketera_Post();
+}
+
+/* 耳デミー機能を追加する */
+if ( $wcr_content->get_func_option( 'mdy' ) ) {
+	require_once 'includes/class-mmdmy-post.php';
+	global $toiee_mimidemy;
+	$toiee_mimidemy = new Toiee_Mimidemy_Post( __FILE__ );
+}
+
+
+/* JetPack を WooCommerce Productページでは実行しない */
 function exclude_jetpack_related_from_products( $options ) {
 	if ( is_product() ) {
 		$options['enabled'] = false;
@@ -128,9 +180,49 @@ function exclude_jetpack_related_from_products( $options ) {
 add_filter( 'jetpack_relatedposts_filter_options', 'exclude_jetpack_related_from_products' );
 
 
+/*
+ *  検索の制御を行う。ここでは、toiee_exclude_search
+ */
+function exclude_search_podcasts( $query ) {
+	if ( is_admin() || is_super_admin() || ! $query->is_main_query() ) {
+		return;
+	}
 
-// プラグインを有効化した時の動作
-function wc4t_rewrite_flush() {
-	flush_rewrite_rules();
+	if ( $query->is_search() ) {
+		$args       = array(
+			'public'              => true,
+			'_builtin'            => false,
+			'exclude_from_search' => false,
+		);
+		$post_types = get_post_types( $args, 'names', 'and' );
+
+		$exclude_post_type = array( 'scrum_post', 'scrum_episode', 'pkt_feedback', 'pkt_report', 'product' );
+		$exclude_post_type = apply_filters( 'toiee_exclude_search_post_type', $exclude_post_type );
+
+		$post_types = array_diff( $post_types, $exclude_post_type );
+
+		$query->set( 'post_type', $post_types );
+	}
 }
-register_activation_hook( __FILE__, 'wc4t_rewrite_flush' );
+add_filter( 'pre_get_posts', 'exclude_search_podcasts' );
+
+/**
+ * 検索エンジンから除外する noindex
+ */
+function toiee_noindex() {
+
+	$exclude_post_type = array( 'scrum_post', 'pkt_feedback', 'pkt_report', 'product' );
+	$exclude_post_type = apply_filters( 'toiee_exclude_search_post_type', $exclude_post_type );
+
+	foreach ( $exclude_post_type as $ptype ) {
+		if ( get_post_type() === $ptype ) {
+			echo '<meta id="toiee_noindex" name="robots" content="noindex" />' . "\n";
+			break;
+		}
+	}
+
+	if ( is_tax( 'scrum' ) ) {
+		echo '<meta id="toiee_noindex2" name="robots" content="noindex" />' . "\n";
+	}
+}
+add_action( 'wp_head', 'toiee_noindex' );
