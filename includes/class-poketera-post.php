@@ -1000,7 +1000,6 @@ class Toiee_Pocketera_Post {
 		$email       = get_field( 'enq_email', $post_id );
 		$admin_email = get_option( 'admin_email' );
 
-
 		if ( null !== $email ) {
 			$to      = $email;
 			$headers = 'From: toiee Lab <' . $admin_email . '>' . "\r\n";
@@ -1022,7 +1021,7 @@ class Toiee_Pocketera_Post {
 				}
 			}
 
-			wp_mail($to, $subject, $body, $headers );
+			wp_mail( $to, $subject, $body, $headers );
 		}
 
 	}

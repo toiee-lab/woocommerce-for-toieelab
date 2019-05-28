@@ -189,7 +189,7 @@ function exclude_search_podcasts( $query ) {
 	}
 
 	if ( $query->is_search() ) {
-		$args = array(
+		$args       = array(
 			'public'              => true,
 			'_builtin'            => false,
 			'exclude_from_search' => false,

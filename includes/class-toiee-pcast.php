@@ -724,7 +724,7 @@ class Toiee_Pcast {
 	}
 
 	public function toiee_pcast_post_types() {
-		$post_types = array( 'mdy_episode', 'pkt_episode', 'scrum_episode', 'tlm_in', 'tlm_ws',  'tlm_archive' );
+		$post_types = array( 'mdy_episode', 'pkt_episode', 'scrum_episode', 'tlm_in', 'tlm_ws', 'tlm_archive' );
 		$post_types = apply_filters( 'toiee_pcast_post_types', $post_types );
 
 		return $post_types;
@@ -1335,9 +1335,9 @@ class Toiee_Pcast {
 			check_admin_referer( 'toiee_podcast' );
 
 			$from_term = $this->get_pcast_tax( $_POST['from_channel'] );
-			$to_term = $this->get_pcast_tax( $_POST['to_channel'] );
+			$to_term   = $this->get_pcast_tax( $_POST['to_channel'] );
 
-			$args     = array(
+			$args       = array(
 				'posts_per_page' => -1,
 				'post_type'      => $from_term['post_type'],
 				'tax_query'      => array(
@@ -1360,7 +1360,7 @@ class Toiee_Pcast {
 					$args[ $key ] = $p->$key;
 				}
 				$args['post_type'] = $to_term['post_type'];
-				$args['tax_input'] = array( $to_term['tax'] => $to_term['term_id']);
+				$args['tax_input'] = array( $to_term['tax'] => $to_term['term_id'] );
 
 				$pid = wp_insert_post( $args );
 
@@ -1385,7 +1385,7 @@ class Toiee_Pcast {
 		$select_from = array();
 
 		foreach ( $select as $s ) {
-			if ( preg_match( '/^mdy|pkt/', $s['value']) ) {
+			if ( preg_match( '/^mdy|pkt/', $s['value'] ) ) {
 				$select_from[] = $s;
 			}
 			if ( preg_match( '/^tlm/', $s['value'] ) ) {
@@ -1393,8 +1393,8 @@ class Toiee_Pcast {
 			}
 		}
 
-
-		?><p>ポケてら、耳デミーをtoiee教材へインポートします<br>
+		?>
+		<p>ポケてら、耳デミーをtoiee教材へインポートします<br>
 			インポートは「データをそのまま変更を加えず」コピーして作成します。</p>
 		<form method="post" action="<?php admin_url( 'options-general.php?page=toiee-podcast&tab=import-pktmdy' ); ?>">
 			<table class="form-table">
@@ -1599,7 +1599,7 @@ class Toiee_Pcast {
 
 				if ( is_array( $post_type ) ) {
 					foreach ( $post_type as $ptype ) {
-						$obj = get_post_type_object( $ptype );
+						$obj                                  = get_post_type_object( $ptype );
 						$select[ $t->term_id . '-' . $ptype ] = array(
 							'disp'  => '【' . $tax_obj->label . '-' . $obj->label . '】' . $t->name,
 							'value' => $tax_name . ',' . $t->term_id . ',' . $ptype,

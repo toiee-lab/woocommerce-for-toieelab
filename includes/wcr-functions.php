@@ -3,7 +3,7 @@
 /*
  * シリーズのIDを渡されたら、Grid表示の教材一覧を表示します。
  */
-function w4t_podcast_grid_display( $channel_ids , $taxonomy ) {
+function w4t_podcast_grid_display( $channel_ids, $taxonomy ) {
 	$grid = <<<EOD
 		<div class="uk-child-width-1-2@m uk-grid-match" uk-grid>
 			<div>

@@ -187,7 +187,7 @@ add_shortcode(
 		$atts = shortcode_atts(
 			array(
 				'tax' => 'mdy_channel',
-				'num'    => 4,
+				'num' => 4,
 			),
 			$atts,
 			'toiee_list_series'
@@ -202,7 +202,7 @@ add_shortcode(
 			return 'this is error : ' . print_r( $terms, true );
 		}
 
-		$ids   = array();
+		$ids = array();
 		foreach ( $terms as $term ) {
 			$ids[] = $term->term_id;
 		}

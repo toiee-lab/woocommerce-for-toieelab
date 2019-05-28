@@ -504,7 +504,7 @@ EOD;
 
 	public function edit_series_columns( $columns ) {
 		$columns['shortcode'] = __( 'Shortcode', 'wcr-ssp' );
-		$columns['moving'] = '移動';
+		$columns['moving']    = '移動';
 		unset( $columns['series_image'] );
 		unset( $columns['series_feed_url'] );
 
@@ -517,8 +517,8 @@ EOD;
 				$column_data = '[wcr_ssp id="' . $term_id . '" /]';
 				break;
 			case 'moving':
-				if ( '1' === get_term_meta( $term_id, 'pcast_moving', true) ) {
-					$to = get_term_meta( $term_id, 'pcast_moving_to', true);
+				if ( '1' === get_term_meta( $term_id, 'pcast_moving', true ) ) {
+					$to          = get_term_meta( $term_id, 'pcast_moving_to', true );
 					$column_data = '<a href="' . $to . '">移動済み</a>';
 				}
 

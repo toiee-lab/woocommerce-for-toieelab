@@ -24,7 +24,10 @@ class Woocommerce_SimpleRestrictContent {
 	 */
 	private $func_options;
 
-	function __construct() {
+	/**
+	 * Woocommerce_SimpleRestrictContent constructor.
+	 */
+	public function __construct() {
 
 		$this->setup_func_options();
 
@@ -42,6 +45,9 @@ class Woocommerce_SimpleRestrictContent {
 		$this->add_acf();
 	}
 
+	/**
+	 * 利用するACFフィールドを設定.
+	 */
 	public function add_acf() {
 		if ( function_exists( 'acf_add_local_field_group' ) ) :
 			/* wcrestrict post type に付属するもの */
@@ -103,7 +109,10 @@ class Woocommerce_SimpleRestrictContent {
 	// ! Create post type for WC Restriction
 	//
 	// -----------------------------------------------------------------------------
-	function create_post_type() {
+	/**
+	 * 投稿タイプの作成.
+	 */
+	public function create_post_type() {
 		register_post_type(
 			'wcrestrict',
 			array(
@@ -125,8 +134,10 @@ class Woocommerce_SimpleRestrictContent {
 		);
 	}
 
-	// 登録情報を表示するための meta box の表示
-	function add_meta_boxes_wcr() {
+	/**
+	 * 閲覧制限のためのボックスを作成.
+	 */
+	public function add_meta_boxes_wcr() {
 		add_meta_box(
 			'wc_restrict',
 			'ショートコード例',
@@ -135,7 +146,13 @@ class Woocommerce_SimpleRestrictContent {
 			'advanced'
 		);
 	}
-	function display_wcr_meta_box( $post ) {
+
+	/**
+	 * 内容の表示
+	 *
+	 * @param $post object
+	 */
+	public function display_wcr_meta_box( $post ) {
 		$id = get_the_ID();
 
 		$wc_param = array(
@@ -166,9 +183,6 @@ here is contents
 
 [/wcr-content]
 </pre>
-
-
-
 EOD;
 
 	}
@@ -199,7 +213,7 @@ EOD;
 
 			$html = get_popup_login_form();
 
-			// 表示するもの
+			/* 表示するもの */
 			$html .= <<<EOD
     <div class="uk-inline uk-padding-small uk-width-1-1">
     
@@ -703,11 +717,11 @@ here is contents
 
 			/* sanitize */
 			$func_options = array();
-			foreach( $this->func_options['options'] as $key => $v ) {
-				if ( isset( $_POST['options'][$key] ) ) {
-					if ( 'true' === $_POST['options'][$key] ) {
+			foreach ( $this->func_options['options'] as $key => $v ) {
+				if ( isset( $_POST['options'][ $key ] ) ) {
+					if ( 'true' === $_POST['options'][ $key ] ) {
 						$func_options[ $key ] = true;
-					} else if ( 'false' === $_POST['options'][$key] ) {
+					} elseif ( 'false' === $_POST['options'][ $key ] ) {
 						$func_options[ $key ] = false;
 					} else {
 						$func_options[ $key ] = $v['init'];
@@ -725,18 +739,29 @@ here is contents
 				}
 			}
 
+			update_option( 'wc4t_func_options', $func_options );
+
 			/* カスタム投稿タイプのためのリライト */
+			$rewrite_message = '';
 			foreach ( $this->func_options['rewrite'] as $name ) {
 				if ( true === isset( $func_options[ $name ] ) ) {
-					flush_rewrite_rules( false );
-					break;
+					$url             = admin_url( 'options-general.php?page=wc4t-admin&tab=preference&flush_rewrite_rules=true' );
+					$rewrite_message = 'パーマリンクの再設定が必要です。<a href="' . $url . '">必ず、このリンクをクリック</a>してください。';
 				}
 			}
 
-			update_option( 'wc4t_func_options', $func_options );
 			?>
 			<div class="notice notice-success is-dismissible">
-				<p><strong>更新しました。</strong></p>
+				<p><strong>更新しました。<?php echo $rewrite_message; ?></strong></p>
+			</div>
+			<?php
+		}
+
+		if ( isset( $_GET['flush_rewrite_rules'] ) ) {
+			flush_rewrite_rules( false );
+			?>
+			<div class="notice notice-success is-dismissible">
+				<p><strong>パーマリンクの設定を更新しました。</strong></p>
 			</div>
 			<?php
 		}
@@ -786,7 +811,7 @@ here is contents
 
 		/* オプション */
 		$this->func_options['options'] = [
-			'mylib' => [
+			'mylib'      => [
 				'title' => 'マイライブラリ機能',
 				'desc'  => 'WooCommerceのユーザーダッシュボードに「マイライブラリ」を表示し、コンテンツに素早くアクセスできるようにします',
 				'init'  => false,
@@ -796,12 +821,12 @@ here is contents
 				'desc'  => '商品購入とMailerliteグループを紐付けます。定期購読、バリエーション、返品にも対応しています',
 				'init'  => false,
 			],
-			'sub_inst' => [
+			'sub_inst'   => [
 				'title' => 'WooCommerce Subscriptions 分割支払い',
 				'desc'  => 'WooCommerce Subscriptionsを分割支払いに使えるように機能を拡張します',
 				'init'  => false,
 			],
-			'sub_bank' => [
+			'sub_bank'   => [
 				'title' => 'WooCommerce Subscriptions 銀行支払い期限延長',
 				'desc'  => 'WooCommerce Subscriptions + WooCommerce for Japan で有効になる銀行振込による定期購読では、銀行支払い期間が短いため有効期限が切れやすくなります。これを1週間に延長します。',
 				'init'  => false,
@@ -811,52 +836,52 @@ here is contents
 				'desc'  => 'WooCommerceの商品ページに独自のタブを追加できます（カテゴリなどを指定することで）',
 				'init'  => false,
 			],
-			'pcast' => [
+			'pcast'      => [
 				'title' => 'Podcast機能',
 				'desc'  => 'Podcast機能を有効にします。マガジン、スクラム、耳デミー、ポケてらなどを利用する場合は、必ず ON にしてください。',
 				'init'  => false,
 			],
-			'mag'   => [
+			'mag'        => [
 				'title' => 'マガジン機能',
 				'desc'  => 'Magazine投稿タイプを有効にします。',
 				'init'  => false,
 			],
-			'mdy' => [
+			'mdy'        => [
 				'title' => '耳デミー機能',
 				'desc'  => '耳デミー（ビデオ、オーディオ、Podcast配信、授業資料）を有効にします',
 				'init'  => false,
 			],
-			'pkt' => [
+			'pkt'        => [
 				'title' => 'ポケてら機能',
 				'desc'  => 'ポケてら（ビデオ、オーディオ、Podcast配信、授業資料、LFT資料、ノート、フィードバック）を有効にします',
 				'init'  => false,
 			],
-			'tkb' => [
+			'tkb'        => [
 				'title' => '関連ナレッジ機能',
 				'desc'  => '関連ナレッジを投稿できるようにします。耳デミー、ポケてらに関連します',
 				'init'  => false,
 			],
-			'scrum' => [
+			'scrum'      => [
 				'title' => 'スクラム機能',
 				'desc'  => '専用ブログ、お知らせ、Podcast配信、教材の関連付けができるスクラム機能です',
 				'init'  => false,
 			],
-			'tlm' => [
+			'tlm'        => [
 				'title' => 'スクラム教材機能',
 				'desc'  => 'ポケてら、耳デミーに変わる新しい教材機能です。',
 				'init'  => false,
 			],
-			'event' => [
+			'event'      => [
 				'title' => 'シンプルイベント機能',
 				'desc'  => 'シンプルなイベント機能です。イベントの申し込みなどは、外部サイトを想定しています。',
 				'init'  => false,
 			],
-			'rlogin' => [
+			'rlogin'     => [
 				'title' => 'rlogin機能',
 				'desc'  => '別のWordPressを認証、ログインさせるための機能',
 				'init'  => false,
 			],
-			'ssp'       => [
+			'ssp'        => [
 				'title' => 'Seriously Simple Podcast拡張',
 				'desc'  => 'Seriously Simple Podcastを拡張し、購入者限定などを実現します',
 				'init'  => false,
@@ -875,14 +900,14 @@ here is contents
 	 * @return boolean
 	 */
 	public function get_func_option( $option_name ) {
-		if( isset( $this->func_options['options'][ $option_name ] ) ) {
+		if ( isset( $this->func_options['options'][ $option_name ] ) ) {
 			$func_options = get_option( 'wc4t_func_options', array() );
 
-			if( isset( $func_options[ $option_name ] ) ) {
+			if ( isset( $func_options[ $option_name ] ) ) {
 				return $func_options[ $option_name ];
 			} else {
-				if( isset($this->func_options['options'][ $option_name ][ 'init' ]) ) {
-					return $this->func_options['options'][ $option_name ][ 'init' ];
+				if ( isset( $this->func_options['options'][ $option_name ]['init'] ) ) {
+					return $this->func_options['options'][ $option_name ]['init'];
 				} else {
 					return false;
 				}
