@@ -28,7 +28,7 @@ let set_autoplay = function ( players ) {
 };
 
 /* アーカイブページの場合を想定した動作 = 次を自動再生する複数プレイヤーを生成 */
-let list    = ['scrum_episode', 'tlm_input--', 'tlm_archive'];
+let list    = ['scrum_episode', 'tlm_input', 'tlm_archive'];
 
 for( let i=0, len=list.length; i<len; i++ ) {
     let name    = list[ i ];

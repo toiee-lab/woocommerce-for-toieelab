@@ -261,23 +261,23 @@ function the_episode_player_plyr( $src, $type = 'video', $ext = '' ) {
 		</div>
 		<?php
 	} else {
-
+/*
 		$pid = attachment_url_to_postid( $src );
 		if ( $pid ) {
 			$mime_type = get_post_mime_type( $pid );
 		} else {
 			$headers = get_headers( $src, 1 );
-			if ( is_array( $headers['Content-Type'] ) ) { /*In some responses Content-type is an array*/
+			if ( is_array( $headers['Content-Type'] ) ) {
 				$mime_type = $headers['Content-Type'][1];
 			} else {
 				$mime_type = $headers['Content-Type'];
 			}
 		}
-
+*/
 		?>
 		<div class="plyr-container-audio">
 			<audio class="plyr-player<?php echo $ext; ?>" controls preload="metadata">
-				<source src="<?php echo esc_url( $src ); ?>" type="<?php echo esc_attr( $mime_type ); ?>" />
+				<source src="<?php echo esc_url( $src ); ?>" />
 			</audio>
 		</div>
 		<?php
