@@ -25,6 +25,11 @@ class Toiee_Pcast {
 	 */
 	private $plugin_dir_path;
 	/**
+	 * プラグインのURLを格納(with trailing slash)
+	 * @var string $plugin_url
+	 */
+	private $plugin_url;
+	/**
 	 * 閲覧制限時のオーディオファイルを指定
 	 *
 	 * @var string $dummy_audio
@@ -48,6 +53,7 @@ class Toiee_Pcast {
 		$this->file            = $file;
 		$this->feed_slug       = 'pcast';
 		$this->plugin_dir_path = plugin_dir_path( $file );
+		$this->plugin_url      = plugin_dir_url( $file );
 		$this->dummy_audio     = $this->plugin_dir_path . 'images/not-available.m4a';
 
 		$this->add_acf();
@@ -63,6 +69,8 @@ class Toiee_Pcast {
 		if ( is_admin() ) {
 			add_action( 'admin_menu', array( $this, 'toiee_podcast_add_plugin_page' ) );
 		}
+
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_plyer_dot_io_style_and_script' ) );
 
 	}
 
@@ -1758,5 +1766,11 @@ class Toiee_Pcast {
 		update_term_meta( $series_id, 'pcast_moving_to_id', $term_id );
 
 		return $term_id;
+	}
+
+	public function enqueue_plyer_dot_io_style_and_script() {
+		wp_enqueue_style( 'plyrio', $this->plugin_url . 'assets/plyr.io/plyr.css' );
+		wp_enqueue_script( 'plyrio', $this->plugin_url . 'assets/plyr.io/plyr.js', array(), '3.5.3', true );
+		wp_enqueue_script( 'plyrio-enable', $this->plugin_url . 'assets/plyr-enable.js', array('plyrio'), '1.0', true );
 	}
 }

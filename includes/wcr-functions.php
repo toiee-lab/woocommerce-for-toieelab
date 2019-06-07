@@ -237,7 +237,11 @@ function the_episode_player( $src, $type = 'video' ) {
  * @param $src
  * @param string $type
  */
-function the_episode_player_plyr( $src, $type = 'video' ) {
+function the_episode_player_plyr( $src, $type = 'video', $ext = '' ) {
+
+	if ( '' !== $ext ) {
+		$ext = '-' . $ext;
+	}
 
 	if ( 'video' === $type ) {
 		?>
@@ -246,7 +250,7 @@ function the_episode_player_plyr( $src, $type = 'video' ) {
 			if ( preg_match( '|https://player.vimeo.com/external/([0-9]+)|', $src, $matches ) ) {
 				$vid = $matches[1];
 				?>
-				<div class="plyr-player" data-plyr-provider="vimeo"
+				<div class="plyr-player<?php echo $ext; ?>" data-plyr-provider="vimeo"
 				     data-plyr-embed-id="<?php echo esc_attr( $vid ); ?>"></div>
 				<?php
 			} else {
@@ -259,7 +263,7 @@ function the_episode_player_plyr( $src, $type = 'video' ) {
 	} else {
 
 		$pid = attachment_url_to_postid( $src );
-		if ( ! is_null( $pid ) ) {
+		if ( $pid ) {
 			$mime_type = get_post_mime_type( $pid );
 		} else {
 			$headers = get_headers( $src, 1 );
@@ -272,8 +276,8 @@ function the_episode_player_plyr( $src, $type = 'video' ) {
 
 		?>
 		<div class="plyr-container-audio">
-			<audio id="player" controls>
-			<source src="<?php echo esc_url( $src ); ?>" type="<?php echo esc_attr( $mime_type ); ?>" />
+			<audio class="plyr-player<?php echo $ext; ?>" controls preload="metadata">
+				<source src="<?php echo esc_url( $src ); ?>" type="<?php echo esc_attr( $mime_type ); ?>" />
 			</audio>
 		</div>
 		<?php
