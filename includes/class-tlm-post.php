@@ -77,8 +77,11 @@ class Toiee_Tlm_Post {
 			$query->set( 'posts_per_page', -1 );
 
 			/* テンプレートの切り替え */
-			add_filter( 'toiee_pcast_feed_template_file', array( $this, 'return_feed_template' ) );
-			return;
+			if ( is_feed() ) {
+				$query->set( 'post_type', 'tlm_in' );
+				add_filter( 'toiee_pcast_feed_template_file', array( $this, 'return_feed_template' ) );
+				return;
+			}
 		}
 	}
 

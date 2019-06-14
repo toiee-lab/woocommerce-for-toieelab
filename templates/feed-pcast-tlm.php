@@ -118,8 +118,8 @@ if ( isset( $elements['tlm_archive'] ) ) {
 
 		<itunes:subtitle><?php echo esc_html( $channel['subtitle'] ); ?></itunes:subtitle>
 		<itunes:author><?php echo esc_html( $channel['author'] ); ?></itunes:author>
-		<itunes:summary><?php echo esc_html( $channel['description'] ); ?></itunes:summary>
-		<description><?php echo esc_html( $channel['description'] . "\n" . $add_user_message ); ?></description>
+		<itunes:summary><![CDATA[<?php echo esc_html( $channel['description'] ); ?>]]></itunes:summary>
+		<description><![CDATA[<?php echo esc_html( $channel['description'] . "\n" . $add_user_message ); ?>]]></description>
 
 		<itunes:type><?php echo esc_html( $channel['episode_type'] ); ?></itunes:type>
 
@@ -219,8 +219,8 @@ foreach ( $post_types as $key => $label ) {
 				<title><?php echo esc_html( '【' . $label . '】 ' ) ?><?php the_title( $title_prefix, '' ); ?></title>
 				<itunes:author><?php echo esc_html( $channel['author'] ); ?></itunes:author>
 				<itunes:subtitle><?php echo esc_html( $atts['subtitle'] ); ?></itunes:subtitle>
-				<itunes:summary><?php echo wp_strip_all_tags( $content ); ?></itunes:summary>
-				<itunes:description><![CDATA[ <?php echo strip_tags( $content, '<p><ol><ul><a><strong><em>' ); ?> ]]></itunes:description>
+				<itunes:summary><![CDATA[<?php echo wp_strip_all_tags( $content ); ?>]]></itunes:summary>
+				<itunes:description><![CDATA[<?php echo strip_tags( $content, '<p><ol><ul><a><strong><em>' ); ?>]]></itunes:description>
 				<enclosure length="<?php echo esc_html( $atts['length'] ); ?>" type="<?php echo esc_html( $etype ); ?>" url="<?php echo esc_html( $atts['enclosure'] ); ?>"/>
 				<guid><?php echo $guid; ?></guid>
 				<pubDate><?php echo esc_html( $pubdate ); ?></pubDate>
