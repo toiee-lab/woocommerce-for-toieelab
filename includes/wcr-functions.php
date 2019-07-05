@@ -327,3 +327,22 @@ function toiee_get_edit_button( $post = null, $echo = true ) {
 	return null;
 }
 
+/**
+ * Customize name field properties.
+ *
+ * @param array $properties
+ * @param array $field
+ * @param array $form_data
+ * @return array
+ */
+function toiee_wpf_name_field_properties( $properties, $field, $form_data ) {
+
+	// Change sublabel values
+	$properties['inputs']['first']['sublabel']['value'] = '名(太郎)';
+	$properties['inputs']['middle']['sublabel']['value'] = 'Middle';
+	$properties['inputs']['last']['sublabel']['value'] = '姓(戸井)';
+
+	return $properties;
+}
+add_filter( 'wpforms_field_properties_name' , 'toiee_wpf_name_field_properties', 10, 3 );
+

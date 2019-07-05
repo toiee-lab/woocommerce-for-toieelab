@@ -216,7 +216,7 @@ foreach ( $post_types as $key => $label ) {
 
 			?>
 			<item>
-				<title><?php echo esc_html( '【' . $label . '】 ' ) ?><?php the_title( $title_prefix, '' ); ?></title>
+				<title><?php the_title( $title_prefix, '' ); ?></title>
 				<itunes:author><?php echo esc_html( $channel['author'] ); ?></itunes:author>
 				<itunes:subtitle><?php echo esc_html( $atts['subtitle'] ); ?></itunes:subtitle>
 				<itunes:summary><![CDATA[<?php echo wp_strip_all_tags( $content ); ?>]]></itunes:summary>
