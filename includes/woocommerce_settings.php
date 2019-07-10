@@ -64,3 +64,31 @@ add_action(
 
 	}
 );
+
+/* ファルタイプの許可 */
+add_filter( 'wp_check_filetype_and_ext', 'w4t_multi_mime_type_check', 99, 4 );
+function w4t_multi_mime_type_check( $check, $file, $filename, $mimes ) {
+    if ( empty( $check['ext'] ) && empty( $check['type'] ) ) {
+        // Adjust to your needs!
+        $multi_mimes = [ 
+//        	[ 'm4b' => 'video/mp4' ],
+        	[ 'm4b' => 'audio/x-m4a' ],
+        	[ 'm4b' => 'audio/mpeg' ],
+        	
+//        	[ 'm4a' => 'video/mp4'],
+//      	[ 'm4a' => 'video/mp4a'],
+//        	[ 'm4a' => 'audio/mpeg'],
+        ];
+
+        // Run new checks for our custom mime types and not on core mime types.
+        foreach( $multi_mimes as $mime ) {
+            remove_filter( 'wp_check_filetype_and_ext', 'w4t_multi_mime_type_check', 99, 4 );           
+            $check = wp_check_filetype_and_ext( $file, $filename, $mime );
+            add_filter( 'wp_check_filetype_and_ext', 'w4t_multi_mime_type_check', 99, 4 );
+            if ( ! empty( $check['ext'] ) ||  ! empty( $check['type'] ) ) {
+                return $check;
+            }
+        }
+    }
+    return $check;
+}
