@@ -41,6 +41,7 @@ ver0.4 からは、マイライブラリ機能や、Advanced Custom Fieldsを統
 
 ## 履歴
 
+- 2019/7/10 (ver3.2) ユーザー登録で自動でMailerliteに登録できるようになりました（バグを修正） 
 - v0.4.3 : slug が翻訳ファイルによって変更されてしまうので、podcast を `ssp_archive_slug` フィルターで指定（rewrite rule を flash しないといけない）
 
 

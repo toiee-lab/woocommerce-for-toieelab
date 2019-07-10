@@ -103,7 +103,6 @@ function get_popup_login_form( $redirect_url = null ) {
 	ob_start();
 	?>
 	<form method="post" class="uk-form-horizontal">
-
 	<?php do_action( 'woocommerce_register_form_start' ); ?>
 
 	<?php if ( 'no' === get_option( 'woocommerce_registration_generate_username' ) ) : ?>
@@ -111,7 +110,7 @@ function get_popup_login_form( $redirect_url = null ) {
 		<div class="uk-margin">
 			<label for="reg_username" class="uk-form-label"><?php esc_html_e( 'Username', 'woocommerce' ); ?>&nbsp;<span class="required">*</span></label>
 			<div class="uk-form-controls">
-				<input type="text" class="uk-input" name="username" id="reg_username" autocomplete="username" value="<?php echo ( ! empty( $_POST['username'] ) ) ? esc_attr( wp_unslash( $_POST['username'] ) ) : ''; ?>" /><?php // @codingStandardsIgnoreLine ?>
+				<input type="text" class="uk-input" name="username" id="reg_username" autocomplete="username" value="<?php echo ( ! empty( $_POST['username'] ) ) ? esc_attr( wp_unslash( $_POST['username'] ) ) : ''; ?>" />
 			</div>
 		</div>
 
@@ -119,7 +118,7 @@ function get_popup_login_form( $redirect_url = null ) {
 
 		<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
 			<label for="reg_email"><?php esc_html_e( 'Email address', 'woocommerce' ); ?>&nbsp;<span class="required">*</span></label>
-			<input type="email" class="woocommerce-Input woocommerce-Input--text input-text" name="email" id="reg_email" autocomplete="email" value="<?php echo ( ! empty( $_POST['email'] ) ) ? esc_attr( wp_unslash( $_POST['email'] ) ) : ''; ?>" /><?php // @codingStandardsIgnoreLine ?>
+			<input type="email" class="woocommerce-Input woocommerce-Input--text input-text" name="email" id="reg_email" autocomplete="email" value="<?php echo ( ! empty( $_POST['email'] ) ) ? esc_attr( wp_unslash( $_POST['email'] ) ) : ''; ?>" />
 		</p>
 
 	<?php if ( 'no' === get_option( 'woocommerce_registration_generate_password' ) ) : ?>
