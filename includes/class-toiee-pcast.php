@@ -25,6 +25,11 @@ class Toiee_Pcast {
 	 */
 	private $plugin_dir_path;
 	/**
+	 * プラグインのURLを格納(with trailing slash)
+	 * @var string $plugin_url
+	 */
+	private $plugin_url;
+	/**
 	 * 閲覧制限時のオーディオファイルを指定
 	 *
 	 * @var string $dummy_audio
@@ -48,6 +53,7 @@ class Toiee_Pcast {
 		$this->file            = $file;
 		$this->feed_slug       = 'pcast';
 		$this->plugin_dir_path = plugin_dir_path( $file );
+		$this->plugin_url      = plugin_dir_url( $file );
 		$this->dummy_audio     = $this->plugin_dir_path . 'images/not-available.m4a';
 
 		$this->add_acf();
@@ -63,6 +69,8 @@ class Toiee_Pcast {
 		if ( is_admin() ) {
 			add_action( 'admin_menu', array( $this, 'toiee_podcast_add_plugin_page' ) );
 		}
+
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_plyer_dot_io_style_and_script' ) );
 
 	}
 
@@ -1185,6 +1193,12 @@ class Toiee_Pcast {
 		if ( isset( $_POST['cmd'] ) && $_POST['cmd'] === 'media-import' ) {
 			check_admin_referer( 'toiee_podcast' );
 
+			if ( in_array( $_POST['restrict'] , array( 'restrict', 'free', 'open' ) ) ) {
+				$restrict_field = $_POST['restrict'];
+			} else {
+				$restrict_field = 'restrict';
+			}
+
 			if ( count( $_POST['media'] ) ) {
 
 				/* 登録先のtaxonomy, term, post_type を取得 */
@@ -1206,7 +1220,7 @@ class Toiee_Pcast {
 						'post_title'   => $attach->post_title,
 						'post_status'  => 'publish',
 						'mime_type'    => $meta['mime_type'],
-						'restrict'     => 'restrict',
+						'restrict'     => $restrict_field,
 						'enclosure'    => $url,
 						'media'        => $media,
 						'duration'     => $meta['length_formatted'],
@@ -1319,6 +1333,20 @@ class Toiee_Pcast {
 						</select>
 						<br>
 						<span class="description"></span>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="my-text-field">閲覧制限</label>
+					</th>
+					<td>
+						<select name="restrict">
+							<option value="open">公開</option>
+							<option value="free" selected="selected">会員無料</option>
+							<option value="restrict">購入者限定</option>
+						</select>
+						<br>
+						<span class="description">スクラム・インプットは「会員無料」です</span>
 					</td>
 				</tr>
 				</tbody>
@@ -1738,5 +1766,11 @@ class Toiee_Pcast {
 		update_term_meta( $series_id, 'pcast_moving_to_id', $term_id );
 
 		return $term_id;
+	}
+
+	public function enqueue_plyer_dot_io_style_and_script() {
+		wp_enqueue_style( 'plyrio', $this->plugin_url . 'assets/plyr.io/plyr.css' );
+		wp_enqueue_script( 'plyrio', $this->plugin_url . 'assets/plyr.io/plyr.js', array(), '3.5.3', true );
+		wp_enqueue_script( 'plyrio-enable', $this->plugin_url . 'assets/plyr-enable.js', array('plyrio'), '1.0', true );
 	}
 }

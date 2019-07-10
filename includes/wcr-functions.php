@@ -102,18 +102,18 @@ function get_popup_login_form( $redirect_url = null ) {
 	// 登録フォームの取得
 	ob_start();
 	?>
-	<h2><?php esc_html_e( 'Register', 'woocommerce' ); ?></h2>
-
-	<form method="post" class="woocommerce-form woocommerce-form-register register">
+	<form method="post" class="uk-form-horizontal">
 
 	<?php do_action( 'woocommerce_register_form_start' ); ?>
 
 	<?php if ( 'no' === get_option( 'woocommerce_registration_generate_username' ) ) : ?>
 
-			<p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
-				<label for="reg_username"><?php esc_html_e( 'Username', 'woocommerce' ); ?>&nbsp;<span class="required">*</span></label>
-				<input type="text" class="woocommerce-Input woocommerce-Input--text input-text" name="username" id="reg_username" autocomplete="username" value="<?php echo ( ! empty( $_POST['username'] ) ) ? esc_attr( wp_unslash( $_POST['username'] ) ) : ''; ?>" /><?php // @codingStandardsIgnoreLine ?>
-			</p>
+		<div class="uk-margin">
+			<label for="reg_username" class="uk-form-label"><?php esc_html_e( 'Username', 'woocommerce' ); ?>&nbsp;<span class="required">*</span></label>
+			<div class="uk-form-controls">
+				<input type="text" class="uk-input" name="username" id="reg_username" autocomplete="username" value="<?php echo ( ! empty( $_POST['username'] ) ) ? esc_attr( wp_unslash( $_POST['username'] ) ) : ''; ?>" /><?php // @codingStandardsIgnoreLine ?>
+			</div>
+		</div>
 
 	<?php endif; ?>
 
@@ -149,15 +149,17 @@ function get_popup_login_form( $redirect_url = null ) {
 <!-- This is the modal -->
 <div id="modal_login_form" uk-modal>
     <div class="uk-modal-dialog uk-modal-body">
-        <h4>会員ログイン</h4>
-        <div class="uk-alert-success" uk-alert><p>無料登録で、ご覧になれます。<br>
-        <a href="#toggle-form" uk-toggle="target: #toggle-form; animation: uk-animation-fade">無料登録はこちらをクリック</a>
-        </p>
-        </div>
-        <div id="toggle-form" hidden class="uk-card uk-card-default uk-card-body uk-margin-small">
-        {$register_form}
-        </div>
-        {$login_form}
+	    <ul uk-tab id="modal_login_form_tab">
+		    <li><a href="#">会員ログイン</a></li>
+		    <li><a href="#">新規登録</a></li>
+		</ul>
+		<ul class="uk-switcher uk-margin">
+		    <li>{$login_form}</li>
+		    <li>
+		        <div class="uk-alert-success" uk-alert>無料登録で、様々なコンテンツをご覧いただけます。</div>
+				{$register_form}
+			</li>
+		</ul>
         <p class="uk-text-right">
             <button class="uk-button uk-button-default uk-modal-close" type="button">閉じる</button>
         </p>
@@ -229,6 +231,59 @@ function the_episode_player( $src, $type = 'video' ) {
 	}
 }
 
+/**
+ * Plyr.io を利用したプレイヤー
+ *
+ * @param $src
+ * @param string $type
+ */
+function the_episode_player_plyr( $src, $type = 'video', $ext = '' ) {
+
+	if ( '' !== $ext ) {
+		$ext = '-' . $ext;
+	}
+
+	if ( 'video' === $type ) {
+		?>
+		<div class="plyr-container-video">
+			<?php
+			if ( preg_match( '|https://player.vimeo.com/external/([0-9]+)|', $src, $matches ) ) {
+				$vid = $matches[1];
+				?>
+				<div class="plyr-player<?php echo $ext; ?>" data-plyr-provider="vimeo"
+				     data-plyr-embed-id="<?php echo esc_attr( $vid ); ?>"></div>
+				<?php
+			} else {
+				/* ビデオのサムネイルが出るので、デフォルトのプレイヤーを使う */
+				echo do_shortcode( '[video src="' . $src . '" /]' );
+			}
+			?>
+		</div>
+		<?php
+	} else {
+/*
+		$pid = attachment_url_to_postid( $src );
+		if ( $pid ) {
+			$mime_type = get_post_mime_type( $pid );
+		} else {
+			$headers = get_headers( $src, 1 );
+			if ( is_array( $headers['Content-Type'] ) ) {
+				$mime_type = $headers['Content-Type'][1];
+			} else {
+				$mime_type = $headers['Content-Type'];
+			}
+		}
+*/
+		?>
+		<div class="plyr-container-audio">
+			<audio class="plyr-player<?php echo $ext; ?>" controls preload="metadata">
+				<source src="<?php echo esc_url( $src ); ?>" />
+			</audio>
+		</div>
+		<?php
+	}
+}
+
 function the_episode_player_dummy( $type = 'video', $message = '閲覧するには、<a href="#" uk-toggle="target: #modal_login_form">ログイン</a>してください' ) {
 	if ( $type == 'video' ) {
 		$img = plugins_url( '/images/na-video.png', dirname( __FILE__ ) );
@@ -271,4 +326,23 @@ function toiee_get_edit_button( $post = null, $echo = true ) {
 
 	return null;
 }
+
+/**
+ * Customize name field properties.
+ *
+ * @param array $properties
+ * @param array $field
+ * @param array $form_data
+ * @return array
+ */
+function toiee_wpf_name_field_properties( $properties, $field, $form_data ) {
+
+	// Change sublabel values
+	$properties['inputs']['first']['sublabel']['value'] = '名(太郎)';
+	$properties['inputs']['middle']['sublabel']['value'] = 'Middle';
+	$properties['inputs']['last']['sublabel']['value'] = '姓(戸井)';
+
+	return $properties;
+}
+add_filter( 'wpforms_field_properties_name' , 'toiee_wpf_name_field_properties', 10, 3 );
 
