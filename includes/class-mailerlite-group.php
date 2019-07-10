@@ -56,7 +56,7 @@ class Toiee_Mailerlite_Group {
 
 			add_action( 'personal_options_update', array( $this, 'update_user' ), 10, 1 );
 			add_action( 'edit_user_profile_update', array( $this, 'update_user' ), 10, 1 );
-			add_action( 'user_register', array( $this, 'update_user' ), 10, 1 ); // ユーザーの作成
+			add_action( 'user_register', array( $this, 'update_user' ), 99, 1 ); // ユーザーの作成
 		}
 	}
 
@@ -192,8 +192,8 @@ class Toiee_Mailerlite_Group {
 
 		// generate data for mailerlite
 		$email  = $user_data->user_email;
-		$name   = $user_meta_data['first_name'][0];
 		$fields = array(
+			'name'      => $user_meta_data['first_name'][0],
 			'last_name' => $user_meta_data['last_name'][0],
 			// 'company'   => $user_meta_data['last_name'][0],
 			'country'   => $user_meta_data['billing_country'][0],
@@ -202,6 +202,14 @@ class Toiee_Mailerlite_Group {
 			'state'     => $user_meta_data['billing_state'][0],
 			'zip'       => $user_meta_data['billing_postcode'][0],
 		);
+
+		if ( '' === $fields['name'] && isset( $_POST['billing_first_name'] ) ) {
+			$fields['name'] = $_POST['billing_first_name'];
+		}
+		if ( '' === $fields['last_name'] && isset( $_POST['billing_last_name'] ) ) {
+			$fields['last_name'] = $_POST['billing_last_name'];
+		}
+
 		// ! apply_filter とか設計したいなー。追加でデータをマッピングできる
 		// user check
 		$subscribersApi = ( new \MailerLiteApi\MailerLite( $this->get_key() ) )->subscribers();
@@ -212,9 +220,8 @@ class Toiee_Mailerlite_Group {
 		}
 
 		if ( isset( $subscriber->error ) ) { // ユーザーがいないなら、登録
-			$subscriber = [
+			$subscriber     = [
 				'email'  => $email,
-				'name'   => $name,
 				'fields' => $fields,
 			];
 
@@ -227,7 +234,10 @@ class Toiee_Mailerlite_Group {
 					'resubscribe'    => true,
 					'autoresponders' => true, // send autoresponders for successfully imported subscribers
 				];
-				$addedSubscriber = $groupsApi->importSubscribers( $group_id, $subscriber, $options );
+
+				$subscribers     = array();
+				$subscribers[]   = $subscriber;
+				$addedSubscriber = $groupsApi->importSubscribers( $group_id, $subscribers, $options );
 			} else {
 				$addedSubscriber = $subscribersApi->create( $subscriber );
 			}
@@ -237,7 +247,6 @@ class Toiee_Mailerlite_Group {
 
 			 $subscriberEmail = $email;
 			 $subscriberData  = [
-				 'name'   => $name,
 				 'fields' => $fields,
 			 ];
 
