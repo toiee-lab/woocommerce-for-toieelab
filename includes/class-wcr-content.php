@@ -389,6 +389,11 @@ EOD;
 				case 'product':  // その他は商品としてチェックする
 				default:
 					$product      = wc_get_product( $i );
+
+					if ( false === $product ) {
+						return false;
+					}
+
 					$product_type = $product->get_type();
 
 					// subscription
