@@ -5,7 +5,7 @@
  * Plugin URI: http://toiee.jp
  * Description: WooCommerceの商品と商品をまとめるデータと連動して、コンテンツの閲覧制限、Seriously Simple Podcastの閲覧制限・機能拡張、ユーザー固有のフィードURL生成、マイライブラリ機能、ショートコードなどを実装
  * Author: toiee Lab
- * Version: 3.4
+ * Version: 3.5
  * Author URI: http://toiee.jp
  */
 
@@ -168,6 +168,12 @@ if ( $wcr_content->get_func_option( 'mdy' ) ) {
 	$toiee_mimidemy = new Toiee_Mimidemy_Post( __FILE__ );
 }
 
+/* カメデミー機能を追加する */
+if ( $wcr_content->get_func_option( 'kdy' ) ) {
+	require_once 'includes/class-kdy-post.php';
+	global $toiee_kdy;
+	$toiee_kdy = new Toiee_Kdy_Post( __FILE__ );
+}
 
 /* JetPack を WooCommerce Productページでは実行しない */
 function exclude_jetpack_related_from_products( $options ) {

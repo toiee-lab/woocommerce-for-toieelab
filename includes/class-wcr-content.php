@@ -876,6 +876,11 @@ here is contents
 				'desc'  => 'ポケてら、耳デミーに変わる新しい教材機能です。',
 				'init'  => false,
 			],
+			'kdy'        => [
+				'title' => 'Kamedemy機能',
+				'desc'  => 'Kamedemyのための機能。単にPodcast、Web視聴のもの',
+				'init'  => false,
+			],
 			'event'      => [
 				'title' => 'シンプルイベント機能',
 				'desc'  => 'シンプルなイベント機能です。イベントの申し込みなどは、外部サイトを想定しています。',
@@ -894,8 +899,8 @@ here is contents
 
 		];
 
-		$this->func_options['depend_pcast'] = [ 'mdy', 'pkt', 'scrum', 'tlm' ];
-		$this->func_options['rewrite']      = [ 'mylib', 'mag', 'mdy', 'pkt', 'scrum', 'event', 'rlogin', 'ssp', 'tlm' ];
+		$this->func_options['depend_pcast'] = [ 'mdy', 'pkt', 'scrum', 'tlm', 'kdy' ];
+		$this->func_options['rewrite']      = [ 'mylib', 'mag', 'mdy', 'pkt', 'scrum', 'event', 'rlogin', 'ssp', 'tlm', 'kdy' ];
 	}
 
 	/**
