@@ -1041,7 +1041,8 @@ class Toiee_Pcast {
 
 					$post_title      = $v['name'];
 					$att['media']    = 'video';
-					$att['restrict'] = 'restrict';
+					/* restrict という名前が、チャンネルと重複しており、予期せぬ動作をするので、 field key で登録 */
+					$att['field_5cabc2922632b'] = 'restrict';
 					$att['duration'] = sprintf( '%02d:%02d:%02d', floor( $v['duration'] / 3600 ), floor( ( $v['duration'] / 60 ) % 60 ), $v['duration'] % 60 );
 					foreach ( $v['files'] as $d ) {
 						if ( 'hd' === $d['quality'] ) {
@@ -1301,8 +1302,12 @@ class Toiee_Pcast {
 					$post_id = wp_insert_post( $args );
 
 					if ( $post_id ) {
-						foreach ( array( 'restrict', 'enclosure', 'media', 'duration', 'length' ) as $k ) {
-							update_field( $k, $p[ $k ], $post_id );
+						/* restrict という名前が、チャンネルと重複しており、予期せぬ動作をするので、 field key で登録 */
+						foreach ( array( 'field_5cabc2922632b' => 'restrict', 'enclosure', 'media', 'duration', 'length' ) as $selector => $name ) {
+							if ( is_numeric( $selector ) ) {
+								$selector = $name;
+							}
+							update_field( $selector, $p[ $name ], $post_id );
 						}
 					}
 				}
