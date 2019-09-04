@@ -25,7 +25,118 @@ add_shortcode(
 	}
 );
 
- // ! 商品プレビューを出すためのショートコード（二回め！）
+
+add_shortcode(
+	'toiee_pcast_preview',
+	function ( $atts, $content = null ) {
+
+		$atts = shortcode_atts(
+			array(
+				'tax'  => '',
+				'term' => '',
+
+			),
+			$atts,
+			'toiee_pcast_preview'
+		);
+
+		global $toiee_pcast;
+		$relations = $toiee_pcast->toiee_pcast_relations();
+
+		if ( ! isset( $relations[ $atts['tax'] ] ) ) {
+			return '<p>invalid tax</p>';
+		}
+
+		$tax   = $atts['tax'];
+		$term  = $atts['term'];
+		$ptype = $relations[ $tax ];
+
+		if ( is_numeric( $term ) ) {
+			$term_obj = get_term_by( 'id', $term, $tax, ARRAY_A );
+		} else {
+			$term_obj = get_term_by( 'slug', $term, $tax, ARRAY_A );
+			if ( is_wp_error( $term ) ) {
+				$term_obj = get_term_by( 'name', $term, $tax, ARRAY_A );
+			}
+		}
+
+		if ( is_wp_error( $term ) ) {
+			return '<p>not found term</p>';
+		}
+
+
+		// get posts form term-tax.
+		$posts = get_posts(
+			array(
+				'post_type'      => $ptype,
+				'posts_per_page' => -1,
+				'order'          => 'ASC',
+				'post_status'    => 'publish',
+				'tax_query'      => array(
+					array(
+						'taxonomy' => $tax,
+						'field'    => 'term_id',
+						'terms'    => $term_obj['term_id'],
+					),
+				),
+			)
+		);
+
+		// display
+		$user_logged_in              = is_user_logged_in();
+		$the_episode_player_plyr_ext = 'scrum_episode';
+		
+		ob_start();
+
+		global $post;
+		foreach ( $posts as $post ) {
+			setup_postdata( $post );
+
+			the_title( '<h2 class="uk-h3">', '</h2>' );
+
+			$src   = get_field( 'enclosure' );
+			$media = get_field( 'media' );
+
+			$restrict = get_field( 'restrict' );
+			if ( $restrict === true ) {
+				$restrict = 'restrict';
+			} else if ( $restrict === false ) {
+				$restrict = 'open';
+			}
+
+			switch ( $restrict ) {
+				case 'open':
+					the_episode_player_plyr( $src, $media, $the_episode_player_plyr_ext );
+					break;
+				case 'free':
+					if ( $user_logged_in ) {
+						the_episode_player_plyr( $src, $media, $the_episode_player_plyr_ext );
+						break;
+					}
+				default: /* restrict */
+					the_episode_player_dummy( $media );
+					break;
+			}
+?>
+			<hr>
+<?php
+		}
+		wp_reset_postdata();
+
+		$output = ob_get_contents();
+		ob_end_clean();
+
+		return $output;
+	}
+);
+
+
+
+ /*
+  *  商品プレビューを出すためのショートコード（二回め！）
+  *  これは古い（Seriously Simple Podcast）のためのもの
+  *
+  */
 add_shortcode(
 	'toiee_preview_list',
 	function ( $atts, $content = null ) {
