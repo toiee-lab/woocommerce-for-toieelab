@@ -345,3 +345,21 @@ function toiee_wpf_name_field_properties( $properties, $field, $form_data ) {
 }
 add_filter( 'wpforms_field_properties_name' , 'toiee_wpf_name_field_properties', 10, 3 );
 
+function toiee_in_categories( $category_slug ) {
+
+	if ( in_category( $category_slug ) ) {
+		return true;
+	}
+
+	$cat_check   = get_term_by( 'slug', $category_slug, 'category' );
+
+	if ( $cat_check ) {
+		$cid         = $cat_check->term_id;
+		$descendants = get_term_children( $cid, 'category' );
+		if ( $descendants && in_category( $descendants ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}

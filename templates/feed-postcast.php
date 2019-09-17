@@ -1,6 +1,7 @@
 <?php
 /**
- * ユーザーを認証して出力を制御する
+ * ユーザーを認証して出力を制御する。
+ * Postを教材にしているものを使います
  *
  */
 
@@ -10,25 +11,24 @@ echo '<?xml version="1.0" encoding="' . get_option( 'blog_charset' ) . '"?' . '>
 ?>
 <rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
 <?php
-$channel_obj            = get_queried_object();
-$channel                = get_fields( $channel_obj );
-$channel['id']          = $channel_obj->term_id;
-$channel['url']         = get_term_link( $channel_obj );
-$channel['title']       = $channel_obj->name;
-$channel['description'] = $channel_obj->description;
+$fields                 = get_fields();
+$channel                = $fields['tlm_channel'];
+$channel['url']         = get_permalink();
+$channel['title']       = get_the_title();
+$channel['description'] = get_the_content();
 
 /* ユーザーを識別するトークンを使ってユーザーを検索し、アクセス制限を設定する */
-
 global $wcr_content;
+
 $add_user_message       = '';
 $add_user_message_email = '';
-$is_user = false;
+$is_user                = false;
 
 /* このチャンネルのアクセス制限を調べる */
 if ( true === $channel['restrict'] ) {
 	$has_access = false;
+	$token      = $wp_query->query_vars['postcast'];
 
-	$token = get_query_var( 'wcrtoken', '' );
 	if ( '' !== $token ) {
 		$user_query = get_users(
 			[
@@ -50,11 +50,18 @@ if ( true === $channel['restrict'] ) {
 			$add_user_message_email = ' (for ' . $uemail . ')';
 
 			$has_access = $wcr_content->check_access( $channel['restrict_product'], $user_id );
+
+			wp_set_current_user( $user_id );
+			if ( current_user_can( 'edit_post' ) ) {
+				$has_access = true;
+			}
 		}
 	}
 } else {
 	$has_access = true;
 }
+
+
 
 /* カテゴリ */
 $pcat    = explode( '&gt;', $channel['category'] );
@@ -71,47 +78,15 @@ $explicit = ( $channel['explicit'] ) ? 'yes' : 'no';
 /* block */
 $block = ( $channel['block'] ) ? 'yes' : 'no';
 
+$guid = get_the_guid();
+
 /* dummy audio */
 global $toiee_pcast;
 $dummy_audio = $toiee_pcast->get_dummy_audio();
 
-$elements = array();
-while ( have_posts() ) {
-	the_post();
-	$p = get_post();
-
-	$ptype = $p->post_type;
-	if ( ! isset( $elements[ $ptype ] ) ) {
-		$elements[ $ptype ] = array();
-	}
-
-	$elements[ $ptype ][] = $p;
-}
-
-/*
- *  基準の時刻を設定する.
- *
- * アーカイブの一番古い投稿を基準として、インプット、ワークの日付を決める。
- * もし、アーカイブがないなら、ワークか、インプットの一番新しいものを基準とする。
- *
- * 以下は、日付順にデータが送られてきていることを想定する。
- * つまり、先頭が「新しい」、最後が一番「古い」ことを想定している。
- */
-if ( isset( $elements['tlm_archive'] ) ) {
-	$oldest_arc = end( $elements['tlm_archive'] );
-	reset( $elements['tlm_archive'] );
-
-	$base_time = strtotime( $oldest_arc->post_date );
-} else {
-	$latest_in = isset( $elements['tlm_in'] ) ? strtotime( $elements['tlm_in'][0]->post_date ) : time();
-	$latest_ws = isset( $elements['tlm_ws'] ) ? strtotime( $elements['tlm_ws'][0]->post_date ) : time();
-
-	$base_time = $latest_in > $latest_ws ? $latest_in : $latest_ws;
-}
-
 ?>
 	<channel>
-		<title>スクラム教材 <?php echo esc_html( $channel['title'] ); ?></title>
+		<title><?php echo esc_html( $channel['title'] ); ?></title>
 		<link><?php echo esc_url( $channel['url'] ); ?></link>
 		<language><?php echo esc_html( $channel['language'] ); ?></language>
 		<copyright><?php echo date('Y'); ?> <?php echo esc_html( $channel['copyright'] ); ?></copyright>
@@ -128,7 +103,7 @@ if ( isset( $elements['tlm_archive'] ) ) {
 			<itunes:email><?php echo esc_html( $channel['owner_email'] ); ?></itunes:email>
 		</itunes:owner>
 
-		<itunes:image href="<?php echo esc_url( $channel['image'] ); ?>" />
+		<itunes:image href="<?php echo esc_url( $channel['artwork'] ); ?>" />
 
 		<itunes:category text="<?php echo esc_html( $pcat[0] ); ?>">
 			<itunes:category text="<?php echo esc_html( $pcat[1] ); ?>"/>
@@ -138,30 +113,13 @@ if ( isset( $elements['tlm_archive'] ) ) {
 
 <?php
 
-global $post;
-$post_types = array(
-	'tlm_archive' => 'アーカイブ',
-	'tlm_ws'      => 'ワーク',
-	'tlm_in'      => 'インプット',
-);
+		$items     = $fields['tlm_items'];
+		$cnt       = 0;
+		$base_time = get_the_time( 'U' ) - ( 3600 * count($items) );
 
-foreach ( $post_types as $key => $label ) {
-	if ( isset( $elements[ $key ] ) ) {
-		/* 各投稿タイプのルール */
-		foreach ( $elements[ $key ] as $post ) {
-			setup_postdata( $post );
-
-			/* アーカイブの日付は、そのまま使う */
-			if ( 'tlm_archive' === $key ) {
-				$pubdate = date( 'r', get_the_time( 'U' ) );
-			} else {
-				$base_time -= 3600;
-				$pubdate = date( 'r', $base_time );
-			}
+		foreach ( $items as $atts ) :
 
 			$post_url = get_permalink();
-
-			$atts = get_fields();
 
 			$content_a = explode( '--toiee-transcribe--', get_the_content() );
 			$content   = '<a href="' . $post_url . '">詳細はこちら</a> ' . strip_shortcodes( $content_a[0] );
@@ -179,8 +137,12 @@ foreach ( $post_types as $key => $label ) {
 						break;
 				}
 			}
+
 			$explicit = $atts['explicit'] ? 'yes' : 'no';
-			$guid     = get_the_guid() . '-' . $token;
+			$guid     = get_the_guid() . '-' . $token . '-' . $cnt;
+
+			$pubdate = date( 'r', $base_time );
+			$base_time += 3600;
 
 			/* ユーザー認証 */
 			$title_prefix = '';
@@ -213,26 +175,23 @@ foreach ( $post_types as $key => $label ) {
 			} else {
 				$block = 'yes';
 			}
-
 			?>
 			<item>
-				<title><?php the_title( $title_prefix, '' ); ?></title>
+				<title><?php echo esc_html( $atts['title'] ); ?></title>
 				<itunes:author><?php echo esc_html( $channel['author'] ); ?></itunes:author>
 				<itunes:subtitle><?php echo esc_html( $atts['subtitle'] ); ?></itunes:subtitle>
-				<itunes:summary><![CDATA[<?php echo wp_strip_all_tags( $content ); ?>]]></itunes:summary>
-				<itunes:description><![CDATA[<?php echo strip_tags( $content, '<p><ol><ul><a><strong><em>' ); ?>]]></itunes:description>
+				<itunes:summary><![CDATA[<?php echo wp_strip_all_tags( $atts['note'] ); ?>]]></itunes:summary>
+				<itunes:description><![CDATA[<?php echo strip_tags( $atts['note'], '<p><ol><ul><a><strong><em>' ); ?>]]></itunes:description>
 				<enclosure length="<?php echo esc_html( $atts['length'] ); ?>" type="<?php echo esc_html( $etype ); ?>" url="<?php echo esc_html( $atts['enclosure'] ); ?>"/>
 				<guid><?php echo $guid; ?></guid>
 				<pubDate><?php echo esc_html( $pubdate ); ?></pubDate>
 				<itunes:duration><?php echo esc_html( $atts['duration'] ); ?></itunes:duration>
 				<itunes:explicit><?php echo esc_html( $explicit ); ?></itunes:explicit>
-				<itunes:block><?php esc_html( $block ); ?></itunes:block>
+				<itunes:block><?php echo esc_html( $block ); ?></itunes:block>
 			</item>
 
-			<?php
-		}
-	}
-}
-?>
+<?php
+		endforeach;
+		?>
 	</channel>
 </rss>
