@@ -7,6 +7,8 @@ class Toiee_Postcast {
 
 	private $plugin_dir;
 
+	public $top_categories;
+
 	public function __construct( $file ) {
 		$plugin_dir       = plugin_dir_path( $file );
 		$this->plugin_dir = $plugin_dir;
@@ -19,6 +21,50 @@ class Toiee_Postcast {
 		add_action( 'init', array( $this, 'add_endpoint') );
 		add_action( 'template_redirect', array( $this, 'postcast_template_redirect' ) );
 
+		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter' ) );
+
+		$this->top_categories = [
+			'workshop-archive', /* ワークショップ・アーカイブのカテゴリスラッグを workshop-archive と想定 */
+			'lft',              /* ワークショップ・レジュメのカテゴリスラッグを lft と想定 */
+			'mimidemy',         /* 耳デミーのカテゴリスラッグを mimidemy と想定 */
+			'kamedemy',         /* かめデミーのカテゴリスラッグを kamedemy と想定 */
+		];
+
+		/* 教材カテゴリの場合、カテゴリとつけないようにする */
+		add_filter( 'get_the_archive_title', array($this, 'archive_title') );
+
+		/* 教材カテゴリの場合、ワークショップ・アーカイブのテンプレートを読み込む　*/
+		add_filter( 'template_include', array( $this, 'workshop_archive_template') , 99 );
+
+	}
+
+	public function pre_get_posts_filter( $query ) {
+		if ( is_admin() || ! $query->is_main_query() )
+			return;
+
+		if ( $query->is_main_query() && is_category( $this->top_categories ) ) {
+			$query->set( 'posts_per_page', -1 );
+			return;
+		}
+
+	}
+
+	public function archive_title($title) {
+		if (is_category( $this->top_categories ) ) {
+			$title = single_cat_title('',false);
+		}
+		return $title;
+	}
+
+	public function workshop_archive_template( $template ) {
+		if (is_category( $this->top_categories ) ) {
+			$new_template = locate_template( array( 'category-workshop-archive.php' ) );
+			if ( !empty( $new_template ) ) {
+				return $new_template;
+			}
+		}
+
+		return $template;
 	}
 
 	function add_acf() {
@@ -691,6 +737,90 @@ class Toiee_Postcast {
 							'param' => 'post_type',
 							'operator' => '==',
 							'value' => 'post',
+						),
+					),
+				),
+				'menu_order' => 0,
+				'position' => 'normal',
+				'style' => 'default',
+				'label_placement' => 'top',
+				'instruction_placement' => 'label',
+				'hide_on_screen' => '',
+				'active' => true,
+				'description' => '',
+			));
+
+
+
+			acf_add_local_field_group(array(
+				'key' => 'group_5d8465ecbba39',
+				'title' => 'カテゴリーヘッダー設定',
+				'fields' => array(
+					array(
+						'key' => 'field_5d8467ea7bc18',
+						'label' => '背景画像',
+						'name' => 'bg_image',
+						'type' => 'image',
+						'instructions' => 'バックグランド画像を指定できます',
+						'required' => 0,
+						'conditional_logic' => 0,
+						'wrapper' => array(
+							'width' => '',
+							'class' => '',
+							'id' => '',
+						),
+						'return_format' => 'url',
+						'preview_size' => 'medium',
+						'library' => 'all',
+						'min_width' => 1000,
+						'min_height' => '',
+						'min_size' => '',
+						'max_width' => '',
+						'max_height' => '',
+						'max_size' => '',
+						'mime_types' => 'jpeg,jpg,png,gif',
+					),
+					array(
+						'key' => 'field_5d8468397bc19',
+						'label' => '文字色',
+						'name' => 'font_color',
+						'type' => 'color_picker',
+						'instructions' => 'タイトルの文字色',
+						'required' => 0,
+						'conditional_logic' => 0,
+						'wrapper' => array(
+							'width' => '',
+							'class' => '',
+							'id' => '',
+						),
+						'default_value' => '#ffffff',
+					),
+					array(
+						'key' => 'field_5d846b61ef897',
+						'label' => 'サブタイトル',
+						'name' => 'cat_subtitle',
+						'type' => 'text',
+						'instructions' => 'ヘッダー文字の直後に入る「サブタイトル」です',
+						'required' => 0,
+						'conditional_logic' => 0,
+						'wrapper' => array(
+							'width' => '',
+							'class' => '',
+							'id' => '',
+						),
+						'default_value' => '',
+						'placeholder' => '',
+						'prepend' => '',
+						'append' => '',
+						'maxlength' => '',
+					),
+				),
+				'location' => array(
+					array(
+						array(
+							'param' => 'taxonomy',
+							'operator' => '==',
+							'value' => 'category',
 						),
 					),
 				),

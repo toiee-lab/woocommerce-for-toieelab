@@ -1,0 +1,83 @@
+[
+    {
+        "key": "group_5d8465ecbba39",
+        "title": "カテゴリーヘッダー設定",
+        "fields": [
+            {
+                "key": "field_5d8467ea7bc18",
+                "label": "背景画像",
+                "name": "bg_image",
+                "type": "image",
+                "instructions": "バックグランド画像を指定できます",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "return_format": "url",
+                "preview_size": "medium",
+                "library": "all",
+                "min_width": 1000,
+                "min_height": "",
+                "min_size": "",
+                "max_width": "",
+                "max_height": "",
+                "max_size": "",
+                "mime_types": "jpeg,jpg,png,gif"
+            },
+            {
+                "key": "field_5d8468397bc19",
+                "label": "文字色",
+                "name": "font_color",
+                "type": "color_picker",
+                "instructions": "タイトルの文字色",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "#ffffff"
+            },
+            {
+                "key": "field_5d846b61ef897",
+                "label": "サブタイトル",
+                "name": "cat_subtitle",
+                "type": "text",
+                "instructions": "ヘッダー文字の直後に入る「サブタイトル」です",
+                "required": 0,
+                "conditional_logic": 0,
+                "wrapper": {
+                    "width": "",
+                    "class": "",
+                    "id": ""
+                },
+                "default_value": "",
+                "placeholder": "",
+                "prepend": "",
+                "append": "",
+                "maxlength": ""
+            }
+        ],
+        "location": [
+            [
+                {
+                    "param": "taxonomy",
+                    "operator": "==",
+                    "value": "category"
+                }
+            ]
+        ],
+        "menu_order": 0,
+        "position": "normal",
+        "style": "default",
+        "label_placement": "top",
+        "instruction_placement": "label",
+        "hide_on_screen": "",
+        "active": true,
+        "description": ""
+    }
+]
