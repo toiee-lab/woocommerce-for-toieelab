@@ -220,7 +220,7 @@ class Toiee_Mailerlite_Group {
 		}
 
 		if ( isset( $subscriber->error ) ) { // ユーザーがいないなら、登録
-			$subscriber     = [
+			$subscriber = [
 				'email'  => $email,
 				'fields' => $fields,
 			];
@@ -230,7 +230,7 @@ class Toiee_Mailerlite_Group {
 				$MailerLiteApi = ( new \MailerLiteApi\MailerLite( $this->get_key() ) );
 				$groupsApi     = $MailerLiteApi->groups();
 				// グループに登録
-				$options         = [
+				$options = [
 					'resubscribe'    => true,
 					'autoresponders' => true, // send autoresponders for successfully imported subscribers
 				];

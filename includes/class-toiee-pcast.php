@@ -26,6 +26,7 @@ class Toiee_Pcast {
 	private $plugin_dir_path;
 	/**
 	 * プラグインのURLを格納(with trailing slash)
+	 *
 	 * @var string $plugin_url
 	 */
 	private $plugin_url;
@@ -744,44 +745,46 @@ class Toiee_Pcast {
 				)
 			);
 
-			acf_add_local_field_group(array(
-				'key' => 'group_5d1ead902d5a6',
-				'title' => 'オーディオブック',
-				'fields' => array(
-					array(
-						'key' => 'field_5d1ead995cc23',
-						'label' => 'オーディオブック',
-						'name' => 'audiobook',
-						'type' => 'file',
-						'instructions' => 'オーディオブックを指定してください（m4b）',
-						'required' => 0,
-						'conditional_logic' => 0,
-						'wrapper' => array(
-							'width' => '',
-							'class' => '',
-							'id' => '',
+			acf_add_local_field_group(
+				array(
+					'key'                   => 'group_5d1ead902d5a6',
+					'title'                 => 'オーディオブック',
+					'fields'                => array(
+						array(
+							'key'                => 'field_5d1ead995cc23',
+							'label'              => 'オーディオブック',
+							'name'               => 'audiobook',
+							'type'               => 'file',
+							'instructions'       => 'オーディオブックを指定してください（m4b）',
+							'required'           => 0,
+							'conditional_logic'  => 0,
+							'wrapper'            => array(
+								'width' => '',
+								'class' => '',
+								'id'    => '',
+							),
+							'return_format'      => 'url',
+							'library'            => 'all',
+							'min_size'           => '',
+							'max_size'           => '',
+							'mime_types'         => 'm4b',
+							'show_column'        => 0,
+							'show_column_weight' => 1000,
+							'allow_quickedit'    => 0,
+							'allow_bulkedit'     => 0,
 						),
-						'return_format' => 'url',
-						'library' => 'all',
-						'min_size' => '',
-						'max_size' => '',
-						'mime_types' => 'm4b',
-						'show_column' => 0,
-						'show_column_weight' => 1000,
-						'allow_quickedit' => 0,
-						'allow_bulkedit' => 0,
 					),
-				),
-				'location' => $pcast_tax_location,
-				'menu_order' => 0,
-				'position' => 'normal',
-				'style' => 'default',
-				'label_placement' => 'top',
-				'instruction_placement' => 'label',
-				'hide_on_screen' => '',
-				'active' => true,
-				'description' => '',
-			));
+					'location'              => $pcast_tax_location,
+					'menu_order'            => 0,
+					'position'              => 'normal',
+					'style'                 => 'default',
+					'label_placement'       => 'top',
+					'instruction_placement' => 'label',
+					'hide_on_screen'        => '',
+					'active'                => true,
+					'description'           => '',
+				)
+			);
 
 		endif;
 	}
@@ -1055,11 +1058,11 @@ class Toiee_Pcast {
 					$time += 60;
 					$att   = array();
 
-					$post_title      = $v['name'];
-					$att['media']    = 'video';
+					$post_title   = $v['name'];
+					$att['media'] = 'video';
 					/* restrict という名前が、チャンネルと重複しており、予期せぬ動作をするので、 field key で登録 */
 					$att['field_5cabc2922632b'] = 'restrict';
-					$att['duration'] = sprintf( '%02d:%02d:%02d', floor( $v['duration'] / 3600 ), floor( ( $v['duration'] / 60 ) % 60 ), $v['duration'] % 60 );
+					$att['duration']            = sprintf( '%02d:%02d:%02d', floor( $v['duration'] / 3600 ), floor( ( $v['duration'] / 60 ) % 60 ), $v['duration'] % 60 );
 					foreach ( $v['files'] as $d ) {
 						if ( 'hd' === $d['quality'] ) {
 							$link             = preg_replace( '/&oauth2_token_id=([0-9]+)/', '', $d['link'] ) . '&download=1';
@@ -1250,7 +1253,7 @@ class Toiee_Pcast {
 		if ( isset( $_POST['cmd'] ) && $_POST['cmd'] === 'media-import' ) {
 			check_admin_referer( 'toiee_podcast' );
 
-			if ( in_array( $_POST['restrict'] , array( 'restrict', 'free', 'open' ) ) ) {
+			if ( in_array( $_POST['restrict'], array( 'restrict', 'free', 'open' ) ) ) {
 				$restrict_field = $_POST['restrict'];
 			} else {
 				$restrict_field = 'restrict';
@@ -1319,7 +1322,13 @@ class Toiee_Pcast {
 
 					if ( $post_id ) {
 						/* restrict という名前が、チャンネルと重複しており、予期せぬ動作をするので、 field key で登録 */
-						foreach ( array( 'field_5cabc2922632b' => 'restrict', 'enclosure', 'media', 'duration', 'length' ) as $selector => $name ) {
+						foreach ( array(
+							'field_5cabc2922632b' => 'restrict',
+							'enclosure',
+							'media',
+							'duration',
+							'length',
+						) as $selector => $name ) {
 							if ( is_numeric( $selector ) ) {
 								$selector = $name;
 							}
@@ -1832,6 +1841,6 @@ class Toiee_Pcast {
 	public function enqueue_plyer_dot_io_style_and_script() {
 		wp_enqueue_style( 'plyrio', $this->plugin_url . 'assets/plyr.io/plyr.css' );
 		wp_enqueue_script( 'plyrio', $this->plugin_url . 'assets/plyr.io/plyr.js', array(), '3.5.3', true );
-		wp_enqueue_script( 'plyrio-enable', $this->plugin_url . 'assets/plyr-enable.js', array('plyrio'), '1.0', true );
+		wp_enqueue_script( 'plyrio-enable', $this->plugin_url . 'assets/plyr-enable.js', array( 'plyrio' ), '1.0', true );
 	}
 }

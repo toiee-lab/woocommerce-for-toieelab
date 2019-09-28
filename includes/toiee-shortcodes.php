@@ -64,7 +64,6 @@ add_shortcode(
 			return '<p>not found term</p>';
 		}
 
-
 		// get posts form term-tax.
 		$posts = get_posts(
 			array(
@@ -85,7 +84,7 @@ add_shortcode(
 		// display
 		$user_logged_in              = is_user_logged_in();
 		$the_episode_player_plyr_ext = 'scrum_episode';
-		
+
 		ob_start();
 
 		global $post;
@@ -100,7 +99,7 @@ add_shortcode(
 			$restrict = get_field( 'restrict' );
 			if ( $restrict === true ) {
 				$restrict = 'restrict';
-			} else if ( $restrict === false ) {
+			} elseif ( $restrict === false ) {
 				$restrict = 'open';
 			}
 
@@ -117,9 +116,9 @@ add_shortcode(
 					the_episode_player_dummy( $media );
 					break;
 			}
-?>
+			?>
 			<hr>
-<?php
+			<?php
 		}
 		wp_reset_postdata();
 

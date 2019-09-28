@@ -2,12 +2,11 @@
 /**
  * ユーザーを認証して出力を制御する。
  * Postを教材にしているものを使います
- *
  */
 
-header('Content-Type: '.feed_content_type('rss-http').'; charset='.get_option('blog_charset'), true);
+header( 'Content-Type: ' . feed_content_type( 'rss-http' ) . '; charset=' . get_option( 'blog_charset' ), true );
 echo '<?xml version="1.0" encoding="' . get_option( 'blog_charset' ) . '"?' . '>' . "\n";
-//header( 'Content-Type: text/plain; charset=utf8' );
+// header( 'Content-Type: text/plain; charset=utf8' );
 ?>
 <rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
 <?php
@@ -89,7 +88,7 @@ $dummy_audio = $toiee_pcast->get_dummy_audio();
 		<title><?php echo esc_html( $channel['title'] ); ?></title>
 		<link><?php echo esc_url( $channel['url'] ); ?></link>
 		<language><?php echo esc_html( $channel['language'] ); ?></language>
-		<copyright><?php echo date('Y'); ?> <?php echo esc_html( $channel['copyright'] ); ?></copyright>
+		<copyright><?php echo date( 'Y' ); ?> <?php echo esc_html( $channel['copyright'] ); ?></copyright>
 
 		<itunes:subtitle><?php echo esc_html( $channel['subtitle'] ); ?></itunes:subtitle>
 		<itunes:author><?php echo esc_html( $channel['author'] ); ?></itunes:author>
@@ -115,67 +114,67 @@ $dummy_audio = $toiee_pcast->get_dummy_audio();
 
 		$items     = $fields['tlm_items'];
 		$cnt       = 0;
-		$base_time = get_the_time( 'U' ) - ( 3600 * count($items) );
+		$base_time = get_the_time( 'U' ) - ( 3600 * count( $items ) );
 
-		foreach ( $items as $atts ) :
+foreach ( $items as $atts ) :
 
-			$post_url = get_permalink();
+	$post_url = get_permalink();
 
-			$content_a = explode( '--toiee-transcribe--', get_the_content() );
-			$content   = '<a href="' . $post_url . '">詳細はこちら</a> ' . strip_shortcodes( $content_a[0] );
-			$etype     = get_post_meta( get_the_author_posts(), 'enclosure_type', true );
-			if ( '' === $etype ) {
-				switch ( $atts['media'] ) {
-					case 'audio':
-						$etype = 'audio/mpeg';
-						break;
-					case 'video':
-						$etype = 'video/mp4';
-						break;
-					case 'pdf':
-						$etype = 'application/pdf';
-						break;
+	$content_a = explode( '--toiee-transcribe--', get_the_content() );
+	$content   = '<a href="' . $post_url . '">詳細はこちら</a> ' . strip_shortcodes( $content_a[0] );
+	$etype     = get_post_meta( get_the_author_posts(), 'enclosure_type', true );
+	if ( '' === $etype ) {
+		switch ( $atts['media'] ) {
+			case 'audio':
+				$etype = 'audio/mpeg';
+				break;
+			case 'video':
+				$etype = 'video/mp4';
+				break;
+			case 'pdf':
+				$etype = 'application/pdf';
+				break;
+		}
+	}
+
+	$explicit = $atts['explicit'] ? 'yes' : 'no';
+	$guid     = get_the_guid() . '-' . $token . '-' . $cnt;
+
+	$pubdate    = date( 'r', $base_time );
+	$base_time += 3600;
+
+	/* ユーザー認証 */
+	$title_prefix = '';
+	$restrict     = get_field( 'restrict' );
+	if ( $restrict === true ) {
+		$restrict = 'restrict';
+	} elseif ( $restrict === false ) {
+		$restrict = 'open';
+	}
+
+	if ( false === $has_access ) {
+		switch ( $restrict ) {
+			case 'open':
+				break;
+			case 'free':
+				if ( $is_user ) {
+					break;
 				}
-			}
+			default: /* restrict */
+				$atts['enclosure'] = $dummy_audio;
+				$etype             = 'audio/mpeg';
+				$title_prefix      = $toiee_pcast->get_restrcit_message();
+				break;
+		}
+	}
 
-			$explicit = $atts['explicit'] ? 'yes' : 'no';
-			$guid     = get_the_guid() . '-' . $token . '-' . $cnt;
-
-			$pubdate = date( 'r', $base_time );
-			$base_time += 3600;
-
-			/* ユーザー認証 */
-			$title_prefix = '';
-			$restrict     = get_field( 'restrict' );
-			if ( $restrict === true ) {
-				$restrict = 'restrict';
-			} else if ( $restrict === false ) {
-				$restrict = 'open';
-			}
-
-			if ( false === $has_access ) {
-				switch ( $restrict ) {
-					case 'open':
-						break;
-					case 'free':
-						if ( $is_user ) {
-							break;
-						}
-					default: /* restrict */
-						$atts['enclosure'] = $dummy_audio;
-						$etype             = 'audio/mpeg';
-						$title_prefix      = $toiee_pcast->get_restrcit_message();
-						break;
-				}
-			}
-
-			/* block */
-			if ( 'open' === $restrict ) {
-				$block = 'no';
-			} else {
-				$block = 'yes';
-			}
-			?>
+	/* block */
+	if ( 'open' === $restrict ) {
+		$block = 'no';
+	} else {
+		$block = 'yes';
+	}
+	?>
 			<item>
 				<title><?php echo esc_html( $atts['title'] ); ?></title>
 				<itunes:author><?php echo esc_html( $channel['author'] ); ?></itunes:author>
@@ -190,8 +189,8 @@ $dummy_audio = $toiee_pcast->get_dummy_audio();
 				<itunes:block><?php echo esc_html( $block ); ?></itunes:block>
 			</item>
 
-<?php
+	<?php
 		endforeach;
-		?>
+?>
 	</channel>
 </rss>

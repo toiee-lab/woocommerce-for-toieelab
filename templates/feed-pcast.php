@@ -1,12 +1,11 @@
 <?php
 /**
  * ユーザーを認証して出力を制御する
- *
  */
 
-header('Content-Type: '.feed_content_type('rss-http').'; charset='.get_option('blog_charset'), true);
+header( 'Content-Type: ' . feed_content_type( 'rss-http' ) . '; charset=' . get_option( 'blog_charset' ), true );
 echo '<?xml version="1.0" encoding="' . get_option( 'blog_charset' ) . '"?' . '>' . "\n";
-//header( 'Content-Type: text/plain; charset=utf8' );
+// header( 'Content-Type: text/plain; charset=utf8' );
 ?>
 <rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
 <?php
@@ -22,7 +21,7 @@ $channel['description'] = $channel_obj->description;
 global $wcr_content;
 $add_user_message       = '';
 $add_user_message_email = '';
-$is_user = false;
+$is_user                = false;
 
 /* このチャンネルのアクセス制限を調べる */
 if ( true === $channel['restrict'] ) {
@@ -96,7 +95,7 @@ $dummy_audio = $toiee_pcast->get_dummy_audio();
 		<title><?php echo esc_html( $channel['title'] ); ?></title>
 		<link><?php echo esc_url( $channel['url'] ); ?></link>
 		<language><?php echo esc_html( $channel['language'] ); ?></language>
-		<copyright><?php echo date('Y'); ?> <?php echo esc_html( $channel['copyright'] ); ?></copyright>
+		<copyright><?php echo date( 'Y' ); ?> <?php echo esc_html( $channel['copyright'] ); ?></copyright>
 
 		<itunes:subtitle><?php echo esc_html( $channel['subtitle'] ); ?></itunes:subtitle>
 		<itunes:author><?php echo esc_html( $channel['author'] ); ?></itunes:author>
@@ -151,7 +150,7 @@ while ( have_posts() ) :
 	$restrict     = get_field( 'restrict' );
 	if ( $restrict === true ) {
 		$restrict = 'restrict';
-	} else if ( $restrict === false ) {
+	} elseif ( $restrict === false ) {
 		$restrict = 'open';
 	}
 

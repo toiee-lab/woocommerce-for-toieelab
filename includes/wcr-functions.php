@@ -250,7 +250,7 @@ function the_episode_player_plyr( $src, $type = 'video', $ext = '' ) {
 				$vid = $matches[1];
 				?>
 				<div class="plyr-player<?php echo $ext; ?>" data-plyr-provider="vimeo"
-				     data-plyr-embed-id="<?php echo esc_attr( $vid ); ?>"></div>
+					 data-plyr-embed-id="<?php echo esc_attr( $vid ); ?>"></div>
 				<?php
 			} else {
 				/* ビデオのサムネイルが出るので、デフォルトのプレイヤーを使う */
@@ -260,7 +260,7 @@ function the_episode_player_plyr( $src, $type = 'video', $ext = '' ) {
 		</div>
 		<?php
 	} else {
-/*
+		/*
 		$pid = attachment_url_to_postid( $src );
 		if ( $pid ) {
 			$mime_type = get_post_mime_type( $pid );
@@ -272,7 +272,7 @@ function the_episode_player_plyr( $src, $type = 'video', $ext = '' ) {
 				$mime_type = $headers['Content-Type'];
 			}
 		}
-*/
+		*/
 		?>
 		<div class="plyr-container-audio">
 			<audio class="plyr-player<?php echo $ext; ?>" controls preload="metadata">
@@ -337,13 +337,13 @@ function toiee_get_edit_button( $post = null, $echo = true ) {
 function toiee_wpf_name_field_properties( $properties, $field, $form_data ) {
 
 	// Change sublabel values
-	$properties['inputs']['first']['sublabel']['value'] = '名(太郎)';
+	$properties['inputs']['first']['sublabel']['value']  = '名(太郎)';
 	$properties['inputs']['middle']['sublabel']['value'] = 'Middle';
-	$properties['inputs']['last']['sublabel']['value'] = '姓(戸井)';
+	$properties['inputs']['last']['sublabel']['value']   = '姓(戸井)';
 
 	return $properties;
 }
-add_filter( 'wpforms_field_properties_name' , 'toiee_wpf_name_field_properties', 10, 3 );
+add_filter( 'wpforms_field_properties_name', 'toiee_wpf_name_field_properties', 10, 3 );
 
 function toiee_in_categories( $category_slug ) {
 
@@ -351,7 +351,7 @@ function toiee_in_categories( $category_slug ) {
 		return true;
 	}
 
-	$cat_check   = get_term_by( 'slug', $category_slug, 'category' );
+	$cat_check = get_term_by( 'slug', $category_slug, 'category' );
 
 	if ( $cat_check ) {
 		$cid         = $cat_check->term_id;

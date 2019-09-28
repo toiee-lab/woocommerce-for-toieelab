@@ -329,8 +329,8 @@ if ( $wc_restrict_ssp ) {
 	}
 }
 
-if ( get_term_meta( $series_id,  'pcast_moving', true) ) {
-	$moving_url = get_term_meta( $series_id,  'pcast_moving_to', true);
+if ( get_term_meta( $series_id, 'pcast_moving', true ) ) {
+	$moving_url   = get_term_meta( $series_id, 'pcast_moving_to', true );
 	$new_feed_url = $moving_url . 'feed/pcast/';
 	if ( '' !== $wcrtoken ) {
 		$new_feed_url .= '?wcrtoken=' . $wcrtoken;

@@ -132,7 +132,7 @@ class Toiee_Kdy_Post {
 	 * カスタムフィールドの追加
 	 */
 	protected function add_acf() {
-		if( function_exists('acf_add_local_field_group') ):
+		if ( function_exists( 'acf_add_local_field_group' ) ) :
 
 		endif;
 	}

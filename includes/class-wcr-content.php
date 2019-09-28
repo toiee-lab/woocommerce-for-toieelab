@@ -388,7 +388,7 @@ EOD;
 
 				case 'product':  // その他は商品としてチェックする
 				default:
-					$product      = wc_get_product( $i );
+					$product = wc_get_product( $i );
 
 					if ( false === $product ) {
 						return false;
@@ -846,7 +846,7 @@ here is contents
 				'desc'  => 'Podcast機能を有効にします。マガジン、スクラム、耳デミー、ポケてらなどを利用する場合は、必ず ON にしてください。',
 				'init'  => false,
 			],
-			'postcast'      => [
+			'postcast'   => [
 				'title' => '投稿Podcast、教材化機能',
 				'desc'  => '投稿に、Podcast機能を有効にします。',
 				'init'  => false,
