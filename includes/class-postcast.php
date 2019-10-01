@@ -28,6 +28,8 @@ class Toiee_Postcast {
 			'lft',              /* ワークショップ・レジュメのカテゴリスラッグを lft と想定 */
 			'mimidemy',         /* 耳デミーのカテゴリスラッグを mimidemy と想定 */
 			'kamedemy',         /* かめデミーのカテゴリスラッグを kamedemy と想定 */
+			'it-support',       /* ITサポート */
+			'pocketera',        /* ポケテら */
 		];
 
 		/* 教材カテゴリの場合、カテゴリとつけないようにする */
@@ -44,8 +46,13 @@ class Toiee_Postcast {
 		}
 
 		if ( $query->is_main_query() && is_category( $this->top_categories ) ) {
-			$query->set( 'posts_per_page', -1 );
-			return;
+			if ( is_category( 'it-support' ) ) {
+				$query->set( 'posts_per_page', 20 );
+				return;
+			} else {
+				$query->set( 'posts_per_page', - 1 );
+				return;
+			}
 		}
 
 	}
@@ -59,6 +66,13 @@ class Toiee_Postcast {
 
 	public function workshop_archive_template( $template ) {
 		if ( is_category( $this->top_categories ) ) {
+			if ( is_category( 'it-support' ) ) {
+				$new_template = locate_template( array( 'category-it-support-archive.php' ) );
+				if ( ! empty( $new_template ) ) {
+					return $new_template;
+				}
+			}
+
 			$new_template = locate_template( array( 'category-workshop-archive.php' ) );
 			if ( ! empty( $new_template ) ) {
 				return $new_template;
