@@ -130,6 +130,7 @@ class Woocommerce_SimpleRestrictContent {
 					'editor',
 				),
 				'capability_type'     => 'product',
+				'show_in_admin_bar'     => false,
 			)
 		);
 	}

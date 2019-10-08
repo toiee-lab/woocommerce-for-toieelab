@@ -181,6 +181,7 @@ class Toiee_Magazine_Post {
 			'menu_icon'             => 'dashicons-book',
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
 			'taxonomies'            => array( 'magazine' ),
+			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'mag_post', $args );

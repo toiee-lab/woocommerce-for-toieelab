@@ -131,6 +131,7 @@ class Toiee_Tlm_Post {
 			'menu_icon'             => 'dashicons-welcome-learn-more',
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
 			'taxonomies'            => array( 'tlm' ),
+			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'tlm_in', $args );
@@ -169,6 +170,7 @@ class Toiee_Tlm_Post {
 			'query_var'             => true,
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
 			'taxonomies'            => array( 'tlm' ),
+			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'tlm_ws', $args );
@@ -207,6 +209,7 @@ class Toiee_Tlm_Post {
 			'query_var'             => true,
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
 			'taxonomies'            => array( 'tlm' ),
+			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'tlm_ws_aid', $args );
@@ -245,6 +248,7 @@ class Toiee_Tlm_Post {
 			'query_var'             => true,
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
 			'taxonomies'            => array( 'tlm' ),
+			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'tlm_ws_lft', $args );
@@ -284,6 +288,7 @@ class Toiee_Tlm_Post {
 			'menu_position'         => 5,
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
 			'taxonomies'            => array( 'tlm' ),
+			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'tlm_archive', $args );
@@ -322,6 +327,7 @@ class Toiee_Tlm_Post {
 			'query_var'             => true,
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
 			'taxonomies'            => array( 'tlm' ),
+			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'tlm_add', $args );

@@ -123,6 +123,7 @@ class Toiee_Mimidemy_Post {
 			'menu_icon'             => 'dashicons-welcome-learn-more',
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
 			'taxonomies'            => array( 'mdy_channel' ),
+			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'mdy_episode', $args );
@@ -160,6 +161,7 @@ class Toiee_Mimidemy_Post {
 			),
 			'query_var'             => true,
 			'supports'              => array( 'title', 'editor' ),
+			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'mdy_material', $args );
