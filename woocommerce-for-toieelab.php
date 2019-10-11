@@ -239,3 +239,34 @@ function toiee_noindex() {
 	}
 }
 add_action( 'wp_head', 'toiee_noindex' );
+
+
+/**
+ * 新規追加から除外
+ */
+add_action(
+	'wp_before_admin_bar_render',
+	function (){
+		global $wp_admin_bar;
+		$wp_admin_bar->remove_menu( 'new-wcrestrict' );
+		$wp_admin_bar->remove_menu( 'new-wcr-customtab' );
+		$wp_admin_bar->remove_menu( 'new-tlm_in' );
+		$wp_admin_bar->remove_menu( 'new-tlm_ws' );
+		$wp_admin_bar->remove_menu( 'new-tlm_ws_aid' );
+		$wp_admin_bar->remove_menu( 'new-tlm_ws_lft' );
+		$wp_admin_bar->remove_menu( 'new-tlm_archive' );
+		$wp_admin_bar->remove_menu( 'new-tlm_add' );
+		$wp_admin_bar->remove_menu( 'new-toiee_knowledge' );
+		$wp_admin_bar->remove_menu( 'new-mag_post' );
+		$wp_admin_bar->remove_menu( 'new-scrum_post' );
+		$wp_admin_bar->remove_menu( 'new-scrum_episode' );
+		$wp_admin_bar->remove_menu( 'new-pkt_episode' );
+		$wp_admin_bar->remove_menu( 'new-pkt_resume' );
+		$wp_admin_bar->remove_menu( 'new-pkt_lftnote' );
+		$wp_admin_bar->remove_menu( 'new-pkt_report' );
+		$wp_admin_bar->remove_menu( 'new-pkt_feedback' );
+		$wp_admin_bar->remove_menu( 'new-pkt_material' );
+		$wp_admin_bar->remove_menu( 'new-mdy_material' );
+		$wp_admin_bar->remove_menu( 'new-mdy_episode' );
+	}
+);
