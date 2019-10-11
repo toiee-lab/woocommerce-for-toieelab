@@ -60,7 +60,6 @@ class Toiee_Tkb_Post {
 			'menu_icon'             => 'dashicons-book-alt',
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
 			'taxonomies'            => array( 'post_tag' ),
-			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'toiee_knowledge', $args );

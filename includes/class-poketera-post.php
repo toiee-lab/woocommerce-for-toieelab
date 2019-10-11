@@ -180,7 +180,6 @@ class Toiee_Pocketera_Post {
 			'menu_icon'             => 'dashicons-location',
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
 			'taxonomies'            => array( 'pkt_channel' ),
-			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'pkt_episode', $args );
@@ -218,7 +217,6 @@ class Toiee_Pocketera_Post {
 			),
 			'query_var'             => true,
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
-			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'pkt_resume', $args );
@@ -256,7 +254,6 @@ class Toiee_Pocketera_Post {
 			),
 			'query_var'             => true,
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
-			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'pkt_lftnote', $args );
@@ -294,7 +291,6 @@ class Toiee_Pocketera_Post {
 			),
 			'query_var'             => true,
 			'supports'              => array( 'title', 'editor', 'thumbnail', 'comments', 'author' ),
-			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'pkt_report', $args );
@@ -332,7 +328,6 @@ class Toiee_Pocketera_Post {
 			),
 			'query_var'             => true,
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
-			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'pkt_feedback', $args );
@@ -370,7 +365,6 @@ class Toiee_Pocketera_Post {
 			),
 			'query_var'             => true,
 			'supports'              => array( 'title', 'editor' ),
-			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'pkt_material', $args );

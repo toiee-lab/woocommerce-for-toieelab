@@ -160,7 +160,6 @@ class Woocommerce_CustomTabs {
 					'editor',
 				),
 				'capability_type'     => 'product',
-				'show_in_admin_bar'     => false,
 			)
 		);
 	}

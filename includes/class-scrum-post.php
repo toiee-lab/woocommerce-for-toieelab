@@ -141,7 +141,6 @@ class Toiee_Scrum_Post {
 			'menu_icon'             => 'dashicons-groups',
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
 			'taxonomies'            => array( 'scrum' ),
-			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'scrum_post', $args );
@@ -180,7 +179,6 @@ class Toiee_Scrum_Post {
 			'query_var'             => true,
 			'supports'              => array( 'title', 'editor', 'thumbnail' ),
 			'taxonomies'            => array( 'scrum_channel' ),
-			'show_in_admin_bar'     => false,
 		);
 
 		register_post_type( 'scrum_episode', $args );
