@@ -343,7 +343,7 @@ EOD;
 	 * 現在のユーザーで、アクセスをチェックします。様々なプロダクトが混ざった状態で動作する設計です
 	 * wcrestrict、product、
 	 */
-	public function check_access( $ids, $user_id = '' ) {
+	public function check_access( $ids, $user_id = '', $include_coupon = true ) {
 
 		// user check
 		if ( $user_id == '' ) {
@@ -367,6 +367,9 @@ EOD;
 		if ( ! is_array( $ids ) ) {
 			return false;
 		}
+
+		/* トライアルクーポンチェックのために、商品IDだけを保持するための配列 */
+		$product_list = array();
 
 		foreach ( $ids as $i ) {
 			$post_type = get_post_type( $i );
@@ -400,9 +403,10 @@ EOD;
 					if ( function_exists( 'wcs_user_has_subscription' )
 					&& ( $product_type == 'subscription' || $product_type == 'variable-subscription' )
 					) {
-							$ret = ( $i != '' ) ? wcs_user_has_subscription( $user_id, $i, 'active' ) : false;
+						$ret = ( $i != '' ) ? wcs_user_has_subscription( $user_id, $i, 'active' ) : false;
 					} else {  // 今の所、 product_varidation ぐらいか？
 						$ret = wc_customer_bought_product( $user_email, $user_id, $i );
+						$product_list[] = $i;
 					}
 			}
 
@@ -410,6 +414,37 @@ EOD;
 				return true;
 			}
 		}
+
+		/* ここに到達しているのは false なので、ここでトライアルクーポンをチェックする */
+		if ( $include_coupon ) {
+			foreach ( $product_list as $pid ) {
+				$args = array(
+					'post_type'  => 'wc4t_trialcpn_order',
+					'meta_query' => array(
+						'relation' => 'AND',
+						array(
+							'key'   => 'wc4t_user',
+							'value' => $user_id,
+						),
+						array(
+							'key'   => 'wc4t_product',
+							'value' => $pid,
+						),
+						array(
+							'key'     => 'wc4t_expire',
+							'value'   => date( 'Y-m-d H:i:s' ),
+							'compare' => '>',
+						),
+					),
+				);
+
+				$p = get_posts( $args );
+				if ( count( $p ) ) {
+					return true;
+				}
+			}
+		}
+
 
 		return $ret;
 	}
@@ -849,6 +884,11 @@ here is contents
 			'postcast'   => [
 				'title' => '投稿Podcast、教材化機能',
 				'desc'  => '投稿に、Podcast機能を有効にします。',
+				'init'  => false,
+			],
+			'trialcoupon'   => [
+				'title' => 'トライアルクーポン機能',
+				'desc'  => '特別にトライアルクーポンを使えるようにします。',
 				'init'  => false,
 			],
 			'mag'        => [

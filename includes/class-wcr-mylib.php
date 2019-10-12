@@ -118,7 +118,8 @@ class toiee_woocommerce_mylibrary {
 	}
 
 	public function mylibrary_content() {
-		$tr_text = '
+		$title         = '<h3>' . __( 'マイライブラリ', 'twmylib' ) . '</h3>';
+		$tr_text       = '
 		<tr>
 			<td>%IMG%</td>
 			<td>%NAME%</td>
@@ -126,9 +127,52 @@ class toiee_woocommerce_mylibrary {
 			<td>%ORDER%</td>
 		</tr>		
 ';
+		$table_content = '';
 
-		$title = '<h3>' . __( 'マイライブラリ', 'twmylib' ) . '</h3>';
+		/* クーポンコードでチェック */
+		$args = array(
+			'post_type'  => 'wc4t_trialcpn_order',
+			'meta_query' => array(
+				'relation' => 'AND',
+				array(
+					'key'   => 'wc4t_user',
+					'value' => get_current_user_id(),
+				),
+				array(
+					'key'     => 'wc4t_expire',
+					'value'   => date( 'Y-m-d H:i:s' ),
+					'compare' => '>',
+				),
+			),
+		);
+		$trials = get_posts( $args );
 
+		foreach ( $trials as $t ) {
+			$product_id = get_field( 'wc4t_product', $t->ID );
+			$expire     = date( 'Y年m月d日', strtotime( get_field( 'wc4t_expire', $t->ID ) ) );
+			$mylib_url  = get_field( 'wcmylib_url', $product_id );
+			if ( '' !== $mylib_url ) {
+				$product = wc_get_product( $product_id );
+				$p_img   = get_the_post_thumbnail_url( $product->get_id(), 'full' );
+				$p_name  = $product->get_name();
+				$p_url   = get_permalink( $product->get_id() );
+
+				$table_content .= str_replace(
+					array( '%IMG%', '%NAME%', '%VIEW%', '%ORDER%' ),
+					array(
+						'<img src="' . $p_img . '" style="height:3.5em;">',
+						$p_name,
+						'<a href="' . $mylib_url . '"><span uk-icon="play"></span> 視聴する</a>',
+						'' . $expire . 'まで<br><a href="' . $p_url . '">商品情報</a>',
+					),
+					$tr_text
+				);
+			}
+		}
+
+
+
+		/* 注文を捜査して、表示 */
 		$customer_orders = wc_get_orders(
 			array(
 				'meta_key'    => '_customer_user',
@@ -138,7 +182,6 @@ class toiee_woocommerce_mylibrary {
 			)
 		);
 
-		$table_content = '';
 		$index         = array();
 		foreach ( $customer_orders as $order ) {
 
@@ -253,7 +296,7 @@ EOD;
 			$product_ids = array( $post->ID );
 		}
 
-		$is_access = $wcr_content->check_access( $product_ids );
+		$is_access = $wcr_content->check_access( $product_ids, '', false );
 		if ( $is_access ) {
 			echo '<div class="woocommerce-info">
 			<strong>この教材は購入済みです</strong><br>

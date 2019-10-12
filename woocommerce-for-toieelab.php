@@ -5,7 +5,7 @@
  * Plugin URI: http://toiee.jp
  * Description: WooCommerceの商品と商品をまとめるデータと連動して、コンテンツの閲覧制限、Seriously Simple Podcastの閲覧制限・機能拡張、ユーザー固有のフィードURL生成、マイライブラリ機能、ショートコードなどを実装
  * Author: toiee Lab
- * Version: 3.6
+ * Version: 4.0
  * Author URI: http://toiee.jp
  */
 
@@ -131,6 +131,13 @@ if ( $wcr_content->get_func_option( 'postcast' ) ) {
 	require_once 'includes/class-postcast.php';
 	global $toiee_postcast;
 	$toiee_postcast = new Toiee_Postcast( __FILE__ );
+}
+
+/* トライアルクーポン機能を追加する */
+if ( $wcr_content->get_func_option( 'trialcoupon' ) ) {
+	require_once 'includes/class-trialcoupen.php';
+	global $toiee_coupon;
+	$toiee_coupon = new Toiee_Trialcoupon( __FILE__ );
 }
 
 /* スクラム教材機能を追加する */
