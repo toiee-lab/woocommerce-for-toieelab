@@ -238,7 +238,7 @@ class Toiee_Postcast {
 									'name'              => 'offer_product',
 									'type'              => 'post_object',
 									'instructions'      => '購入を案内する商品を選択します（一つだけ）',
-									'required'          => 1,
+									'required'          => 0,
 									'conditional_logic' => 0,
 									'wrapper'           => array(
 										'width' => '',
