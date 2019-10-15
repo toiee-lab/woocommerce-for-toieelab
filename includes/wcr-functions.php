@@ -283,7 +283,7 @@ function the_episode_player_plyr( $src, $type = 'video', $ext = '' ) {
 	}
 }
 
-function the_episode_player_dummy( $type = 'video', $message = '閲覧するには、<a href="#" uk-toggle="target: #modal_login_form">ログイン</a>してください' ) {
+function the_episode_player_dummy( $type = 'video', $message = '閲覧するには、<a href="#" uk-toggle="target: #modal_login_form">ログイン(ここをクリック)</a>してください' ) {
 	if ( $type == 'video' ) {
 		$img = plugins_url( '/images/na-video.png', dirname( __FILE__ ) );
 	} else {
@@ -296,7 +296,7 @@ function the_episode_player_dummy( $type = 'video', $message = '閲覧するに�
 		'
 <div class="uk-margin-medium-top uk-margin-small-bottom">
 <img src="%IMG%" /><br>
-<span class="uk-text-meta uk-text-small">%MESSAGE%</span>&nbsp;
+<span class="uk-text-small">%MESSAGE%</span>&nbsp;
 </div>					
 '
 	);

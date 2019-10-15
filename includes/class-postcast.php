@@ -233,6 +233,28 @@ class Toiee_Postcast {
 									'ui_off_text'       => '',
 								),
 								array(
+									'key'               => 'field_5d788c901d62f',
+									'label'             => 'オファー商品',
+									'name'              => 'offer_product',
+									'type'              => 'post_object',
+									'instructions'      => '購入を案内する商品を選択します（一つだけ）',
+									'required'          => 1,
+									'conditional_logic' => 0,
+									'wrapper'           => array(
+										'width' => '',
+										'class' => '',
+										'id'    => '',
+									),
+									'post_type'         => array(
+										0 => 'product',
+									),
+									'taxonomy'          => '',
+									'allow_null'        => 0,
+									'multiple'          => 0,
+									'return_format'     => 'id',
+									'ui'                => 1,
+								),
+								array(
 									'key'               => 'field_5d7886a73a41a',
 									'label'             => 'アクセス許可商品',
 									'name'              => 'restrict_product',
