@@ -1048,21 +1048,36 @@ class Toiee_Pcast {
 				$time  = time() - 60 * ( $total + 2 );
 
 				/* 登録先情報 */
-				$tt        = $this->get_pcast_tax( $_POST['target_channel'] );
-				$term      = get_term_by( 'id', $tt['term_id'], $tt['tax'] );
-				$post_type = $tt['post_type'];
+				$post_id     = null;
+				$is_postcast = isset( $_POST['podcast_type'] ) && 'postcast' === $_POST['podcast_type'];
+				if ( $is_postcast ) {
+					/* ブログ投稿 */
+					$proj = $lib->request( $_POST['source_channel'], 'GET' );
+					$name = $proj['body']['name'];
+
+					$args    = [
+						'ID'          => null,
+						'post_title'  => $name,
+						'post_status' => 'draft',
+					];
+					$post_id = wp_insert_post( $args );
+					update_field( 'tlm_enable', true, $post_id );
+
+				} else {
+					/* タームで投稿(pcast) */
+					$tt        = $this->get_pcast_tax( $_POST['target_channel'] );
+					$term      = get_term_by( 'id', $tt['term_id'], $tt['tax'] );
+					$post_type = $tt['post_type'];
+				}
 
 				/* 登録開始 */
 				foreach ( $videos as $i => $v ) {
 					$cnt++;
 					$time += 60;
-					$att   = array();
 
-					$post_title   = $v['name'];
-					$att['media'] = 'video';
-					/* restrict という名前が、チャンネルと重複しており、予期せぬ動作をするので、 field key で登録 */
-					$att['field_5cabc2922632b'] = 'restrict';
-					$att['duration']            = sprintf( '%02d:%02d:%02d', floor( $v['duration'] / 3600 ), floor( ( $v['duration'] / 60 ) % 60 ), $v['duration'] % 60 );
+					$att             = array();
+					$att['media']    = 'video';
+					$att['duration'] = sprintf( '%02d:%02d:%02d', floor( $v['duration'] / 3600 ), floor( ( $v['duration'] / 60 ) % 60 ), $v['duration'] % 60 );
 					foreach ( $v['files'] as $d ) {
 						if ( 'hd' === $d['quality'] ) {
 							$link             = preg_replace( '/&oauth2_token_id=([0-9]+)/', '', $d['link'] ) . '&download=1';
@@ -1072,26 +1087,56 @@ class Toiee_Pcast {
 						}
 					}
 
-					$arg     = array(
-						'ID'           => null,
-						'post_content' => '',
-						'post_name'    => $term->slug . '-' . $cnt,
-						'post_title'   => $post_title,
-						'post_status'  => 'publish',
-						'post_type'    => $post_type,
-						'post_date'    => date( 'Y-m-d H:i:s', $time ),
-						'tax_input'    => array( $tt['tax'] => $term->term_id ),
-					);
-					$post_id = wp_insert_post( $arg );
+					/* 投稿を作る */
+					if ( $is_postcast ) {
+						/* ブログ投稿 */
+						$field_list = array(
+							'subtitle',
+							'enclosure',
+							'media',
+							'duration',
+							'length',
+						);
 
-					if ( $post_id ) {
-						foreach ( $att as $k => $v ) {
-							update_field( $k, $v, $post_id );
+						$rows             = array();
+						$rows['title']    = $v['name'];
+						$rows['restrict'] = 'restrict';
+						foreach ( $field_list as $f ) {
+							if ( isset( $att[ $f ] ) ) {
+								$rows[ $f ] = $att[ $f ];
+							}
+						}
+
+						add_row( 'tlm_items', $rows, $post_id );
+					} else {
+						$arg     = array(
+							'ID'           => null,
+							'post_content' => '',
+							'post_name'    => $term->slug . '-' . $cnt,
+							'post_title'   => $v['name'],
+							'post_status'  => 'publish',
+							'post_type'    => $post_type,
+							'post_date'    => date( 'Y-m-d H:i:s', $time ),
+							'tax_input'    => array( $tt['tax'] => $term->term_id ),
+						);
+						$post_id = wp_insert_post( $arg );
+
+						/* restrict という名前が、チャンネルと重複しており、予期せぬ動作をするので、 field key で登録 */
+						$att['field_5cabc2922632b'] = 'restrict';
+
+						if ( $post_id ) {
+							foreach ( $att as $k => $v ) {
+								update_field( $k, $v, $post_id );
+							}
 						}
 					}
 				}
 
-				$edit_url = admin_url( 'edit.php?' . $tt['tax'] . '=' . $term->slug . '&post_type=' . $post_type );
+				if ( $is_postcast ) {
+					$edit_url = admin_url( 'post.php?post=' . $post_id . '&action=edit' );
+				} else {
+					$edit_url = admin_url( 'edit.php?' . $tt['tax'] . '=' . $term->slug . '&post_type=' . $post_type );
+				}
 				?>
 				<div class="notice notice-success is-dismissible">
 					<p><strong>登録作業が完了しました。</strong> <a href="<?php echo esc_url( $edit_url ); ?>">結果はこちら</a></p>
@@ -1143,12 +1188,14 @@ class Toiee_Pcast {
 						<label for="my-text-field">インポート先</label>
 					</th>
 					<td>
+						<p><label><input type="radio" name="podcast_type" value="postcast" checked="checked"> ブログ投稿型（下書きで保存します) </label></p>
+						<p><label><input type="radio" name="podcast_type" value="pcast"> Pcast型(下から選ぶ)</label><br>
 						<select name="target_channel">
 							<?php foreach ( $select_to as $option ) : ?>
 								<option value="<?php echo esc_attr( $option['value'] ); ?>"><?php echo esc_attr( $option['disp'] ); ?></option>
 							<?php endforeach; ?>
 						</select>
-						<br>
+							<br></p>
 						<span class="description"></span>
 					</td>
 				</tr>
@@ -1250,7 +1297,7 @@ class Toiee_Pcast {
 	}
 
 	private function import_from_media() {
-		if ( isset( $_POST['cmd'] ) && $_POST['cmd'] === 'media-import' ) {
+		if ( isset( $_POST['cmd'] ) && 'media-import' === $_POST['cmd'] ) {
 			check_admin_referer( 'toiee_podcast' );
 
 			if ( in_array( $_POST['restrict'], array( 'restrict', 'free', 'open' ) ) ) {
@@ -1259,12 +1306,27 @@ class Toiee_Pcast {
 				$restrict_field = 'restrict';
 			}
 
-			if ( count( $_POST['media'] ) ) {
+			if ( isset( $_POST['media'] ) && count( $_POST['media'] ) ) {
 
-				/* 登録先のtaxonomy, term, post_type を取得 */
-				$tt        = $this->get_pcast_tax( $_POST['target_channel'] );
-				$term      = get_term_by( 'id', $tt['term_id'], $tt['tax'] );
-				$post_type = $tt['post_type'];
+				$post_id     = null;
+				$is_postcast = isset( $_POST['podcast_type'] ) && 'postcast' === $_POST['podcast_type'];
+				if ( $is_postcast ) {
+					/* postcast 形式 */
+					$post_title = isset( $_POST['post_title'] ) ? wp_strip_all_tags( wp_unslash( $_POST['post_title'] ) ) : '下書きです';
+					$args       = [
+						'ID'          => null,
+						'post_title'  => $post_title,
+						'post_status' => 'draft',
+					];
+					$post_id    = wp_insert_post( $args );
+					update_field( 'tlm_enable', true, $post_id );
+
+				} else {
+					/* term & post 形式。登録先のtaxonomy, term, post_type を取得 */
+					$tt        = $this->get_pcast_tax( $_POST['target_channel'] );
+					$term      = get_term_by( 'id', $tt['term_id'], $tt['tax'] );
+					$post_type = $tt['post_type'];
+				}
 
 				/* 投稿データを用意し、並び替えをする */
 				$pcast = array();
@@ -1307,37 +1369,64 @@ class Toiee_Pcast {
 
 					$media = get_post( $id );
 
-					/* post を投稿 */
-					$args    = array(
-						'ID'           => null,
-						'post_content' => $p['post_content'],
-						'post_name'    => $term->slug . '-' . $cnt,
-						'post_title'   => $p['post_title'],
-						'post_status'  => 'publish',
-						'post_date'    => date( 'Y-m-d H:i:s', $time ),
-						'post_type'    => $post_type,
-						'tax_input'    => array( $tt['tax'] => $term->term_id ),
-					);
-					$post_id = wp_insert_post( $args );
-
-					if ( $post_id ) {
-						/* restrict という名前が、チャンネルと重複しており、予期せぬ動作をするので、 field key で登録 */
-						foreach ( array(
-							'field_5cabc2922632b' => 'restrict',
+					if ( $is_postcast ) {
+						/* ブログ投稿にデータを追加 */
+						$field_list = array(
 							'enclosure',
 							'media',
 							'duration',
 							'length',
-						) as $selector => $name ) {
-							if ( is_numeric( $selector ) ) {
-								$selector = $name;
+						);
+
+						$rows             = array();
+						$rows['title']    = $p['post_title'];
+						$rows['restrict'] = 'restrict';
+						foreach ( $field_list as $f ) {
+							if ( isset( $p[ $f ] ) ) {
+								$rows[ $f ] = $p[ $f ];
 							}
-							update_field( $selector, $p[ $name ], $post_id );
+						}
+
+						add_row( 'tlm_items', $rows, $post_id );
+					} else {
+						/* post を投稿 */
+						$args    = array(
+							'ID'           => null,
+							'post_content' => $p['post_content'],
+							'post_name'    => $term->slug . '-' . $cnt,
+							'post_title'   => $p['post_title'],
+							'post_status'  => 'publish',
+							'post_date'    => date( 'Y-m-d H:i:s', $time ),
+							'post_type'    => $post_type,
+							'tax_input'    => array( $tt['tax'] => $term->term_id ),
+						);
+						$post_id = wp_insert_post( $args );
+
+						if ( $post_id ) {
+							/* restrict という名前が、チャンネルと重複しており、予期せぬ動作をするので、 field key で登録 */
+							foreach (
+								array(
+									'field_5cabc2922632b' => 'restrict',
+									'enclosure',
+									'media',
+									'duration',
+									'length',
+								) as $selector => $name
+							) {
+								if ( is_numeric( $selector ) ) {
+									$selector = $name;
+								}
+								update_field( $selector, $p[ $name ], $post_id );
+							}
 						}
 					}
 				}
 
-				$edit_url = admin_url( 'edit.php?' . $tt['tax'] . '=' . $term->slug . '&post_type=' . $post_type );
+				if ( $is_postcast ) {
+					$edit_url = admin_url( 'post.php?post=' . $post_id . '&action=edit' );
+				} else {
+					$edit_url = admin_url( 'edit.php?' . $tt['tax'] . '=' . $term->slug . '&post_type=' . $post_type );
+				}
 			}
 			?>
 			<div class="notice notice-success is-dismissible">
@@ -1396,12 +1485,16 @@ class Toiee_Pcast {
 						<label for="my-text-field">インポート先</label>
 					</th>
 					<td>
+						<p><label><input type="radio" name="podcast_type" value="postcast" checked="checked"> ブログ投稿型（下書きで保存します) </label><br>
+						<input type="text" name="post_title" value="" placeholder="ブログのタイトルを入れてください" class="" style="width:80%;" />
+						</p>
+						<p><label><input type="radio" name="podcast_type" value="pcast"> Pcast型(下から選ぶ)</label><br>
 						<select name="target_channel">
 							<?php foreach ( $select_to as $option ) : ?>
 								<option value="<?php echo esc_attr( $option['value'] ); ?>"><?php echo esc_attr( $option['disp'] ); ?></option>
 							<?php endforeach; ?>
 						</select>
-						<br>
+						</p>
 						<span class="description"></span>
 					</td>
 				</tr>
@@ -1412,8 +1505,8 @@ class Toiee_Pcast {
 					<td>
 						<select name="restrict">
 							<option value="open">公開</option>
-							<option value="free" selected="selected">会員無料</option>
-							<option value="restrict">購入者限定</option>
+							<option value="free">会員無料</option>
+							<option value="restrict" selected="selected">購入者限定</option>
 						</select>
 						<br>
 						<span class="description">スクラム・インプットは「会員無料」です</span>
@@ -1690,24 +1783,26 @@ class Toiee_Pcast {
 				)
 			);
 
-			$tax_obj   = get_taxonomy( $tax_name );
-			$post_type = $relation[ $tax_name ];
+			$tax_obj = get_taxonomy( $tax_name );
+			if ( false !== $tax_obj ) {
+				$post_type = $relation[ $tax_name ];
 
-			foreach ( $terms as $t ) {
+				foreach ( $terms as $t ) {
 
-				if ( is_array( $post_type ) ) {
-					foreach ( $post_type as $ptype ) {
-						$obj                                  = get_post_type_object( $ptype );
-						$select[ $t->term_id . '-' . $ptype ] = array(
-							'disp'  => '【' . $tax_obj->label . '-' . $obj->label . '】' . $t->name,
-							'value' => $tax_name . ',' . $t->term_id . ',' . $ptype,
+					if ( is_array( $post_type ) ) {
+						foreach ( $post_type as $ptype ) {
+							$obj                                  = get_post_type_object( $ptype );
+							$select[ $t->term_id . '-' . $ptype ] = array(
+								'disp'  => '【' . $tax_obj->label . '-' . $obj->label . '】' . $t->name,
+								'value' => $tax_name . ',' . $t->term_id . ',' . $ptype,
+							);
+						}
+					} else {
+						$select[ $t->term_id ] = array(
+							'disp'  => '【' . $tax_obj->label . '】' . $t->name,
+							'value' => $tax_name . ',' . $t->term_id . ',' . $post_type,
 						);
 					}
-				} else {
-					$select[ $t->term_id ] = array(
-						'disp'  => '【' . $tax_obj->label . '】' . $t->name,
-						'value' => $tax_name . ',' . $t->term_id . ',' . $post_type,
-					);
 				}
 			}
 		}
