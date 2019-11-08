@@ -1308,24 +1308,44 @@ class Toiee_Pcast {
 
 			if ( isset( $_POST['media'] ) && count( $_POST['media'] ) ) {
 
-				$post_id     = null;
-				$is_postcast = isset( $_POST['podcast_type'] ) && 'postcast' === $_POST['podcast_type'];
-				if ( $is_postcast ) {
-					/* postcast 形式 */
-					$post_title = isset( $_POST['post_title'] ) ? wp_strip_all_tags( wp_unslash( $_POST['post_title'] ) ) : '下書きです';
-					$args       = [
-						'ID'          => null,
-						'post_title'  => $post_title,
-						'post_status' => 'draft',
-					];
-					$post_id    = wp_insert_post( $args );
-					update_field( 'tlm_enable', true, $post_id );
+				$post_id       = null;
+				$postcast_type = isset( $_POST['podcast_type'] ) ? $_POST['podcast_type'] : false;
+				$is_postcast   = false;
 
-				} else {
-					/* term & post 形式。登録先のtaxonomy, term, post_type を取得 */
-					$tt        = $this->get_pcast_tax( $_POST['target_channel'] );
-					$term      = get_term_by( 'id', $tt['term_id'], $tt['tax'] );
-					$post_type = $tt['post_type'];
+				switch ( $postcast_type ) {
+					/* 新規投稿 */
+					case 'postcast':
+						$is_postcast = true;
+						$post_title  = isset( $_POST['post_title'] ) ? wp_strip_all_tags( wp_unslash( $_POST['post_title'] ) ) : '下書きです';
+						$args        = [
+							'ID'          => null,
+							'post_title'  => $post_title,
+							'post_status' => 'draft',
+						];
+						$post_id     = wp_insert_post( $args );
+						update_field( 'tlm_enable', true, $post_id );
+
+						break;
+
+					/* 追記 */
+					case 'postcast_add':
+						$post_id = isset( $_POST['target_post'] ) ? $_POST['target_post'] : false;
+						if ( false === $post_id ) {
+							wp_die( '不正な投稿IDです : ' . $post_id );
+							exit;
+						}
+
+						$is_postcast = true;
+						break;
+
+					case 'pcast' :
+						/* term & post 形式。登録先のtaxonomy, term, post_type を取得 */
+						$tt        = $this->get_pcast_tax( $_POST['target_channel'] );
+						$term      = get_term_by( 'id', $tt['term_id'], $tt['tax'] );
+						$post_type = $tt['post_type'];
+
+						break;
+					default:
 				}
 
 				/* 投稿データを用意し、並び替えをする */
@@ -1457,6 +1477,20 @@ class Toiee_Pcast {
 
 		$select_to = $this->get_pcast_taxes_select();
 
+		/* postcast型の投稿を探す */
+		$args     = array(
+			'posts_per_page' => 20,
+			'post_type'      => 'post',
+			'post_status'    => [ 'publish', 'draft' ],
+			'meta_query'     => array(
+				array(
+					'key'   => 'tlm_enable',
+					'value' => true,
+				),
+			),
+		);
+		$tlm_posts = get_posts( $args );
+
 		?>
 		<p>メディアライブラリの音声、ビデオを特定のPcastにインポートします。<br>
 		投稿日時は、インポートした時点（今）を起点に設定されます。また、順番は「名前順」となります。<br>
@@ -1485,8 +1519,15 @@ class Toiee_Pcast {
 						<label for="my-text-field">インポート先</label>
 					</th>
 					<td>
-						<p><label><input type="radio" name="podcast_type" value="postcast" checked="checked"> ブログ投稿型（下書きで保存します) </label><br>
+						<p style="margin-bottom:2em;"><label><input type="radio" name="podcast_type" value="postcast" checked="checked"> 新規投稿型（下書きで保存します) </label><br>
 						<input type="text" name="post_title" value="" placeholder="ブログのタイトルを入れてください" class="" style="width:80%;" />
+						</p>
+						<p style="margin-bottom:2em;"><label><input type="radio" name="podcast_type" value="postcast_add"> 投稿型に追記</label><br>
+							<select name="target_post">
+								<?php foreach ( $tlm_posts as $option ) : ?>
+									<option value="<?php echo esc_attr( $option->ID ); ?>"><?php echo esc_attr( $option->post_title ); ?></option>
+								<?php endforeach; ?>
+							</select>
 						</p>
 						<p><label><input type="radio" name="podcast_type" value="pcast"> Pcast型(下から選ぶ)</label><br>
 						<select name="target_channel">
