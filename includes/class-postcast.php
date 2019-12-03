@@ -30,6 +30,7 @@ class Toiee_Postcast {
 			'kamedemy',         /* かめデミーのカテゴリスラッグを kamedemy と想定 */
 			'it-support',       /* ITサポート */
 			'pocketera',        /* ポケテら */
+			'webterakoya',      /* Web寺子屋 */
 		];
 
 		/* 教材カテゴリの場合、カテゴリとつけないようにする */
